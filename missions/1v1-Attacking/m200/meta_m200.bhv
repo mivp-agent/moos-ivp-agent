@@ -1,0 +1,227 @@
+initialize DEPLOY     = false
+initialize RETURN     = false
+initialize ACTION     = $(BEH)
+initialize TAGGED     = false
+initialize AVOID      = true
+
+set MODE     = ACTIVE {
+  DEPLOY     = true
+} INACTIVE
+
+set MODE     = RETURNING {
+  MODE       = ACTIVE
+  RETURN     = true
+} INGAME
+
+set MODE     = SOLOPLAY {
+  MODE       = ACTIVE:INGAME
+  ((ACTION    = ATTACK) or ((ACTION = ATTACK_LEFT) or (ACTION = ATTACK_RIGHT))) or (ACTION = DEFEND)
+}
+
+set MODE     = TEAMPLAY {
+  MODE       = ACTIVE:INGAME
+  (ACTION    = COVER) or ((ACTION = STATION) or (ACTION = TRAIL))
+}
+
+set MODE     = ATTACKING {
+  MODE       = ACTIVE:INGAME:SOLOPLAY
+  ACTION     = ATTACK
+}
+
+set MODE     = ATTACKING_RIGHT {
+  MODE	     = ACTIVE:INGAME:SOLOPLAY
+  ACTION     = ATTACK_RIGHT
+}
+
+set MODE     = ATTACKING_LEFT {
+  MODE	     = ACTIVE:INGAME:SOLOPLAY
+  ACTION     = ATTACK_LEFT
+}
+
+set MODE     = DEFENDING {
+  MODE       = ACTIVE:INGAME:SOLOPLAY
+}
+
+set MODE     = TAGGED {
+  MODE       = ACTIVE:INGAME:SOLOPLAY:ATTACKING
+  TAGGED     = true
+} UNTAGGED
+
+set MODE     = TAGGED {
+  MODE       = ACTIVE:INGAME:SOLOPLAY:ATTACKING_LEFT
+  TAGGED     = true
+} UNTAGGED
+
+set MODE     = TAGGED {
+  MODE       = ACTIVE:INGAME:SOLOPLAY:ATTACKING_RIGHT
+  TAGGED     = true
+} UNTAGGED
+
+set MODE     = PASSIVE {
+  MODE       = ACTIVE:INGAME:SOLOPLAY:DEFENDING
+  ACTION     = DEFEND
+}
+
+set MODE     = STATIONNING {
+  MODE       = ACTIVE:INGAME:TEAMPLAY
+  ACTION     = STATION
+}
+
+
+//#############################################################################
+Behavior = BHV_Waypoint
+{
+  name                    = waypt_return
+  pwt                     = 100
+
+  condition               = MODE == RETURNING
+  runflag                 = BOT_DIALOG_STATUS=Returning
+  endflag                 = ACTION=STATION
+
+  speed                   = 3.0
+  capture_radius          = 3.0
+  slip_radius             = 10.0
+  points                  = $(RETURN_POS)
+  lead                    = 8
+}
+
+//#############################################################################
+Behavior = BHV_Waypoint
+{
+  name                    = waypt_grab
+  pwt                     = 50
+  perpetual               = true
+
+  condition               = (MODE == ATTACKING) and (MODE == UNTAGGED)  
+  runflag                 = BOT_DIALOG_STATUS=Attacking
+  endflag                 = FLAG_GRAB_REQUEST=vname=$(VNAME)
+  endflag                 = TAGGED=true
+  
+  speed	                  = 5
+  capture_line            = false
+  capture_radius	        = 5.0
+  slip_radius             = 5.0
+  points                  = $(GRAB_POS)
+}
+
+//################################################################
+Behavior = BHV_Waypoint
+{
+  name                    = left_waypt_grab
+  pwt                     = 50
+  perpetual               = true
+
+  condition               = MODE == ATTACKING_LEFT 
+  runflag                 = BOT_DIALOG_STATUS=Attacking
+  endflag                 = FLAG_GRAB_REQUEST=vname=$(VNAME)
+  endflag                 = TAGGED=true
+
+  speed                   = 5 // meters per second
+  capture_line            = false
+  capture_radius          = 5.0
+  slip_radius             = 5.0
+
+  points                  = $(GRABL_POS):$(GRAB_POS)
+}
+
+//#########################################
+Behavior = BHV_Waypoint
+{
+  name                    = right_waypt_grab
+  pwt                     = 50
+  perpetual               = true
+
+  condition               = MODE == ATTACKING_RIGHT
+  runflag                 = BOT_DIALOG_STATUS=Attacking
+  endflag                 = FLAG_GRAB_REQUEST=vname=$(VNAME)
+  endflag                 = TAGGED=true
+
+  speed                   = 5 // meters per second
+  capture_line            = false
+  capture_radius          = 5.0
+  slip_radius             = 5.0
+
+  points                  = $(GRABR_POS):$(GRAB_POS)
+}
+
+
+//#############################################################################
+Behavior = BHV_Waypoint
+{
+  name                    = waypt_untag
+  pwt                     = 50
+  perpetual               = true
+
+  condition               = MODE == TAGGED
+  runflag                 = BOT_DIALOG_STATUS=Returning to home flag
+  endflag                 = TAGGED=false
+
+  speed                   = 5 // meters per second
+  capture_line            = false
+  capture_radius          = 5.0
+  slip_radius             = 5.0
+
+  points                  = $(UNTAG_POS)
+}
+
+//#############################################################################
+Behavior = BHV_Loiter
+{
+  name                    = loiter_passive
+  pwt                     = 100
+  condition               = MODE==PASSIVE
+  runflag                 = BOT_DIALOG_STATUS=Defending
+  updates                 = LOITER_UPDATES
+
+  speed                   = 5
+
+  polygon                 = radial:: x=0,y=0,radius=10,pts=8 // example
+  center_assign           = $(UNTAG_POS)
+}
+
+//#############################################################################
+Behavior = BHV_StationKeep
+{
+  name                    = station_keep
+  pwt                     = 100
+  condition               = MODE==STATIONNING // example
+  runflag                 = BOT_DIALOG_STATUS=Stationing
+
+  center_activate         = true
+  hibernation_radius      = 5
+  inner_radius            = 4
+  outer_radius            = 15
+  outer_speed             = 5
+  transit_speed           = 5
+  swing_time              = 3
+
+  visual_hints            = vertex_size = 1 // default
+  visual_hints            = edge_color = light_blue // default
+  visual_hints            = edge_size = 1 // default
+  visual_hints            = label_color = white // default
+  visual_hints            = vertex_color = red // default
+}
+
+//#############################################################################
+Behavior = BHV_AvoidCollision
+{
+  name       = avdcollision_
+  pwt        = 75
+  condition  = AVOID = true
+  updates    = CONTACT_INFO
+  endflag    = CONTACT_RESOLVED = $[CONTACT]
+  templating = spawn
+
+               contact = to-be-set
+      on_no_contact_ok = true
+           extrapolate = true
+                 decay = 30,60
+
+        pwt_outer_dist = 50
+        pwt_inner_dist = 20
+        completed_dist = 10
+     min_util_cpa_dist = 5
+     max_util_cpa_dist = 10
+             pwt_grade = linear
+   bearing_line_config = white:0, green:0.65, yellow:0.8, red:1.0
+}

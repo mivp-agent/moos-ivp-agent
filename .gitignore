@@ -1,0 +1,19 @@
+# Tracking directories
+.svn/
+.git/
+
+.DS_Store
+# MOOS files
+MOOSLog*
+bin/
+build/
+lib/
+.LastOpenedMOOSLogDirectory
+LOG_*/
+cmake-build-debug/
+targ_*
+.idea
+CMakeFiles
+
+# 
+
