@@ -1,4 +1,4 @@
-FROM moosivp/moos-ivp:r9177-gui
+FROM moosivp/moos-ivp:r9767-gui
 LABEL maintainer = Michael Misha Novitzky <michael.novitzky@westpoint.edu>
 
 ENV MOOS="moos-ivp-aquaticus"
@@ -18,8 +18,14 @@ USER moos
 RUN svn co "https://oceanai.mit.edu/svn/${MOOS}-oai/trunk/" "${HOME}/${MOOS}"
 RUN cd "${HOME}/${MOOS}" && ./build.sh
 
-# RLquaticus
-RUN mkdir -p moos-ivp-RLquaticus/missions
+# RLquaticus tree
+ENV RLQUATICUS="moos-ivp-RLquaticus"
+ENV PATH="/home/moos/${RLQUATICUS}/bin:${PATH}"
+
+RUN mkdir -p moos-ivp-RLquaticus
+COPY --chown=moos:moos . moos-ivp-RLquaticus/
+
+RUN cd ${RLQUATICUS} && ./build.sh
 
 # pLearn tree
 #ENV PLEARN="moos-ivp-pLearn"

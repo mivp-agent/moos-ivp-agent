@@ -43,11 +43,13 @@ elif [[ "$1" == "run" ]]; then
         docker run --env="DISPLAY=host.docker.internal:0" \
             --volume="/tmp/.X11-unix:/tmp/.X11-unix" \
             --mount type=bind,source="$(pwd)"/missions,target=/home/moos/moos-ivp-RLquaticus/missions \
+            --mount type=bind,source="$(pwd)"/src,target=/home/moos/moos-ivp-RLquaticus/src \
             --name rl-quaticus -it rl-quaticus:1.0 bash
     elif [[ "$OS_TYPE" == "linux" ]]; then
         docker run --env="DISPLAY" \
             --volume="/tmp/.X11-unix:/tmp/.X11-unix" \
             --mount type=bind,source="$(pwd)"/missions,target=/home/moos/moos-ivp-RLquaticus/missions \
+            --mount type=bind,source="$(pwd)"/src,target=/home/moos/moos-ivp-RLquaticus/src \
             --name rl-quaticus -it rl-quaticus:1.0 bash
     fi
     printf "WARNING: Docker container will run in background unless stopped\n"

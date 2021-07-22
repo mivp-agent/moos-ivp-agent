@@ -23,6 +23,7 @@ ProcessConfig = ANTLER
   Run = uFldMessageHandler @ NewConsole = false
   Run = pRangeEvent        @ NewConsole = false
   Run = pNodeReportParse   @ NewConsole = false
+  Run = pEpisodeManager    @ NewConsole = false
 }
 
 #include ../plug_pShare.moos
@@ -54,3 +55,5 @@ ProcessConfig = pNodeReportParse
   AppTick  = 4
   CommsTick= 4
 }
+
+#include plug_pEpisodeManager.moos

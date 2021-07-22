@@ -177,8 +177,7 @@ ProcessConfig = uFldShoreBroker
   qbridge  = HAS_FLAG
   qbridge  = ACTION
   qbridge  = SAY_MOOS
-  //for BHV_Input
-  //qbridge  = TAGGED_VEHICLES, RED_FLAG_GRABBED, BLUE_FLAG_GRABBED
+  qbridge  = USM_RESET
 
   bridge   = src=IN_OWN_TERRITORY
   bridge   = src=IN_ENEMY_TERRITORY
@@ -247,6 +246,7 @@ ProcessConfig = pMarineViewer
   appcast_color_scheme = indigo
 
   scope = FLAG_GRAB_REPORT
+  scope = FLAG_GRAB_REQUEST
   scope = NODE_BROKER_PING
   scope = DEPLOY_ALL
 
@@ -268,6 +268,8 @@ ProcessConfig = pMarineViewer
   button_three = UNTAG_REQUEST=vname=gus
   button_three = FLAG_RESET=all
   button_three = RETURN_ALL=true
+
+  button_four = RESET_FELIX # USM_RESET_FELIX=x=50,y=-24,speed=0,heading=240,depth=0
 
   op_vertex = x=56,   y=16,  lwidth=1,lcolor=yellow,looped=true,group=moa
   op_vertex = x=-83, y=-49,  lwidth=1,lcolor=yellow,looped=true,group=moa

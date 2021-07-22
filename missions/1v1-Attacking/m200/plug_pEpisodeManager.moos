@@ -1,0 +1,11 @@
+//------------------------------------------------
+// pEpisodeManager config block
+
+ProcessConfig = pEpisodeManager
+{
+  AppTick   = 4
+  CommsTick = 4
+
+  RESET_POS = $(START_POS)
+  VNAME     = $(VNAME)
+}
