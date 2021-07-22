@@ -140,8 +140,44 @@ bool EpisodeManager::OnStartUp()
       if(ok)
         m_end_conditions.push_back(new_condition);
       else
-        reportConfigWarning("Invalid logic condition:" + value);
+        reportConfigWarning("Invalid logic condition: " + value);
       
+      handled = true;
+    }else if(param == "end_post"){
+      // Add a new end post
+      string new_var;
+      string new_val;
+
+      // Loop through the comma seperated pairs to find the key and value to post
+      vector<string> svector = parseStringQ(value, ',');
+      unsigned int i, vsize = svector.size();
+      if(vsize == 2){
+        for(i=0; i<vsize; i++){
+          string k = tolower(biteStringX(svector[i], '='));
+          string v = svector[i];
+
+          if(k == "var") {
+            new_var = v;
+            if(strContainsWhite(v))
+              reportConfigWarning("End post variable has white-space: " + v);
+          }else if(k == "val") {
+            new_val = v;
+          }else{
+            reportConfigWarning("Invalid end post: "+ value);
+          }
+        }
+      }else{
+        reportConfigWarning("Invalid end post: "+ value);
+      }
+
+      if(new_var != "" && new_val != ""){
+        VarDataPair new_pair(new_var, new_val, "Auto");
+        m_end_posts.push_back(new_pair);
+      }else{
+        // TODO: Will double post with first one of these in some conditions
+        reportConfigWarning("Invalid end post: "+ value);
+      }
+
       handled = true;
     }else if(param == "reset_pos") {
       m_reset_x = biteStringX(value, ',');
@@ -252,7 +288,30 @@ bool EpisodeManager::stopEpisode(){
   }
   
   Notify("USM_RESET", "x="+m_reset_x+",y="+m_reset_y+",speed=0,heading="+m_reset_heading+"depth=0");
-  Notify("TAGGED", false);
+
+  // Notify end posts
+  unsigned int i, vsize = m_end_posts.size();
+  for(i=0; i<vsize; i++){
+    string var = m_end_posts[i].get_var();
+
+    if(!m_end_posts[i].is_string()){
+      double dval = m_end_posts[i].get_ddata();
+      Notify(var, dval);
+      // TODO: Booleans do not get printed nicely here
+      reportEvent("Posted float "+var+"="+doubleToString(dval));
+    }else{
+      string sval = m_end_posts[i].get_sdata();
+
+      if(isNumber(sval) && !m_end_posts[i].is_quoted()){
+        double dval = atof(sval.c_str());
+        Notify(var, dval);
+        reportEvent("Posted \""+sval+"\" as float "+var+"="+doubleToString(dval));
+      }else{
+        Notify(var, sval);
+        reportEvent("Posted string "+var+"="+sval);
+      }
+    }
+  }
 
   // Report app casting event
   if(!m_continuous){

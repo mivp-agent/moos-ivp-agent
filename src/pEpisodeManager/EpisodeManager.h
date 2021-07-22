@@ -11,6 +11,7 @@
 #include "MOOS/libMOOS/Thirdparty/AppCasting/AppCastingMOOSApp.h"
 #include "LogicCondition.h"
 #include "InfoBuffer.h"
+#include "VarDataPair.h"
 
 class EpisodeManager : public AppCastingMOOSApp
 {
@@ -46,7 +47,11 @@ class EpisodeManager : public AppCastingMOOSApp
    bool m_episode_running;
    bool m_continuous;
 
+  // TODO: m_unpause_conditions, m_unpause_posts, m_continous -> m_paused
+  // m_paused set by m_end_posts?? (prob not delay to get new mail?)
+
    std::vector<LogicCondition> m_end_conditions;
+   std::vector<VarDataPair> m_end_posts;
 
  private: // State variables
    InfoBuffer *m_info_buffer;

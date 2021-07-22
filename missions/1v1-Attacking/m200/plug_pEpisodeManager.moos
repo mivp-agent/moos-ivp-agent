@@ -8,6 +8,8 @@ ProcessConfig = pEpisodeManager
 
   end_condition = (TAGGED = true) or (HAS_FLAG = true)
 
+  end_post = var=TAGGED,val=false
+
   RESET_POS = $(START_POS)
   VNAME     = $(VNAME)
 }
