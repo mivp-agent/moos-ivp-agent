@@ -9,6 +9,8 @@
 #define EpisodeManager_HEADER
 
 #include "MOOS/libMOOS/Thirdparty/AppCasting/AppCastingMOOSApp.h"
+#include "LogicCondition.h"
+#include "InfoBuffer.h"
 
 class EpisodeManager : public AppCastingMOOSApp
 {
@@ -30,21 +32,25 @@ class EpisodeManager : public AppCastingMOOSApp
    bool stopEpisode();
 
    bool resetVarsValid();
+   bool updateInfoBuffer(CMOOSMsg&);
+   bool checkConditions();
 
  private: // Configuration variables
+   //TODO: Move initalization to the constructor
    std::string m_vname = "";
 
    std::string m_reset_x = "";
    std::string m_reset_y = "";
    std::string m_reset_heading = "";
 
+   bool m_episode_running;
+   bool m_continuous;
+
+   std::vector<LogicCondition> m_end_conditions;
 
  private: // State variables
-   bool m_tagged;
-
-   int m_episode_cnt = 0;
-   int m_tagged_cnt = 0;
-   int m_capture_cnt = 0;
+   InfoBuffer *m_info_buffer;
+   int m_episode_cnt;
 };
 
 #endif 

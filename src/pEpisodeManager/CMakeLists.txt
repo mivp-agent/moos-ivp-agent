@@ -16,5 +16,6 @@ TARGET_LINK_LIBRARIES(pEpisodeManager
    apputil
    mbutil
    m
-   pthread)
+   pthread
+   logic)
 

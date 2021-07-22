@@ -17,6 +17,11 @@ using namespace std;
 
 EpisodeManager::EpisodeManager()
 {
+  m_info_buffer = new InfoBuffer;
+
+  m_episode_cnt = 0;
+  m_episode_running = true;
+  m_continuous = true;
 }
 
 //---------------------------------------------------------
@@ -48,23 +53,34 @@ bool EpisodeManager::OnNewMail(MOOSMSG_LIST &NewMail)
     bool   mstr  = msg.IsString();
 #endif
 
-    if(key == "TAGGED"){
-      string sval = msg.GetString();
-      if(sval == "true"){
-        m_tagged = true;
-        m_tagged_cnt++;
-
-        stopEpisode();
-      }
-      else
-        m_tagged = false;
+    if(key == "SOME_KEY_HERE"){
+      // TODO: Other stuff?
+    }else{
+      updateInfoBuffer(msg);
     }
-    else if(key != "APPCAST_REQ") // handled by AppCastingMOOSApp
-      reportRunWarning("Unhandled Mail: " + key);
-   }
+  }
 	
    return(true);
 }
+
+//------------------------------------------------------------
+// Procedure: updateInfoBuffer()
+
+bool EpisodeManager::updateInfoBuffer(CMOOSMsg &msg)
+{
+  string key = msg.GetKey();
+  string sdata = msg.GetString();
+  double ddata = msg.GetDouble();
+
+  if(msg.IsDouble()) {
+    return(m_info_buffer->setValue(key, ddata));
+  }
+  else if(msg.IsString()) {
+    return(m_info_buffer->setValue(key, sdata));
+  }
+  return(false);
+}
+
 
 //---------------------------------------------------------
 // Procedure: OnConnectToServer
@@ -82,7 +98,16 @@ bool EpisodeManager::OnConnectToServer()
 bool EpisodeManager::Iterate()
 {
   AppCastingMOOSApp::Iterate();
-  // Do your thing here!
+
+  if(m_episode_running){
+    
+    bool end = checkConditions();
+
+    // Handle episode ending 
+    if (end)
+      stopEpisode();
+  }
+
   AppCastingMOOSApp::PostReport();
   return(true);
 }
@@ -108,7 +133,17 @@ bool EpisodeManager::OnStartUp()
     string value = line;
 
     bool handled = false;
-    if(param == "reset_pos") {
+    if(param == "end_condition"){
+      // Following example from TS_MOOSApp
+      LogicCondition new_condition;
+      bool ok = new_condition.setCondition(value);
+      if(ok)
+        m_end_conditions.push_back(new_condition);
+      else
+        reportConfigWarning("Invalid logic condition:" + value);
+      
+      handled = true;
+    }else if(param == "reset_pos") {
       m_reset_x = biteStringX(value, ',');
       m_reset_y = biteStringX(value, ',');
       m_reset_heading = biteStringX(value, ',');
@@ -126,7 +161,6 @@ bool EpisodeManager::OnStartUp()
 
     if(!handled)
       reportUnhandledConfigWarning(orig);
-
   }
   
   registerVariables();	
@@ -139,13 +173,73 @@ bool EpisodeManager::OnStartUp()
 void EpisodeManager::registerVariables()
 {
   AppCastingMOOSApp::RegisterVariables();
-  // Register("FOOBAR", 0);
 
-  Register("TAGGED", 0);
+  // Again following TS_MOOSApp example
+  vector<string> all_vars;
+  unsigned int i, vsize = m_end_conditions.size();
+  for(i=0; i<vsize; i++) {
+    vector<string> svector = m_end_conditions[i].getVarNames();
+    all_vars = mergeVectors(all_vars, svector);
+  }
+  all_vars = removeDuplicates(all_vars);
+
+  // Register for all variables found in all conditions.
+  unsigned int all_size = all_vars.size();
+  for(i=0; i<all_size; i++){
+    Register(all_vars[i], 0);
+    reportEvent("Regested for end condition var: "+all_vars[i]);
+  }
 }
 
 bool EpisodeManager::resetVarsValid(){
   return m_reset_x != "" && m_reset_y != "" && m_reset_heading != "";
+}
+
+//-----------------------------------------------------------
+// Procedure: checkConditions()
+//   Purpose: Determine if all the logic conditions in the vector
+//            of conditions is met, given the snapshot of variable
+//            values in the info_buffer.
+
+bool EpisodeManager::checkConditions()
+{
+  if(!m_info_buffer) 
+    return(false);
+
+  unsigned int i, j, vsize, csize;
+
+  // Phase 1: get all the variable names from all present conditions.
+  vector<string> all_vars;
+  csize = m_end_conditions.size();
+  for(i=0; i<csize; i++) {
+    vector<string> svector = m_end_conditions[i].getVarNames();
+    all_vars = mergeVectors(all_vars, svector);
+  }
+  all_vars = removeDuplicates(all_vars);
+
+  // Phase 2: get values of all variables from the info_buffer and 
+  // propogate these values down to all the logic conditions.
+  vsize = all_vars.size();
+  for(i=0; i<vsize; i++) {
+    string varname = all_vars[i];
+    bool   ok_s, ok_d;
+    string s_result = m_info_buffer->sQuery(varname, ok_s);
+    double d_result = m_info_buffer->dQuery(varname, ok_d);
+
+    for(j=0; (j<csize)&&(ok_s); j++)
+      m_end_conditions[j].setVarVal(varname, s_result);
+    for(j=0; (j<csize)&&(ok_d); j++)
+      m_end_conditions[j].setVarVal(varname, d_result);
+  }
+
+  // Phase 3: evaluate all logic conditions. Return true only if all
+  // conditions evaluate to be true.
+  for(i=0; i<csize; i++) {
+    bool satisfied = m_end_conditions[i].eval();
+    if(!satisfied)
+      return(false);
+  }
+  return(true);
 }
 
 //---------------------------------------------------------
@@ -159,12 +253,14 @@ bool EpisodeManager::stopEpisode(){
   
   Notify("USM_RESET", "x="+m_reset_x+",y="+m_reset_y+",speed=0,heading="+m_reset_heading+"depth=0");
   Notify("TAGGED", false);
-  Notify("UNTAG_REQUEST", "vname="+m_vname);
 
   // Report app casting event
-  std::stringstream report;
-  report << "Episode #" << m_episode_cnt << " has ended.";
-  reportEvent(report.str());
+  if(!m_continuous){
+    m_episode_running = false;
+    reportEvent("Episode #"+ intToString(m_episode_cnt) + " has_ended.");
+  }else{
+    reportEvent("Episode #"+ intToString(m_episode_cnt) + " has_ended. Starting next...");
+  }
 
   // Update state vars
   m_episode_cnt++;
@@ -182,13 +278,12 @@ bool EpisodeManager::buildReport()
   m_msgs << "VNAME: " << m_vname << endl;
   m_msgs << "RESET_X:       " << m_reset_x << endl;
   m_msgs << "RESET_Y:       " << m_reset_y << endl;
-  m_msgs << "RESET_HEADING: " << m_reset_heading << endl << endl;
+  m_msgs << "RESET_HEADING: " << m_reset_heading << endl;
+  m_msgs << "Continous:     " << std::boolalpha << m_continuous << endl << endl;
 
   m_msgs << "State Variables" << endl;
   m_msgs << "----------------------------------" << endl;
-  m_msgs << "tagged: " << std::boolalpha << m_tagged << endl;
   m_msgs << "episode_cnt: " << m_episode_cnt << endl;
-  m_msgs << "tagged_cnt:  " << m_tagged_cnt << endl;
 
   return(true);
 }
