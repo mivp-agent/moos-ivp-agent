@@ -15,5 +15,6 @@ targ_*
 .idea
 CMakeFiles
 
-# 
+# python files
+*.pyc 
 
