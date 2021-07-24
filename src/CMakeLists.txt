@@ -15,6 +15,7 @@ INCLUDE_DIRECTORIES(${LOCAL_LIBRARY_DIRS})
 #============================================================================
 # List the subdirectories to build...
 #============================================================================
+ADD_SUBDIRECTORY(lib_behaviors-RLquaticus)
 ADD_SUBDIRECTORY(pEpisodeManager)
 
 ##############################################################################
