@@ -29,21 +29,29 @@ DUMMY_ACTION_NO_MOOS_VARS = {
   'course': 90
 }
 
+DUMMY_STATE = {
+  'NAV_X': 58.1,
+  'NAV_Y': 76.0
+}
+
 
 
 class TestServer(unittest.TestCase):
 
-
   def test_server_offline_state(self):
     with ModelBridgeServer() as server:
-      self.assertFalse(server.send_action('dummy'))
+      self.assertFalse(server.send_action(DUMMY_ACTION))
+      self.assertFalse(server.listen_state())
+    with ModelBridgeClient() as client:
+      self.assertFalse(client.send_state(DUMMY_STATE))
+      self.assertFalse(client.listen_action())
   
   def test_socket_send_action(self):
     with ModelBridgeServer() as server:
       with ModelBridgeClient() as client:
         def dummy_connect_client(client):
           client.connect()
-          action = client.get_action()
+          action = client.listen_action()
 
           self.assertEqual(action, DUMMY_ACTION)
 
@@ -62,6 +70,28 @@ class TestServer(unittest.TestCase):
         self.assertTrue(server.send_action(DUMMY_ACTION))
 
         t.join()
+  
+  def test_socket_send_action(self):
+    with ModelBridgeServer() as server:
+      with ModelBridgeClient() as client:
+        def dummy_connect_server(server):
+          server.start()
+          state = server.listen_state()
+
+          self.assertEqual(state, DUMMY_STATE)
+
+        # Use another thread to connect client
+        t =  Thread(target=dummy_connect_server, args=(server,))
+        t.start()
+
+        # Start server
+        client.connect()
+
+        self.assertRaises(AssertionError, client.send_state, "Wrong Type")
+        self.assertTrue(client.send_state(DUMMY_STATE))
+
+        t.join()
+  
   
 
 if __name__ == '__main__':

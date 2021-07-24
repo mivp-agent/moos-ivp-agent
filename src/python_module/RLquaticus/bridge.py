@@ -71,6 +71,9 @@ def checkAction(action):
   assert "course" in action, "Action must have key 'course'"
   assert "MOOS_VARS" in action, "Action must have key 'MOOS_VARS'"
 
+def checkState(state):
+  assert isinstance(state, dict), "State must be dict"
+
 class ModelBridgeServer:
   def __init__(self, hostname="localhost", port=57722):
     self.host = hostname
@@ -103,6 +106,16 @@ class ModelBridgeServer:
     send_full(self._client, pickle.dumps(action))
 
     return True
+  
+  def listen_state(self):
+    if self._client is None:
+      return False
+
+    state = pickle.loads(recv_full(self._client))
+
+    checkState(state)
+
+    return state
 
   def close(self):
     if self._socket is not None:
@@ -125,7 +138,20 @@ class ModelBridgeClient:
     self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     self._socket.connect((self.host, self.port))
   
-  def get_action(self):
+  def send_state(self, state):
+    if self._socket is None:
+      return False
+
+    # Test submitted action
+    checkState(state)
+
+    send_full(self._socket, pickle.dumps(state))
+
+    return True
+
+  def listen_action(self):
+    if self._socket is None:
+      return False
     action = pickle.loads(recv_full(self._socket))
 
     checkAction(action)
