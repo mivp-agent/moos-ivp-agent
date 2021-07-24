@@ -1,0 +1,6 @@
+**/*.LastOpenedMOOSLogDirectory
+
+**/*.alog
+**/*.blog
+**/*.slog
+**/*.ylog
