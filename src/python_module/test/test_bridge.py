@@ -1,5 +1,6 @@
 import unittest
 from threading import Thread
+import socket
 
 import os, sys
 currentdir = os.path.dirname(os.path.realpath(__file__))
@@ -92,6 +93,28 @@ class TestServer(unittest.TestCase):
 
         t.join()
   
+  def test_socket_timeout(self):
+
+
+    with ModelBridgeServer() as server:
+      with ModelBridgeClient() as client:
+
+        # Assert that the client will timeout 
+        self.assertFalse(client.connect())
+        # TODO: Time it
+
+        # Start the server
+        def dummy_connect_server(server):
+            server.start()
+        t = Thread(target=dummy_connect_server, args=(server,))
+        t.start()
+
+        client.connect()
+
+        t.join() # Don't need the server for the rest of the tests
+
+        
+        self.assertRaises(socket.timeout, client.listen_action)
   
 
 if __name__ == '__main__':

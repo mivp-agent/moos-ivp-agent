@@ -26,22 +26,30 @@ ModelBridgeClient (MOOSDB SIDE):
 HEADER_SIZE=4
 MAX_BUFFER_SIZE=8192
 
-def recv_full(socket):
+def recv_full(socket, timeout=None):
   total_data=[] # To keep track of each payload segment
   total_len=0 # Current len of payload
   size=sys.maxsize # Size of message assumed to be large for the loop to work
   size_data = sock_data = b'' # Empty byte string
   recv_size=MAX_BUFFER_SIZE
 
-  while total_len < size:
+  # Preform an inital recv with a timeout and then disable the timeout
+  try:
+    socket.settimeout(timeout)
     sock_data = socket.recv(recv_size)
-    
+  finally:
+    # Reset timeout regardless 
+    socket.settimeout(None)
+  
+  while total_len < size:
     if not total_data:
       # If first message decode the header
       if len(sock_data)>HEADER_SIZE:
         size_data += sock_data
         # Unpack big-endian encoded size integer
         size = struct.unpack('>i', size_data[:HEADER_SIZE])[0]
+        print(f'Got packet of size: {size}')
+
         # Update buffer size to be max the size of the message (with max of 81)
         recv_size = min(size, MAX_BUFFER_SIZE)
 
@@ -53,7 +61,12 @@ def recv_full(socket):
       # If header has been read already
       total_data.append(sock_data)
     total_len=sum([len(i) for i in total_data])
-  
+
+    # TODO: Slopy code below (changed b/c timeout edit)
+    if total_len < size: 
+      # Pull more data
+      sock_data = socket.recv(recv_size)
+
   return b"".join(total_data)
 
 def send_full(socket, data):
@@ -134,9 +147,23 @@ class ModelBridgeClient:
   def __enter__(self):
     return self
 
-  def connect(self):
+  def connect(self, timeout=1):
+    success = True
     self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self._socket.connect((self.host, self.port))
+
+    # Attempt connection with timeout
+    try:
+      self._socket.settimeout(timeout)
+      self._socket.connect((self.host, self.port))
+    except (socket.timeout, ConnectionRefusedError) as e:
+      # Signal failure in event of timeout
+      success = False
+    finally:
+      # Reset timeout regardless
+      self._socket.settimeout(None)
+    
+    # Return status
+    return success
   
   def send_state(self, state):
     if self._socket is None:
@@ -149,10 +176,10 @@ class ModelBridgeClient:
 
     return True
 
-  def listen_action(self):
+  def listen_action(self, timeout=1):
     if self._socket is None:
       return False
-    action = pickle.loads(recv_full(self._socket))
+    action = pickle.loads(recv_full(self._socket, timeout=timeout))
 
     checkAction(action)
 
