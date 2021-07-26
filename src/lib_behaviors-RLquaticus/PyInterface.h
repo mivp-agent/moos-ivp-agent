@@ -18,12 +18,17 @@ class PyInterface
   ~PyInterface();
 
  public: // Overloaded virtual functions
-  bool loadModule(std::string path);
+  bool failureState();
 
  private:
+  bool loadModule();
   bool unloadModule();
 
-  PyObject *m_module;
+  void printPythonError();
+
+  PyObject* m_bridge_module;
+  PyObject* m_bridge_client_attribute;
+  PyObject* m_bridge_client;
 };
 
 #endif 

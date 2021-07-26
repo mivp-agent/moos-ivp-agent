@@ -17,26 +17,58 @@ using namespace std;
 PyInterface::PyInterface()
 {
   Py_Initialize();
+
+  loadModule();
+
+  m_bridge_module = NULL;
+  m_bridge_client_attribute;
+  m_bridge_client = NULL;
+}
+
+bool PyInterface::failureState(){
+  return m_bridge_module == NULL;
+}
+
+void PyInterface::printPythonError(){
+  // Print error to console
+  PyObject *ptype, *pvalue, *ptraceback;
+  PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+  printf("ERROR: PyInterface.cpp failed to load module in specified path\n");
+  PyErr_Print();
 }
 
 //---------------------------------------------------------
 // Procedure: loadModule
 
-bool PyInterface::loadModule(string path)
+bool PyInterface::loadModule()
 {
-  if(m_module){
+  // Check if module has been loaded
+  if(m_bridge_module){
     if(!unloadModule())
       return false;
   }
-  m_module = PyImport_ImportModule("RLAgent_interface");
+  
+  // Load module
+  m_bridge_module = PyImport_ImportModule("RLAgent_interface");
 
-  if(!m_module){
-    // Print error to console
-    PyObject *ptype, *pvalue, *ptraceback;
-    PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-    printf("ERROR: PyInterface.cpp failed to load module in specified path\n");
-    PyErr_Print();
+  if(!m_bridge_module){
+    printPythonError();
+    return false;
   }
+
+  // Get the reference to the ModelBridgeClient object
+  m_bridge_client_attribute = PyObject_GetAttrString(m_bridge_module, "ModelBridgeClient");
+
+  if(!m_bridge_client_attribute){
+    printPythonError();
+    return false;
+  }
+
+  // Instantiate the object
+  PyObject* args = PyTuple_New(0);
+  m_bridge_client = PyObject_CallObject(m_bridge_client_attribute, args);
+
+  return true;
 }
 
 //---------------------------------------------------------
@@ -44,7 +76,10 @@ bool PyInterface::loadModule(string path)
 
 bool PyInterface::unloadModule()
 {
+  if (m_bridge_module)
+    Py_DECREF(m_bridge_module);
   
+  Py_Finalize();
 }
 
 
