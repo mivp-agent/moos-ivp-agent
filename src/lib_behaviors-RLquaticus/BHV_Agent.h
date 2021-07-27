@@ -28,10 +28,13 @@ public:
   IvPFunction* onRunState();
 
 protected: // Local Utility functions
+  void         postBridgeState(std::string state);
+  void         tickBridge();
 
 protected: // Configuration parameters
 
 protected: // State variables
+  PyInterface bridge;
 };
 
 #define IVP_EXPORT_FUNCTION

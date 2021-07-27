@@ -27,6 +27,9 @@ BHV_Agent::BHV_Agent(IvPDomain domain) :
 
   // Add any variables this behavior needs to subscribe for
   addInfoVars("NAV_X, NAV_Y");
+
+  if(true)
+    setbuf(stdout, NULL);
 }
 
 //---------------------------------------------------------------
@@ -77,6 +80,7 @@ void BHV_Agent::onHelmStart()
 
 void BHV_Agent::onIdleState()
 {
+  tickBridge();
 }
 
 //---------------------------------------------------------------
@@ -84,6 +88,7 @@ void BHV_Agent::onIdleState()
 
 void BHV_Agent::onCompleteState()
 {
+  tickBridge();
 }
 
 //---------------------------------------------------------------
@@ -116,6 +121,8 @@ void BHV_Agent::onRunToIdleState()
 
 IvPFunction* BHV_Agent::onRunState()
 {
+  tickBridge();
+
   // Part 1: Build the IvP function
   IvPFunction *ipf = 0;
 
@@ -130,3 +137,24 @@ IvPFunction* BHV_Agent::onRunState()
   return(ipf);
 }
 
+void BHV_Agent::postBridgeState(std::string state){
+  postRepeatableMessage("AGENT_BRIDGE_STATE", state);
+}
+
+//---------------------------------------------------------------
+// Procedure: tickBridge()
+//   Purpose: Used to tick the bridge
+void BHV_Agent::tickBridge(){
+  
+  if(bridge.failureState()){
+    postBridgeState("Failed");
+    return;
+  }
+
+  if(!bridge.isConnected()){
+    bridge.connect();
+    postBridgeState("Not Connected");
+  } else {
+    postBridgeState("Connected");
+  }
+}

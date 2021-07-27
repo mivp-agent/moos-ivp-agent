@@ -31,6 +31,18 @@ set MODE     = STATIONNING {
   ACTION     = STATION
 }
 
+#ifdef BEH ATTACK
+  //#############################################################################
+  Behavior = BHV_Agent
+  {
+    name = agent
+    pwt  = 100
+    perpetual = true
+
+    condition = MODE == ACTIVE
+  }
+#endif
+
 //#############################################################################
 Behavior = BHV_Waypoint
 {

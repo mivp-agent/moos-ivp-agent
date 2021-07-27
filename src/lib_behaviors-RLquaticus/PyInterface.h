@@ -17,18 +17,25 @@ class PyInterface
   PyInterface();
   ~PyInterface();
 
- public: // Overloaded virtual functions
+ public: 
+  // Do things functions TODO: name?
+  bool connect();
+
+  // State exposure
   bool failureState();
+  bool isConnected(); 
 
  private:
+  // Python functions
   bool loadModule();
   bool unloadModule();
+  
+  // Helper functions
 
-  void printPythonError();
-
-  PyObject* m_bridge_module;
-  PyObject* m_bridge_client_attribute;
+  // Objects
   PyObject* m_bridge_client;
+
+  bool m_is_connected;
 };
 
 #endif 

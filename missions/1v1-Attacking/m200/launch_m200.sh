@@ -172,6 +172,7 @@ nsplug meta_m200.moos targ_${VNAME}.moos -f \
     VTYPE="kayak"                \
     VTEAM=$VTEAM                 \
     START_POS=$START_POS         \
+    BEH=$BEH                     \
     $SIM
 
 echo "Assembling BHV file targ_${VNAME}.bhv"

@@ -24,6 +24,9 @@ ProcessConfig = ANTLER
   Run = pRangeEvent        @ NewConsole = false
   Run = pNodeReportParse   @ NewConsole = false
   Run = pEpisodeManager    @ NewConsole = false
+#ifdef BEH ATTACK
+  Run = uXMS               @ NewConsole = false
+#endif
 }
 
 #include ../plug_pShare.moos
@@ -57,3 +60,5 @@ ProcessConfig = pNodeReportParse
 }
 
 #include plug_pEpisodeManager.moos
+
+#include plug_uXMS.moos
