@@ -2,6 +2,7 @@ import socket
 import pickle
 import struct
 import sys
+from typing import Iterable
 
 '''
 ModelBridgeServer (MODEL SIDE):
@@ -83,9 +84,13 @@ def checkAction(action):
   assert "speed" in action, "Action must have key 'speed'"
   assert "course" in action, "Action must have key 'course'"
   assert "MOOS_VARS" in action, "Action must have key 'MOOS_VARS'"
+  assert isinstance(action["MOOS_VARS"], tuple), "MOOS_VARS must be a tuple"
 
 def checkState(state):
   assert isinstance(state, dict), "State must be dict"
+  assert "NAV_X" in state, "State must have 'NAV_X' key"
+  assert "NAV_Y" in state, "State must have 'NAV_Y' key"
+  assert "MOOS_VARS" in state, "State must have 'MOOS_VARS' key" 
 
 class ModelBridgeServer:
   def __init__(self, hostname="localhost", port=57722):

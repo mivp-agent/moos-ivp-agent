@@ -29,9 +29,10 @@ public:
 
 protected: // Local Utility functions
   void         postBridgeState(std::string state);
-  void         tickBridge();
+  void         tickBridge(bool running);
 
 protected: // Configuration parameters
+  std::vector<std::string> m_state_vars;
 
 protected: // State variables
   PyInterface bridge;

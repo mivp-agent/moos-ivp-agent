@@ -10,6 +10,7 @@
 
 #include <string>
 #include <Python.h>
+#include "VarDataPair.h"
 
 class PyInterface
 {
@@ -20,10 +21,12 @@ class PyInterface
  public: 
   // Do things functions TODO: name?
   bool connect();
+  bool sendState(double NAV_X, double NAV_Y, std::vector<VarDataPair> vd_pairs);
 
   // State exposure
   bool failureState();
-  bool isConnected(); 
+  bool isConnected();
+
 
  private:
   // Python functions
@@ -31,6 +34,8 @@ class PyInterface
   bool unloadModule();
   
   // Helper functions
+  PyObject* constructState(double NAV_X, double NAV_Y, std::vector<VarDataPair> vd_pairs);
+
 
   // Objects
   PyObject* m_bridge_client;

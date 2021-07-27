@@ -28,11 +28,6 @@ PyInterface::PyInterface()
   setvbuf(stdout, NULL, _IOLBF, 0);
 }
 
-bool PyInterface::failureState(){
-  return m_bridge_client == NULL;
-}
-
-
 //---------------------------------------------------------
 // Procedure: loadModule
 
@@ -137,8 +132,82 @@ bool PyInterface::connect(){
   return m_is_connected;
 }
 
+bool PyInterface::sendState(double NAV_X, double NAV_Y, std::vector<VarDataPair> vd_pairs){
+  if(!isConnected())
+    return false;
+
+  // Create the state object
+  PyObject* state_dict = constructState(NAV_X, NAV_Y, vd_pairs);
+
+  if(!state_dict)
+    return false; // Error will have been handled by constructState
+  
+  // Call bridge's send state method
+  PyObject* method_name = Py_BuildValue("s", "send_state");
+  PyObject* result = PyObject_CallMethodObjArgs(m_bridge_client, method_name, state_dict, NULL);
+
+  // Release our references we just used
+  Py_DECREF(method_name);
+  Py_DECREF(state_dict);
+
+  // Check if we got an error
+  if(result == NULL){
+    fprintf(stderr, "ERROR: Failed to call send_state function from client object\n\n");
+    PyErr_Print();
+
+    return false;
+  }
+
+  if(!PyBool_Check(result)){
+    //Clean up
+    Py_DECREF(result);
+
+    // Not what we are expecting so raise our own error
+    throw runtime_error("ModelBridgeClient's send_state function did not return a boolean");
+  }
+
+  // Clean up and return
+  bool success = PyObject_IsTrue(result);
+  Py_DECREF(result);
+  return result;
+}
+
+bool PyInterface::failureState(){
+  return m_bridge_client == NULL;
+}
+
+
 bool PyInterface::isConnected(){
   return m_is_connected;
+}
+
+PyObject* PyInterface::constructState(double NAV_X, double NAV_Y, std::vector<VarDataPair> vd_pairs){
+  // Unpack vd_pairs and translate into python types
+  int vsize = vd_pairs.size();
+  for(int i=0; i<vsize; i++){
+    string var = vd_pairs[i].get_var();
+    if(vd_pairs[i].is_string()){
+      string sdata = vd_pairs[i].get_sdata();
+      //TODO: Handle vd string data
+    }else{
+      double ddata = vd_pairs[i].get_ddata();
+      //TODO: Handle vd double data
+    }
+  }
+
+  PyObject* MOOS_VARS_TMP = PyTuple_New(0); // TODO: Use code above to populate stuff
+  PyObject *state_dict = Py_BuildValue("{s:d,s:d,s:()}", // This constructs a python dict
+    "NAV_X", NAV_X,
+    "NAV_Y", NAV_Y,
+    "MOOS_VARS", MOOS_VARS_TMP);
+
+  if (!state_dict){
+    PyErr_Print();
+    Py_DECREF(MOOS_VARS_TMP);
+    return NULL;
+  }
+
+  return state_dict;
 }
 
 PyInterface::~PyInterface(){

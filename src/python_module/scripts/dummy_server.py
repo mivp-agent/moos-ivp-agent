@@ -1,3 +1,4 @@
+import time
 import os, sys
 currentdir = os.path.dirname(os.path.realpath(__file__))
 bridgedir = os.path.join(os.path.dirname(currentdir), 'RLquaticus')
@@ -7,5 +8,14 @@ from bridge import ModelBridgeServer
 
 if __name__ == '__main__':
   with ModelBridgeServer() as server:
+    print('Starting server...')
     server.start()
-    input("Press any key to continue...")
+
+    print('Listing for state...')
+    state = None
+    while True:
+      state = server.listen_state()
+      print('Got state dict: ')
+      print(state)
+
+      time.sleep(0.25)

@@ -10,6 +10,7 @@
 #include "MBUtils.h"
 #include "BuildUtils.h"
 #include "BHV_Agent.h"
+#include "VarDataPair.h"
 
 using namespace std;
 
@@ -80,7 +81,7 @@ void BHV_Agent::onHelmStart()
 
 void BHV_Agent::onIdleState()
 {
-  tickBridge();
+  tickBridge(false);
 }
 
 //---------------------------------------------------------------
@@ -88,7 +89,7 @@ void BHV_Agent::onIdleState()
 
 void BHV_Agent::onCompleteState()
 {
-  tickBridge();
+  tickBridge(false);
 }
 
 //---------------------------------------------------------------
@@ -121,7 +122,7 @@ void BHV_Agent::onRunToIdleState()
 
 IvPFunction* BHV_Agent::onRunState()
 {
-  tickBridge();
+  tickBridge(true);
 
   // Part 1: Build the IvP function
   IvPFunction *ipf = 0;
@@ -144,17 +145,40 @@ void BHV_Agent::postBridgeState(std::string state){
 //---------------------------------------------------------------
 // Procedure: tickBridge()
 //   Purpose: Used to tick the bridge
-void BHV_Agent::tickBridge(){
-  
+void BHV_Agent::tickBridge(bool running){
+  // Post status if failed
   if(bridge.failureState()){
     postBridgeState("Failed");
     return;
   }
 
+  // Post status if connected
   if(!bridge.isConnected()){
     bridge.connect();
     postBridgeState("Not Connected");
-  } else {
-    postBridgeState("Connected");
+    return; // Nothing else to do
+  }
+  
+  postBridgeState("Connected");
+  // Send the current state
+  if(running){
+    // Pull NAV_X and NAV_Y from the Helm info buffer
+    bool x_ok, y_ok;
+    double NAV_X = getBufferDoubleVal("NAV_X", x_ok);
+    if(!x_ok){
+      postWMessage("NAV_X not found in info buffer. Can't send state update.");
+      return;
+    }
+    double NAV_Y = getBufferDoubleVal("NAV_Y", y_ok);
+    if(!y_ok){
+      postWMessage("NAV_Y not found in info buffer. Can't send state update.");
+      return;
+    }
+
+    //TODO: Construct actuall VarDataPair vector
+    std::vector<VarDataPair> vd_pairs;
+
+    // Send update through bridge
+    bridge.sendState(NAV_X, NAV_Y, vd_pairs);
   }
 }
