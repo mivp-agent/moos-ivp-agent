@@ -28,61 +28,74 @@ HEADER_SIZE=4
 MAX_BUFFER_SIZE=8192
 
 def recv_full(socket, timeout=None):
-  total_data=[] # To keep track of each payload segment
-  total_len=0 # Current len of payload
-  size=sys.maxsize # Size of message assumed to be large for the loop to work
-  size_data = sock_data = b'' # Empty byte string
-  recv_size=MAX_BUFFER_SIZE
+  messages = []
+  current_len = None
+  # Create byte string for storing the header in
+  tmp_data = b''
 
-  # Preform an inital recv with a timeout and then disable the timeout
+  # Attempt first receive with timeout
   try:
     socket.settimeout(timeout)
-    sock_data = socket.recv(recv_size)
+    tmp_data = socket.recv(MAX_BUFFER_SIZE)
   finally:
-    # Reset timeout regardless 
+    # Cleanup regardless
     socket.settimeout(None)
-  
-  while total_len < size:
-    if not total_data:
-      # If first message decode the header
-      if len(sock_data)>HEADER_SIZE:
-        size_data += sock_data
-        # Unpack big-endian encoded size integer
-        size = struct.unpack('>i', size_data[:HEADER_SIZE])[0]
-        print(f'Got packet of size: {size}')
 
-        # Update buffer size to be max the size of the message (with max of 81)
-        recv_size = min(size, MAX_BUFFER_SIZE)
+  # While we have data to process into messages
+  while len(tmp_data) != 0:
+    # Get more data if needed
+    if (current_len is None and len(tmp_data) < HEADER_SIZE) or (current_len is not None and len(tmp_data) < current_len): 
+      tmp_data += socket.recv(MAX_BUFFER_SIZE)
 
-        # Add any data stored that was not used in header to our output list
-        total_data.append(size_data[HEADER_SIZE:])
-      else:
-        size_data += sock_data
-    else:
-      # If header has been read already
-      total_data.append(sock_data)
-    total_len=sum([len(i) for i in total_data])
+    if current_len is None:
+      # We should be looking for a header
 
-    # TODO: Slopy code below (changed b/c timeout edit)
-    if total_len < size: 
-      # Pull more data
-      sock_data = socket.recv(recv_size)
+      if len(tmp_data) >= HEADER_SIZE:
+        # We can construct a header (current_len)
+        current_len = struct.unpack('>i', tmp_data[:HEADER_SIZE])[0]
+        
+        # Remove header data from our data store
+        tmp_data = tmp_data[HEADER_SIZE:]
+    
+    # Not else b/c previous clause might have constructed it
+    if current_len is not None:
+      # We should be looking for a message
+      if len(tmp_data) >= current_len:
+        # We can construct a packed
+        messages.append(tmp_data[:current_len])
 
-  return b"".join(total_data)
+        # Remove the packet just constructed from out data store
+        tmp_data = tmp_data[current_len:]
+        current_len = None # Signal we are looking for another header
+
+  return messages
+
 
 def send_full(socket, data):
   # Create C struct (in python bytes)
   # '>i' specifies a big-endian encoded integer (a standard size of 4 bytes)
   packed_size = struct.pack('>i', len(data))
   # Concat the size (our 4 bytes header) and data then send
-  socket.sendall(packed_size+data)
+  result = socket.sendall(packed_size+data)
+  assert result is None
 
 # Assertion Helpers ===========================
 
+def checkFloat(var, error_string):
+  try:
+    return float(var)
+  except ValueError:
+    raise ValueError(error_string)
+
 def checkAction(action):
   assert isinstance(action, dict), "Action must be a dict"
+
   assert "speed" in action, "Action must have key 'speed'"
+  action['speed'] = checkFloat(action['speed'], "action['speed'] must be a float")
+  
   assert "course" in action, "Action must have key 'course'"
+  action['course'] = checkFloat(action['course'], "action['course'] must be a float")
+
   assert "MOOS_VARS" in action, "Action must have key 'MOOS_VARS'"
   assert isinstance(action["MOOS_VARS"], tuple), "MOOS_VARS must be a tuple"
 
@@ -98,44 +111,57 @@ class ModelBridgeServer:
     self.port = port
 
     self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # Line below reuses the socket address if previous socket closed but improperly
+    self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    self._socket.bind((self.host, self.port))
 
     self._client = None
     self._address = None
-  
+
   def __enter__(self):
     return self
 
-  def start(self):
-    self._socket.bind((self.host, self.port))
-    self._socket.listen(0) # Only accept one connection
+  def accept(self):
+    # Close current connection if we have one
+    if self._client is not None:
+      self._client.close()
+      self._client = None
 
+
+    self._socket.listen(0) # Only accept one connection
     # Wait for client
     self._client, self._address = self._socket.accept()
     print(f"Client connected from {self._address}.")
   
   def send_action(self, action):
+    # Test submitted action
+    checkAction(action)
+
     # Fail if no client connected
     if self._client is None:
       return False
 
-    # Test submitted action
-    checkAction(action)
-
     send_full(self._client, pickle.dumps(action))
 
     return True
-  
+
   def listen_state(self):
     if self._client is None:
       return False
 
-    state = pickle.loads(recv_full(self._client))
+    try:
+      msgs = recv_full(self._client)
+    except socket.timeout:
+      return False
 
+    state = pickle.loads(msgs[len(msgs)-1]) # Only use most recent state
     checkState(state)
 
     return state
 
   def close(self):
+    if self._client is not None:
+      self._client.close()
     if self._socket is not None:
       self._socket.close()
   
@@ -153,22 +179,26 @@ class ModelBridgeClient:
     return self
 
   def connect(self, timeout=1):
-    success = True
+    if self._socket is not None:
+      raise RuntimeError("Clients should not be connect more than once")
+
     self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     # Attempt connection with timeout
     try:
       self._socket.settimeout(timeout)
       self._socket.connect((self.host, self.port))
-    except (socket.timeout, ConnectionRefusedError) as e:
-      # Signal failure in event of timeout
-      success = False
-    finally:
-      # Reset timeout regardless
+      # Dont hold onto the timeout if we succeed
       self._socket.settimeout(None)
+    except (socket.timeout, ConnectionRefusedError) as e:
+      # Clean up socket
+      self._socket.close()
+      self._socket = None
+      # Signal failure in event of timeout
+      return False
     
     # Return status
-    return success
+    return True
   
   def send_state(self, state):
     if self._socket is None:
@@ -184,7 +214,12 @@ class ModelBridgeClient:
   def listen_action(self, timeout=1):
     if self._socket is None:
       return False
-    action = pickle.loads(recv_full(self._socket, timeout=timeout))
+
+    try:
+      msgs = recv_full(self._socket, timeout=timeout)
+    except socket.timeout:
+      return False
+    action = pickle.loads(msgs[len(msgs)-1])
 
     checkAction(action)
 
