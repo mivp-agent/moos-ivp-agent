@@ -1,0 +1,102 @@
+initialize DELPOY     = false
+initialize ACTION     = $(BEH)
+initialize TAGGED     = false
+
+set MODE     = ACTIVE {
+  DEPLOY     = true
+} INACTIVE
+
+set MODE     = RETURN_BASE {
+  MODE       = ACTIVE
+  (HAS_FLAG = true) or (TAGGED = true)
+} PLAY
+
+set MODE     = ATTACKING {
+  MODE       = ACTIVE:PLAY
+  (ACTION = ATTACK) and (TAGGED = false)
+}
+
+set MODE     = ATTACKING {
+  MODE       = ACTIVE:PLAY
+  (ACTION = ATTACK) and (TAGGED = false)
+}
+
+set MODE     = DEFENDING {
+  MODE       = ACTIVE:PLAY
+  (ACTION = DEFEND) and (TAGGED = false)
+}
+
+set MODE     = STATIONNING {
+  MODE       = ACTIVE:PLAY
+  ACTION     = STATION
+}
+
+#ifdef BEH ATTACK
+  //#############################################################################
+  Behavior = BHV_Agent
+  {
+    name = agent
+    pwt  = 100
+    perpetual = true
+
+    condition = MODE == ACTIVE
+  }
+#endif
+
+//#############################################################################
+Behavior = BHV_Waypoint
+{
+  name                    = waypt_base
+  pwt                     = 50
+  perpetual               = true
+
+  condition               = MODE == RETURN_BASE
+  runflag                 = BOT_DIALOG_STATUS=Returning to home flag
+  endflag                 = TAGGED=false
+
+  speed                   = 5 // meters per second
+  capture_line            = false
+  capture_radius          = 5.0
+  slip_radius             = 5.0
+
+  points                  = $(UNTAG_POS)
+}
+
+//#############################################################################
+Behavior = BHV_Loiter
+{
+  name                    = loiter_passive
+  pwt                     = 100
+  condition               = MODE == DEFENDING
+  runflag                 = BOT_DIALOG_STATUS=Defending
+  updates                 = LOITER_UPDATES
+
+  speed                   = 5
+
+  polygon                 = radial:: x=0,y=0,radius=10,pts=8 // example
+  center_assign           = $(UNTAG_POS)
+}
+
+//#############################################################################
+Behavior = BHV_StationKeep
+{
+  name                    = station_keep
+  pwt                     = 100
+  condition               = MODE == STATIONNING
+  runflag                 = BOT_DIALOG_STATUS=Stationing
+
+  center_activate         = true
+  hibernation_radius      = 5
+  inner_radius            = 4
+  outer_radius            = 15
+  outer_speed             = 5
+  transit_speed           = 5
+  swing_time              = 3
+
+  visual_hints            = vertex_size = 1 // default
+  visual_hints            = edge_color = light_blue // default
+  visual_hints            = edge_size = 1 // default
+  visual_hints            = label_color = white // default
+  visual_hints            = vertex_color = red // default
+}
+

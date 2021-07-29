@@ -1,0 +1,15 @@
+//------------------------------------------------
+// pEpisodeManager config block
+
+ProcessConfig = pEpisodeManager
+{
+  AppTick   = 4
+  CommsTick = 4
+
+  end_condition = (TAGGED = true) or (HAS_FLAG = true)
+
+  end_post = var=TAGGED,val=false
+
+  RESET_POS = $(START_POS)
+  VNAME     = $(VNAME)
+}
