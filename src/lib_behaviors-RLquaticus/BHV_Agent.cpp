@@ -11,6 +11,8 @@
 #include "BuildUtils.h"
 #include "BHV_Agent.h"
 #include "VarDataPair.h"
+#include "ZAIC_PEAK.h"
+#include "OF_Coupler.h"
 
 using namespace std;
 
@@ -122,12 +124,46 @@ void BHV_Agent::onRunToIdleState()
 
 IvPFunction* BHV_Agent::onRunState()
 {
+  IvPFunction *ipf = 0;
   tickBridge(true);
 
-  // Part 1: Build the IvP function
-  IvPFunction *ipf = 0;
+  // Listen for action from bridge
+  std::vector<VarDataPair> action = bridge.listenAction();
+  
+  int vsize = action.size();
+  if(vsize > 0){
+    // We got an action
+    for(int i=0; i<vsize; i++){
+      string var = action[i].get_var();
 
+      if (var == "speed"){
+        m_current_speed = action[i].get_ddata();
+      }else if (var == "course"){
+        m_current_course = action[i].get_ddata();
+      }else if (var == "othervar"){
+        // Do something
+      }
+    }
+  }else{
+    // Bridge didn't get an action but failed nicely (timeout)
+  }
 
+  // Build a new IvP function
+  ZAIC_PEAK spd_zaic(m_domain, "speed");
+  spd_zaic.setSummit(m_current_speed);
+  spd_zaic.setBaseWidth(0.3);
+  spd_zaic.setPeakWidth(0.0);
+  spd_zaic.setSummitDelta(0.0);
+  IvPFunction *spd_of = spd_zaic.extractIvPFunction();
+
+  ZAIC_PEAK crs_zaic(m_domain, "course");
+  crs_zaic.setSummit(m_current_course);
+  crs_zaic.setBaseWidth(180.0);
+  crs_zaic.setValueWrap(true);
+  IvPFunction *crs_of = crs_zaic.extractIvPFunction();
+
+  OF_Coupler coupler;
+  ipf = coupler.couple(crs_of, spd_of);
 
   // Part N: Prior to returning the IvP function, apply the priority wt
   // Actual weight applied may be some value different than the configured
@@ -140,6 +176,7 @@ IvPFunction* BHV_Agent::onRunState()
 
 void BHV_Agent::postBridgeState(std::string state){
   postRepeatableMessage("AGENT_BRIDGE_STATE", state);
+  postRepeatableMessage("AGENT_CURRENT_ACTION", "speed="+doubleToString(m_current_speed)+",course="+doubleToString(m_current_course));
 }
 
 //---------------------------------------------------------------
@@ -179,6 +216,9 @@ void BHV_Agent::tickBridge(bool running){
     std::vector<VarDataPair> vd_pairs;
 
     // Send update through bridge
-    bridge.sendState(NAV_X, NAV_Y, vd_pairs);
+    bool ok = bridge.sendState(NAV_X, NAV_Y, vd_pairs);
+    if (!ok){
+      postWMessage("Bridge says connected but failed to send state.");
+    }
   }
 }

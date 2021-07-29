@@ -22,6 +22,7 @@ class PyInterface
   // Do things functions TODO: name?
   bool connect();
   bool sendState(double NAV_X, double NAV_Y, std::vector<VarDataPair> vd_pairs);
+  std::vector<VarDataPair> listenAction();
 
   // State exposure
   bool failureState();
@@ -35,7 +36,7 @@ class PyInterface
   
   // Helper functions
   PyObject* constructState(double NAV_X, double NAV_Y, std::vector<VarDataPair> vd_pairs);
-
+  bool validateAction(PyObject* action);
 
   // Objects
   PyObject* m_bridge_client;

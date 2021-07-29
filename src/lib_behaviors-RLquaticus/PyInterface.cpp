@@ -40,7 +40,7 @@ bool PyInterface::loadModule()
   }
   
   // Load module
-  PyObject* m_bridge_module = PyImport_ImportModule("bridge");
+  PyObject* m_bridge_module = PyImport_ImportModule("RLquaticus.bridge");
 
   if(!m_bridge_module){
     fprintf(stderr, "ERROR: Failed to import bridge module\n");
@@ -172,6 +172,70 @@ bool PyInterface::sendState(double NAV_X, double NAV_Y, std::vector<VarDataPair>
   return result;
 }
 
+std::vector<VarDataPair> PyInterface::listenAction(){
+  std::vector<VarDataPair> action; // Will return with size = 0 on failure
+
+  if(!isConnected())
+    return action;
+
+  PyObject* result = PyObject_CallMethod(m_bridge_client, "listen_action", NULL);
+
+  if(result == NULL){
+    fprintf(stderr, "ERROR: Failed to call connect function from client object\n\n");
+    PyErr_Print();
+    return action;
+  }
+
+  if(PyBool_Check(result)){
+    bool return_bool = PyObject_IsTrue(result);
+    //Clean up
+    Py_DECREF(result);
+
+    if(return_bool){
+      // Not what we are expecting so raise our own error
+      throw runtime_error("ModelBridgeClient's listen_state function returned True (invalid protocol)");
+    }
+    return action; // Fail normally
+  }
+
+  if(!PyDict_Check(result)){
+    Py_DECREF(result);
+    throw runtime_error("Method 'listen_action' did not fail or return dict");
+  }
+
+  if(!validateAction(result)){
+    Py_DECREF(result);
+    throw runtime_error("Unable to unpack dictionary");
+  }
+
+  // Parse out speed and course
+  double speed, course;
+  PyObject* speed_key = Py_BuildValue("s", "speed");
+  PyObject* course_key = Py_BuildValue("s", "course");
+
+  // PyDict_GetItem returns borrowed reference so no need to decref
+  // Python code should do type checking for us
+  speed = PyFloat_AsDouble(PyDict_GetItem(result, speed_key));
+  course = PyFloat_AsDouble(PyDict_GetItem(result, course_key));
+
+  Py_DECREF(speed_key);
+  Py_DECREF(course_key);
+
+  // Push into return vector
+  VarDataPair speed_pair("speed", speed);
+  VarDataPair course_pair("course", course);
+
+  action.push_back(speed_pair);
+  action.push_back(course_pair);
+
+  // TODO: Parse MOOS_VARS as actions  
+
+  // Clean up and return
+  Py_DECREF(result);
+  
+  return action;
+}
+
 bool PyInterface::failureState(){
   return m_bridge_client == NULL;
 }
@@ -208,6 +272,37 @@ PyObject* PyInterface::constructState(double NAV_X, double NAV_Y, std::vector<Va
   }
 
   return state_dict;
+}
+
+bool PyInterface::validateAction(PyObject* action){
+  // NOTE: Most checking will be done python size. This is just for C API errors
+  // Define expected keys as python strings
+  PyObject* speed = Py_BuildValue("s", "speed");
+  PyObject* course = Py_BuildValue("s", "course");
+  PyObject* moos_vars = Py_BuildValue("s", "MOOS_VARS");
+
+  int ok = PyDict_Contains(action, speed);
+
+  // This is expanded to not loose an error if two happen at same time
+  if(ok > -1){
+    ok = PyDict_Contains(action, course);
+    if(ok > -1){
+      ok = PyDict_Contains(action, moos_vars);
+      if(ok > -1){
+        return true; // No errors with the dict
+      }
+    }
+  }
+
+  // Print error
+  PyErr_Print();
+
+  // Clean up local vars
+  Py_DECREF(speed);
+  Py_DECREF(course);
+  Py_DECREF(moos_vars);
+
+  return false;
 }
 
 PyInterface::~PyInterface(){

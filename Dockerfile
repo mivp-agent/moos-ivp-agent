@@ -25,7 +25,7 @@ RUN cd "${HOME}/${MOOS}" && ./build.sh
 # RLquaticus tree
 ENV RLQUATICUS="moos-ivp-RLquaticus"
 ENV PATH="/home/moos/${RLQUATICUS}/bin:${PATH}"
-ENV PYTHONPATH="${PYTHONPATH}:/home/moos/${RLQUATICUS}/src/python_module/RLquaticus"
+ENV PYTHONPATH="${PYTHONPATH}:/home/moos/${RLQUATICUS}/src/python_module"
 ENV IVP_BEHAVIOR_DIRS="${IVP_BEHAVIOR_DIRS}:/home/moos/${RLQUATICUS}/lib"
 
 RUN mkdir -p moos-ivp-RLquaticus

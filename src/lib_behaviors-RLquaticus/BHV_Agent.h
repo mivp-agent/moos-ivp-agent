@@ -36,6 +36,8 @@ protected: // Configuration parameters
 
 protected: // State variables
   PyInterface bridge;
+  double m_current_course;
+  double m_current_speed;
 };
 
 #define IVP_EXPORT_FUNCTION

@@ -141,16 +141,21 @@ class ModelBridgeServer:
     if self._client is None:
       return False
 
-    send_full(self._client, pickle.dumps(action))
+    try:
+      send_full(self._client, pickle.dumps(action))
+    except ConnectionResetError:
+      # Client has left
+      self.close_client()
+      return False
 
     return True
 
-  def listen_state(self):
+  def listen_state(self, timeout=None):
     if self._client is None:
       return False
 
     try:
-      msgs = recv_full(self._client)
+      msgs = recv_full(self._client, timeout=timeout)
     except socket.timeout:
       return False
 
@@ -159,9 +164,12 @@ class ModelBridgeServer:
 
     return state
 
-  def close(self):
+  def close_client(self):
     if self._client is not None:
       self._client.close()
+
+  def close(self):
+    self.close_client()
     if self._socket is not None:
       self._socket.close()
   
@@ -207,7 +215,12 @@ class ModelBridgeClient:
     # Test submitted action
     checkState(state)
 
-    send_full(self._socket, pickle.dumps(state))
+    try:
+      send_full(self._socket, pickle.dumps(state))
+    except BrokenPipeError:
+      # Server has disconnected, reset
+      self.close()
+      return False
 
     return True
 
