@@ -46,8 +46,12 @@ bool BHV_Agent::setParam(string param, string val)
   // Get the numerical value of the param argument for convenience once
   double double_val = atof(val.c_str());
 
-  if((param == "sub_vehicle")) {
+  if(param == "sub_vehicle") {
     m_sub_vehicles.push_back(toupper(stripBlankEnds(val)));
+    return(true);
+  }
+  else if(param == "sub_var"){
+    m_sub_vars.push_back(stripBlankEnds(val));
     return(true);
   }
   else if (param == "bar") {
@@ -69,6 +73,10 @@ void BHV_Agent::onSetParamComplete()
   unsigned int i, vsize = m_sub_vehicles.size();
   for(i=0; i<vsize; i++){
     addInfoVars("NODE_REPORT_"+m_sub_vehicles[i]);
+  }
+  vsize = m_sub_vars.size();
+  for(i=0; i<vsize; i++){
+    addInfoVars(m_sub_vars[i]);
   }
 }
 
@@ -229,6 +237,24 @@ void BHV_Agent::tickBridge(bool running){
 
     //TODO: Construct actuall VarDataPair vector
     std::vector<VarDataPair> vd_pairs;
+    vsize = m_sub_vars.size();
+    for(i=0; i<vsize; i++){
+      // Access buffer directly as we don't know what type
+      // Calls through Helm will throw un wanted warnings
+      bool ok_s, ok_d;
+      string s_result = m_info_buffer->sQuery(m_sub_vars[i], ok_s);
+      double d_result = m_info_buffer->dQuery(m_sub_vars[i], ok_d);
+
+      if(ok_d){
+        VarDataPair pair(m_sub_vars[i], d_result);
+        vd_pairs.push_back(pair);
+      }else if(ok_s){
+        VarDataPair pair(m_sub_vars[i], s_result);
+        vd_pairs.push_back(pair);
+      }else{
+        postWMessage("Subscription var '"+m_sub_vars[i]+"' not found in info buffer");
+      }
+    }
 
     // Send update through bridge
     bool ok = bridge.sendState(getBufferCurrTime(), NAV_X, NAV_Y, node_reports, vd_pairs);

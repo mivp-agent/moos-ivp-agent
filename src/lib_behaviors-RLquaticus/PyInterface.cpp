@@ -246,24 +246,11 @@ bool PyInterface::isConnected(){
 }
 
 PyObject* PyInterface::constructState(double helm_time, double NAV_X, double NAV_Y, std::vector<std::string> node_reports, std::vector<VarDataPair> vd_pairs){
-  // Unpack vd_pairs and translate into python types
-  int vsize = vd_pairs.size();
-  for(int i=0; i<vsize; i++){
-    string var = vd_pairs[i].get_var();
-    if(vd_pairs[i].is_string()){
-      string sdata = vd_pairs[i].get_sdata();
-      //TODO: Handle vd string data
-    }else{
-      double ddata = vd_pairs[i].get_ddata();
-      //TODO: Handle vd double data
-    }
-  }
-
   // Build top level state['NODE_REPORTS'] = {} dictionary
   PyObject* node_reports_dict = PyDict_New();
 
   // Ass all node reports to this dict in the form a a dictionary themselves
-  vsize = node_reports.size();
+  int vsize = node_reports.size();
   for(int i=0; i<vsize; i++){
     std::string name = tokStringParse(node_reports[i], "NAME", ',', '=');
     PyObject* report_dict = nodeReportToDict(node_reports[i]);
@@ -274,16 +261,13 @@ PyObject* PyInterface::constructState(double helm_time, double NAV_X, double NAV
     Py_DECREF(report_dict);
   }
 
-  PyObject* MOOS_VARS_TMP = PyTuple_New(0); // TODO: Use code above to populate stuff
   PyObject *state_dict = Py_BuildValue("{s:d,s:d,s:d,s:O,s:()}", // This constructs a python dict
     "HELM_TIME", helm_time,
     "NAV_X", NAV_X,
     "NAV_Y", NAV_Y,
-    "NODE_REPORTS", node_reports_dict, // Using O cause it incref's (for sure)
-    "MOOS_VARS", MOOS_VARS_TMP);
-
+    "NODE_REPORTS", node_reports_dict // Using O cause it incref's (for sure)
+  );
   
-    Py_DECREF(MOOS_VARS_TMP);
     Py_DECREF(node_reports_dict);
 
   if (!state_dict){
@@ -291,6 +275,34 @@ PyObject* PyInterface::constructState(double helm_time, double NAV_X, double NAV
     return NULL;
   }
 
+  // Unpack vd_pairs and translate into python types
+  vsize = vd_pairs.size();
+  for(int i=0; i<vsize; i++){
+    string var = vd_pairs[i].get_var();
+    PyObject* pydata;
+
+    if(vd_pairs[i].is_string()){
+      string sdata = vd_pairs[i].get_sdata();
+
+      // Convert python land and True / False if applicable
+      if(tolower(sdata) == "false"){
+        Py_INCREF(Py_False);
+        pydata = Py_False;
+      }else if(tolower(sdata) == "true"){
+        Py_INCREF(Py_True);
+        pydata = Py_True;
+      }else{
+        pydata = Py_BuildValue("s", sdata.c_str());
+      }
+    }else{
+      double ddata = vd_pairs[i].get_ddata();
+      pydata = PyFloat_FromDouble(ddata);
+    }
+
+    // Add to state dict and release our hold
+    PyDict_SetItemString(state_dict, var.c_str(), pydata);
+    Py_DECREF(pydata);
+  }
   return state_dict;
 }
 

@@ -103,7 +103,6 @@ def checkState(state):
   assert isinstance(state, dict), "State must be dict"
   assert "NAV_X" in state, "State must have 'NAV_X' key"
   assert "NAV_Y" in state, "State must have 'NAV_Y' key"
-  assert "MOOS_VARS" in state, "State must have 'MOOS_VARS' key" 
 
 class ModelBridgeServer:
   def __init__(self, hostname="localhost", port=57722):

@@ -32,7 +32,7 @@ protected: // Local Utility functions
   void         tickBridge(bool running);
 
 protected: // Configuration parameters
-  std::vector<std::string> m_state_vars;
+  std::vector<std::string> m_sub_vars;
   std::vector<std::string> m_sub_vehicles;
 
 protected: // State variables
