@@ -15,7 +15,8 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y sudo pyt
 RUN apt-get install -y vim emacs-nox tmux git
 # Add debuging utilities
 RUN apt-get install -y gdb psmisc 
-RUN pip3 install --no-cache-dir numpy matplotlib 'tensorflow==1.5' 'keras==2.0.8' colorama h5py
+# Legacy plearn stuff
+RUN pip3 install --no-cache-dir numpy matplotlib 'tensorflow==1.5' 'keras==2.0.8' colorama 'h5py==2.10.0'
 USER moos
 
 # Aquaticus tree

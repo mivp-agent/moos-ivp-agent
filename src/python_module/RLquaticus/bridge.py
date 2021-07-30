@@ -223,7 +223,7 @@ class ModelBridgeClient:
 
     return True
 
-  def listen_action(self, timeout=1):
+  def listen_action(self, timeout=0.0005):
     if self._socket is None:
       return False
 

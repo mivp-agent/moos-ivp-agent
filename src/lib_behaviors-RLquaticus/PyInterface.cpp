@@ -132,12 +132,12 @@ bool PyInterface::connect(){
   return m_is_connected;
 }
 
-bool PyInterface::sendState(double helm_time, double NAV_X, double NAV_Y, std::vector<std::string> node_reports, std::vector<VarDataPair> vd_pairs){
+bool PyInterface::sendState(double helm_time, double NAV_X, double NAV_Y, double NAV_H, std::vector<std::string> node_reports, std::vector<VarDataPair> vd_pairs){
   if(!isConnected())
     return false;
 
   // Create the state object
-  PyObject* state_dict = constructState(helm_time, NAV_X, NAV_Y, node_reports, vd_pairs);
+  PyObject* state_dict = constructState(helm_time, NAV_X, NAV_Y, NAV_H, node_reports, vd_pairs);
 
   if(!state_dict)
     return false; // Error will have been handled by constructState
@@ -245,7 +245,7 @@ bool PyInterface::isConnected(){
   return m_is_connected;
 }
 
-PyObject* PyInterface::constructState(double helm_time, double NAV_X, double NAV_Y, std::vector<std::string> node_reports, std::vector<VarDataPair> vd_pairs){
+PyObject* PyInterface::constructState(double helm_time, double NAV_X, double NAV_Y, double NAV_H, std::vector<std::string> node_reports, std::vector<VarDataPair> vd_pairs){
   // Build top level state['NODE_REPORTS'] = {} dictionary
   PyObject* node_reports_dict = PyDict_New();
 
@@ -261,14 +261,15 @@ PyObject* PyInterface::constructState(double helm_time, double NAV_X, double NAV
     Py_DECREF(report_dict);
   }
 
-  PyObject *state_dict = Py_BuildValue("{s:d,s:d,s:d,s:O,s:()}", // This constructs a python dict
+  PyObject *state_dict = Py_BuildValue("{s:d,s:d,s:d,s:d,s:O}", // This constructs a python dict
     "HELM_TIME", helm_time,
     "NAV_X", NAV_X,
     "NAV_Y", NAV_Y,
+    "NAV_HEADING", NAV_H,
     "NODE_REPORTS", node_reports_dict // Using O cause it incref's (for sure)
   );
   
-    Py_DECREF(node_reports_dict);
+  Py_DECREF(node_reports_dict);
 
   if (!state_dict){
     PyErr_Print();

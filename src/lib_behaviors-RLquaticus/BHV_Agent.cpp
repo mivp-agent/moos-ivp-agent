@@ -212,7 +212,7 @@ void BHV_Agent::tickBridge(bool running){
   // Send the current state
   if(running){
     // Pull NAV_X and NAV_Y from the Helm info buffer
-    bool x_ok, y_ok;
+    bool x_ok, y_ok, h_ok;
     double NAV_X = getBufferDoubleVal("NAV_X", x_ok);
     if(!x_ok){
       postWMessage("NAV_X not found in info buffer. Can't send state update.");
@@ -221,6 +221,11 @@ void BHV_Agent::tickBridge(bool running){
     double NAV_Y = getBufferDoubleVal("NAV_Y", y_ok);
     if(!y_ok){
       postWMessage("NAV_Y not found in info buffer. Can't send state update.");
+      return;
+    }
+    double NAV_HEADING = getBufferDoubleVal("NAV_HEADING", h_ok);
+    if(!h_ok){
+      postWMessage("NAV_HEADING not found in info buffer. Can't send state update.");
       return;
     }
 
@@ -257,7 +262,7 @@ void BHV_Agent::tickBridge(bool running){
     }
 
     // Send update through bridge
-    bool ok = bridge.sendState(getBufferCurrTime(), NAV_X, NAV_Y, node_reports, vd_pairs);
+    bool ok = bridge.sendState(getBufferCurrTime(), NAV_X, NAV_Y, NAV_HEADING, node_reports, vd_pairs);
     if (!ok){
       postWMessage("Bridge says connected but failed to send state.");
     }
