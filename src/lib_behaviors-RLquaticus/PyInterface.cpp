@@ -132,12 +132,12 @@ bool PyInterface::connect(){
   return m_is_connected;
 }
 
-bool PyInterface::sendState(double NAV_X, double NAV_Y, std::vector<VarDataPair> vd_pairs){
+bool PyInterface::sendState(double helm_time, double NAV_X, double NAV_Y, std::vector<std::string> node_reports, std::vector<VarDataPair> vd_pairs){
   if(!isConnected())
     return false;
 
   // Create the state object
-  PyObject* state_dict = constructState(NAV_X, NAV_Y, vd_pairs);
+  PyObject* state_dict = constructState(helm_time, NAV_X, NAV_Y, node_reports, vd_pairs);
 
   if(!state_dict)
     return false; // Error will have been handled by constructState
@@ -245,7 +245,7 @@ bool PyInterface::isConnected(){
   return m_is_connected;
 }
 
-PyObject* PyInterface::constructState(double NAV_X, double NAV_Y, std::vector<VarDataPair> vd_pairs){
+PyObject* PyInterface::constructState(double helm_time, double NAV_X, double NAV_Y, std::vector<std::string> node_reports, std::vector<VarDataPair> vd_pairs){
   // Unpack vd_pairs and translate into python types
   int vsize = vd_pairs.size();
   for(int i=0; i<vsize; i++){
@@ -259,19 +259,54 @@ PyObject* PyInterface::constructState(double NAV_X, double NAV_Y, std::vector<Va
     }
   }
 
+  // Build top level state['NODE_REPORTS'] = {} dictionary
+  PyObject* node_reports_dict = PyDict_New();
+
+  // Ass all node reports to this dict in the form a a dictionary themselves
+  vsize = node_reports.size();
+  for(int i=0; i<vsize; i++){
+    std::string name = tokStringParse(node_reports[i], "NAME", ',', '=');
+    PyObject* report_dict = nodeReportToDict(node_reports[i]);
+
+    
+
+    PyDict_SetItemString(node_reports_dict, name.c_str(), report_dict);
+    Py_DECREF(report_dict);
+  }
+
   PyObject* MOOS_VARS_TMP = PyTuple_New(0); // TODO: Use code above to populate stuff
-  PyObject *state_dict = Py_BuildValue("{s:d,s:d,s:()}", // This constructs a python dict
+  PyObject *state_dict = Py_BuildValue("{s:d,s:d,s:d,s:O,s:()}", // This constructs a python dict
+    "HELM_TIME", helm_time,
     "NAV_X", NAV_X,
     "NAV_Y", NAV_Y,
+    "NODE_REPORTS", node_reports_dict, // Using O cause it incref's (for sure)
     "MOOS_VARS", MOOS_VARS_TMP);
+
+  
+    Py_DECREF(MOOS_VARS_TMP);
+    Py_DECREF(node_reports_dict);
 
   if (!state_dict){
     PyErr_Print();
-    Py_DECREF(MOOS_VARS_TMP);
     return NULL;
   }
 
   return state_dict;
+}
+
+PyObject* PyInterface::nodeReportToDict(std::string report){
+  // Parse node report
+  double x = tokDoubleParse(report, "X", ',', '=');
+  double y = tokDoubleParse(report, "Y", ',', '=');
+  double heading = tokDoubleParse(report, "HDG", ',', '=');
+
+  PyObject* dict = Py_BuildValue("{s:d,s:d,s:d}",
+    "NAV_X", x,
+    "NAV_Y", y,
+    "NAV_HEADING", heading
+  );
+
+  return dict;
 }
 
 bool PyInterface::validateAction(PyObject* action){

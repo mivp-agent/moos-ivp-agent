@@ -21,7 +21,7 @@ class PyInterface
  public: 
   // Do things functions TODO: name?
   bool connect();
-  bool sendState(double NAV_X, double NAV_Y, std::vector<VarDataPair> vd_pairs);
+  bool sendState(double helm_time, double NAV_X, double NAV_Y, std::vector<std::string> node_reports, std::vector<VarDataPair> vd_pairs);
   std::vector<VarDataPair> listenAction();
 
   // State exposure
@@ -35,7 +35,8 @@ class PyInterface
   bool unloadModule();
   
   // Helper functions
-  PyObject* constructState(double NAV_X, double NAV_Y, std::vector<VarDataPair> vd_pairs);
+  PyObject* constructState(double helm_time, double NAV_X, double NAV_Y, std::vector<std::string> node_reports, std::vector<VarDataPair> vd_pairs);
+  PyObject* nodeReportToDict(std::string report);
   bool validateAction(PyObject* action);
 
   // Objects

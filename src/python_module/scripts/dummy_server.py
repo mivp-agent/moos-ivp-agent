@@ -9,7 +9,7 @@ from bridge import ModelBridgeServer
 if __name__ == '__main__':
   with ModelBridgeServer() as server:
     print('Starting server...')
-    server.start()
+    server.accept()
 
     print('Listing for state...')
     state = None

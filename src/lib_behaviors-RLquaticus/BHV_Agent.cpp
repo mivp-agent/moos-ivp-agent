@@ -29,7 +29,7 @@ BHV_Agent::BHV_Agent(IvPDomain domain) :
   m_domain = subDomain(m_domain, "course,speed");
 
   // Add any variables this behavior needs to subscribe for
-  addInfoVars("NAV_X, NAV_Y");
+  addInfoVars("NAV_X, NAV_Y", "NAV_HEADING");
 
   if(true)
     setbuf(stdout, NULL);
@@ -46,8 +46,8 @@ bool BHV_Agent::setParam(string param, string val)
   // Get the numerical value of the param argument for convenience once
   double double_val = atof(val.c_str());
 
-  if((param == "foo") && isNumber(val)) {
-    // Set local member variables here
+  if((param == "sub_vehicle")) {
+    m_sub_vehicles.push_back(toupper(stripBlankEnds(val)));
     return(true);
   }
   else if (param == "bar") {
@@ -66,6 +66,10 @@ bool BHV_Agent::setParam(string param, string val)
 
 void BHV_Agent::onSetParamComplete()
 {
+  unsigned int i, vsize = m_sub_vehicles.size();
+  for(i=0; i<vsize; i++){
+    addInfoVars("NODE_REPORT_"+m_sub_vehicles[i]);
+  }
 }
 
 //---------------------------------------------------------------
@@ -212,11 +216,22 @@ void BHV_Agent::tickBridge(bool running){
       return;
     }
 
+    // Post other node reports
+    std::vector<std::string> node_reports;
+    unsigned int i, vsize = m_sub_vehicles.size();
+    for(i=0; i<vsize; i++){
+      bool ok;
+      std::string result = getBufferStringVal("NODE_REPORT_"+m_sub_vehicles[i], ok);
+      if(ok){
+        node_reports.push_back(result);
+      }
+    }
+
     //TODO: Construct actuall VarDataPair vector
     std::vector<VarDataPair> vd_pairs;
 
     // Send update through bridge
-    bool ok = bridge.sendState(NAV_X, NAV_Y, vd_pairs);
+    bool ok = bridge.sendState(getBufferCurrTime(), NAV_X, NAV_Y, node_reports, vd_pairs);
     if (!ok){
       postWMessage("Bridge says connected but failed to send state.");
     }

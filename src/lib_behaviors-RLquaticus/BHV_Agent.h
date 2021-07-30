@@ -33,6 +33,7 @@ protected: // Local Utility functions
 
 protected: // Configuration parameters
   std::vector<std::string> m_state_vars;
+  std::vector<std::string> m_sub_vehicles;
 
 protected: // State variables
   PyInterface bridge;
