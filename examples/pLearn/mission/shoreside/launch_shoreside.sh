@@ -10,6 +10,7 @@ SHORE_IP="localhost"
 SHORE_LISTEN="9300"
 BLUE_FLAG="x=-58,y=-71"
 RED_FLAG="x=50,y=-24"
+VERBOSE=""
 
 for ARGI; do
     if [ "${ARGI}" = "--help" -o "${ARGI}" = "-h" ] ; then
@@ -27,6 +28,9 @@ for ARGI; do
         SHORE_IP="${ARGI#--shore-ip=*}"
     elif [ "${ARGI:0:13}" = "--shore-port=" ] ; then
         SHORE_LISTEN=${ARGI#--shore-port=*}
+    elif [ "${ARGI}" = "--verbose" -o "${ARGI}" = "-v" ] ; then
+        VERBOSE="-v" 
+        echo "Excuting launch verbosly."
     else
         echo "Bad Argument: " $ARGI
         exit 1
