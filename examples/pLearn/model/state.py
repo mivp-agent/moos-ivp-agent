@@ -1,14 +1,8 @@
 import math
 from typing import Type
 
-UPPER_LEFT_CORNER = (-83,-49)
-UPPER_RIGHT_CORNER = (56, 16)
-LOWER_LEFT_CORNER = (-53, -114)
-LOWER_RIGHT_CORNER = (82, -56)
-
-MY_FLAG = (50.0, -24.0)
-ENEMY_FLAG = (-58.0, -71.0)
-
+from util.constants import UPPER_LEFT_CORNER, UPPER_RIGHT_CORNER, LOWER_LEFT_CORNER, LOWER_RIGHT_CORNER
+from util.constants import MY_FLAG, ENEMY_FLAG
 
 # From: https://github.com/mnovitzky/moos-ivp-pLearn/blob/master/src/lib_behaviors-test/BHV_Input.cpp#L656
 def process_dist(goal_x, goal_y, bucket_size, x, y):

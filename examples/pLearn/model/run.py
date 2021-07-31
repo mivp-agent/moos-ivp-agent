@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-import os
-THISDIR = os.path.dirname(os.path.realpath(__file__))
 
+
+import argparse
 import numpy as np
 from keras.models import load_model
 from trained.topModel.environment import Constants
@@ -10,42 +10,30 @@ from RLquaticus.bridge import ModelBridgeServer
 from RLquaticus.util.display import ModelConsole
 from state import make_state
 
-
-PLEARN_TOPMODEL = os.path.join(THISDIR, 'trained/topModel')
-PLEARN_ACTIONS = {
-    '(2, 0)': {'speed':2.0, 'course':0.0, 'MOOS_VARS': ()},
-    '(2, 60)': {'speed':2.0, 'course':60.0, 'MOOS_VARS': ()},
-    '(2, 120)': {'speed':2.0, 'course':120.0, 'MOOS_VARS': ()},
-    '(2, 180)': {'speed':2.0, 'course':180.0, 'MOOS_VARS': ()},
-    '(2, 240)': {'speed':2.0, 'course':240.0, 'MOOS_VARS': ()},
-    '(2, 300)': {'speed':2.0, 'course':300.0, 'MOOS_VARS': ()}
-}
+from util.validate import check_model_dir
+from util.constants import PLEARN_ACTIONS, PLEARN_TOPMODEL
 
 def state2vec(s, const):
-    #print("state2vec")
     if(s==None):
         print("NULL STATE")
     temp = []
-    #print("Preprocessed State: "+str(s))
     for state in s:
         temp.append(float(state))
     temp.append(1)
     for param in const.state:
-        #print("on "+param)
         if const.state[param].standardized:
             if const.state[param].type != "binary":
                 temp[const.state[param].index]=float(int(temp[Constants.state[param].index])-Constants.state[param].range[0])/Constants.state[param].range[1]
-    #print("state2Vec finishing with value: "+str(temp))
     return np.array([temp])
 
-if __name__ == '__main__':
+def run_model(args):
     const = Constants()
     models = {}
 
     print('Loading model...')
     if const.alg_type == "fitted":
         for a in PLEARN_ACTIONS:
-            models[a] = load_model(f'{PLEARN_TOPMODEL}/{a}.h5')
+            models[a] = load_model(f'{args.model}/{a}.h5')
     else:
         raise TypeError(f'Unimplmented pLearn algorithm "{const.alg_type}"')
 
@@ -74,3 +62,13 @@ if __name__ == '__main__':
             server.send_action(optimal[1])
 
             console.tick(MOOS_STATE)
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model', default=PLEARN_TOPMODEL)
+    
+    args = parser.parse_args()
+
+    check_model_dir(args.model)
+
+    run_model(args)
