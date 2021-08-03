@@ -12,19 +12,7 @@ from state import make_state
 
 from util.validate import check_model_dir
 from util.constants import PLEARN_ACTIONS, PLEARN_TOPMODEL
-
-def state2vec(s, const):
-    if(s==None):
-        print("NULL STATE")
-    temp = []
-    for state in s:
-        temp.append(float(state))
-    temp.append(1)
-    for param in const.state:
-        if const.state[param].standardized:
-            if const.state[param].type != "binary":
-                temp[const.state[param].index]=float(int(temp[Constants.state[param].index])-Constants.state[param].range[0])/Constants.state[param].range[1]
-    return np.array([temp])
+from util.state import state2vec
 
 def run_model(args):
     const = Constants()

@@ -11,26 +11,13 @@ matplotlib.use('TkAgg') # For X11 forwarding in docker
 from util.graphing import plot_rewards
 
 import argparse
-import numpy as np
 from keras.models import load_model
 from trained.topModel.environment import Constants
 
 from state import make_state
 from util.validate import check_model_dir
 from util.constants import PLEARN_ACTIONS, PLEARN_TOPMODEL
-
-def state2vec(s, const):
-    if(s==None):
-        print("NULL STATE")
-    temp = []
-    for state in s:
-        temp.append(float(state))
-    temp.append(1)
-    for param in const.state:
-        if const.state[param].standardized:
-            if const.state[param].type != "binary":
-                temp[const.state[param].index]=float(int(temp[Constants.state[param].index])-Constants.state[param].range[0])/Constants.state[param].range[1]
-    return np.array([temp])
+from util.state import state2vec
 
 def graph_model(args):
     const = Constants()
