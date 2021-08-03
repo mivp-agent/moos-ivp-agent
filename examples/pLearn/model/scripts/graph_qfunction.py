@@ -1,10 +1,12 @@
-#!/usr/bin/env python3pyt
+#!/usr/bin/env python3
 import os, sys
-
-from matplotlib.pyplot import plot
+import matplotlib
 currentdir = os.path.dirname(os.path.realpath(__file__))
 parrent = os.path.join(os.path.dirname(currentdir), '..')
 sys.path.append(parrent)
+
+from matplotlib.pyplot import plot
+matplotlib.use('TkAgg') # For X11 forwarding in docker
 
 from util.graphing import plot_rewards
 

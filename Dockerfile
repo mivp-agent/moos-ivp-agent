@@ -17,6 +17,11 @@ RUN apt-get install -y vim emacs-nox tmux git
 RUN apt-get install -y gdb psmisc 
 # Legacy plearn stuff
 RUN pip3 install --no-cache-dir numpy matplotlib 'tensorflow==1.5' 'keras==2.0.8' colorama 'h5py==2.10.0'
+# Matplotlib X11 forwarding with GTK
+ENV DEBIAN_FRONTEND="noninteractive"
+RUN apt-get install -y python3-tk
+RUN pip3 install tqdm
+
 USER moos
 
 # Aquaticus tree

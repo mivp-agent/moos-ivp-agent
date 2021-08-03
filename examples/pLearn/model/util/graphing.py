@@ -39,11 +39,6 @@ def plot_rewards(reward_function, defender=False):
       v_pos.append(max_value.item(0))
       x_pos.append(x)
       y_pos.append(y)
-  
-
-  print(len(v_pos), v_pos, '\n')
-  print(len(x_pos), x_pos, '\n')
-  print(len(y_pos), y_pos, '\n')
 
   fig = plt.figure()
   ax = plt.axes(projection='3d')
