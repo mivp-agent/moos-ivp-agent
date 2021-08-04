@@ -6,12 +6,12 @@ PLEARN_TOPMODEL = os.path.abspath(os.path.join(THISDIR, '../trained/topModel'))
 
 # Translate pLearn actions 
 PLEARN_ACTIONS = {
-    '(2, 0)': {'speed':2.0, 'course':0.0, 'MOOS_VARS': ()},
-    '(2, 60)': {'speed':2.0, 'course':60.0, 'MOOS_VARS': ()},
-    '(2, 120)': {'speed':2.0, 'course':120.0, 'MOOS_VARS': ()},
-    '(2, 180)': {'speed':2.0, 'course':180.0, 'MOOS_VARS': ()},
-    '(2, 240)': {'speed':2.0, 'course':240.0, 'MOOS_VARS': ()},
-    '(2, 300)': {'speed':2.0, 'course':300.0, 'MOOS_VARS': ()}
+    '(2, 0)': {'speed':2.0, 'course':0.0, 'MOOS_VARS': {}},
+    '(2, 60)': {'speed':2.0, 'course':60.0, 'MOOS_VARS': {}},
+    '(2, 120)': {'speed':2.0, 'course':120.0, 'MOOS_VARS': {}},
+    '(2, 180)': {'speed':2.0, 'course':180.0, 'MOOS_VARS': {}},
+    '(2, 240)': {'speed':2.0, 'course':240.0, 'MOOS_VARS': {}},
+    '(2, 300)': {'speed':2.0, 'course':300.0, 'MOOS_VARS': {}}
 }
 
 # Aquaticus X/Y pairsx

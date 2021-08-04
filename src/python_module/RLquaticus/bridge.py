@@ -97,7 +97,7 @@ def checkAction(action):
   action['course'] = checkFloat(action['course'], "action['course'] must be a float")
 
   assert "MOOS_VARS" in action, "Action must have key 'MOOS_VARS'"
-  assert isinstance(action["MOOS_VARS"], tuple), "MOOS_VARS must be a tuple"
+  assert isinstance(action["MOOS_VARS"], dict), "MOOS_VARS must be a dict"
 
 def checkState(state):
   assert isinstance(state, dict), "State must be dict"

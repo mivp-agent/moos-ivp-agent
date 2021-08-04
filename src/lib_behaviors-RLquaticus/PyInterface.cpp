@@ -132,12 +132,12 @@ bool PyInterface::connect(){
   return m_is_connected;
 }
 
-bool PyInterface::sendState(double helm_time, double NAV_X, double NAV_Y, double NAV_H, std::vector<std::string> node_reports, std::vector<VarDataPair> vd_pairs){
+bool PyInterface::sendState(double helm_time, double NAV_X, double NAV_Y, double NAV_H, std::string VNAME, std::vector<std::string> node_reports, std::vector<VarDataPair> vd_pairs){
   if(!isConnected())
     return false;
 
   // Create the state object
-  PyObject* state_dict = constructState(helm_time, NAV_X, NAV_Y, NAV_H, node_reports, vd_pairs);
+  PyObject* state_dict = constructState(helm_time, NAV_X, NAV_Y, NAV_H, VNAME, node_reports, vd_pairs);
 
   if(!state_dict)
     return false; // Error will have been handled by constructState
@@ -229,8 +229,34 @@ std::vector<VarDataPair> PyInterface::listenAction(){
   action.push_back(course_pair);
 
   // TODO: Parse MOOS_VARS as actions  
+  PyObject* MOOS_VARS = PyDict_GetItemString(result, "MOOS_VARS");
+  PyObject *key, *value;
+  Py_ssize_t pos = 0;
+  while (PyDict_Next(MOOS_VARS, &pos, &key, &value)){
+    std::string moos_name = PyUnicode_AsUTF8(key);
 
-  // Clean up and return
+    if(PyObject_TypeCheck(value, &PyUnicode_Type)){
+      std::string moos_value = PyUnicode_AsUTF8(value);
+
+      VarDataPair pair(moos_name, moos_value);
+      action.push_back(pair);
+    }else if(PyBool_Check(value)){
+      if(PyObject_IsTrue(value)){
+        VarDataPair pair(moos_name, "true", "auto");
+        action.push_back(pair);
+      }else{
+        VarDataPair pair(moos_name, "false", "auto");
+        action.push_back(pair);
+      }
+    }else{
+      // Clean up and throw
+      Py_DECREF(MOOS_VARS);
+      Py_DECREF(result);
+      throw runtime_error("Unimplement python type in MOOS_VARS");
+    }
+  }
+
+  Py_DECREF(MOOS_VARS);
   Py_DECREF(result);
   
   return action;
@@ -245,7 +271,7 @@ bool PyInterface::isConnected(){
   return m_is_connected;
 }
 
-PyObject* PyInterface::constructState(double helm_time, double NAV_X, double NAV_Y, double NAV_H, std::vector<std::string> node_reports, std::vector<VarDataPair> vd_pairs){
+PyObject* PyInterface::constructState(double helm_time, double NAV_X, double NAV_Y, double NAV_H, std::string VNAME, std::vector<std::string> node_reports, std::vector<VarDataPair> vd_pairs){
   // Build top level state['NODE_REPORTS'] = {} dictionary
   PyObject* node_reports_dict = PyDict_New();
 
@@ -261,11 +287,12 @@ PyObject* PyInterface::constructState(double helm_time, double NAV_X, double NAV
     Py_DECREF(report_dict);
   }
 
-  PyObject *state_dict = Py_BuildValue("{s:d,s:d,s:d,s:d,s:O}", // This constructs a python dict
+  PyObject *state_dict = Py_BuildValue("{s:d,s:d,s:d,s:d,s:s,s:O}", // This constructs a python dict
     "HELM_TIME", helm_time,
     "NAV_X", NAV_X,
     "NAV_Y", NAV_Y,
     "NAV_HEADING", NAV_H,
+    "VNAME", VNAME.c_str(),
     "NODE_REPORTS", node_reports_dict // Using O cause it incref's (for sure)
   );
   

@@ -30,6 +30,7 @@ BHV_Agent::BHV_Agent(IvPDomain domain) :
 
   // Add any variables this behavior needs to subscribe for
   addInfoVars("NAV_X, NAV_Y", "NAV_HEADING");
+  addInfoVars("NODE_REPORT_LOCAL");
 
   if(true)
     setbuf(stdout, NULL);
@@ -152,8 +153,13 @@ IvPFunction* BHV_Agent::onRunState()
         m_current_speed = action[i].get_ddata();
       }else if (var == "course"){
         m_current_course = action[i].get_ddata();
-      }else if (var == "othervar"){
-        // Do something
+      }else{
+        // The action should be a MOOS_VAR action
+        if(action[i].is_string()){
+          postRepeatableMessage(var, action[i].get_sdata());
+        }else{
+          postRepeatableMessage(var, action[i].get_ddata());
+        }
       }
     }
   }else{
@@ -229,6 +235,13 @@ void BHV_Agent::tickBridge(bool running){
       return;
     }
 
+    bool name_ok;
+    std::string node_local = getBufferStringVal("NODE_REPORT_LOCAL", name_ok);
+    if(!name_ok){
+      postWMessage("NODE_REPORT_LOCAL not found in info buffer. Can't sent state update.");
+    }
+    std::string VNAME = tokStringParse(node_local, "NAME", ',', '=');
+
     // Post other node reports
     std::vector<std::string> node_reports;
     unsigned int i, vsize = m_sub_vehicles.size();
@@ -262,7 +275,7 @@ void BHV_Agent::tickBridge(bool running){
     }
 
     // Send update through bridge
-    bool ok = bridge.sendState(getBufferCurrTime(), NAV_X, NAV_Y, NAV_HEADING, node_reports, vd_pairs);
+    bool ok = bridge.sendState(getBufferCurrTime(), NAV_X, NAV_Y, NAV_HEADING, VNAME, node_reports, vd_pairs);
     if (!ok){
       postWMessage("Bridge says connected but failed to send state.");
     }

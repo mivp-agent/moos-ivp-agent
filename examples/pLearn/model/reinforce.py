@@ -11,8 +11,8 @@ from RLquaticus.util.display import ModelConsole
 from state import make_state
 
 from util.validate import check_model_dir
-from util.constants import PLEARN_ACTIONS, PLEARN_TOPMODEL
-from util.state import state2vec
+from util.constants import PLEARN_ACTIONS, PLEARN_TOPMODEL, ENEMY_FLAG
+from util.state import state2vec, dist
 
 def run_model(args):
     const = Constants()
@@ -47,6 +47,12 @@ def run_model(args):
                     optimal = (value, PLEARN_ACTIONS[a])
 
             # Send optimal action to BHV_Agent client
+            action = optimal[1]
+            if abs(dist((MOOS_STATE['NAV_X'], MOOS_STATE['NAV_Y']), ENEMY_FLAG)) < 10:
+                action['MOOS_VARS'] = {
+                'FLAG_GRAB_REQUEST': f'vname={MOOS_STATE["VNAME"]}'
+                }
+
             server.send_action(optimal[1])
 
             console.tick(MOOS_STATE)
