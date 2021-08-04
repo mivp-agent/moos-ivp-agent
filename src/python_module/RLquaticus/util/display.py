@@ -26,7 +26,8 @@ class ModelConsole:
     self._last_MOOS_time = MOOS_STATE['HELM_TIME']
 
     print('\n===========================================')
-    print(f' Iteration: {self._iteration}\n')
+    print(f' Iteration: {self._iteration}')
+    print(f' HELM_TIME: {MOOS_STATE["HELM_TIME"]}\n')
     print(f' MOOS delta: {MOOS_delta}')
     print(f' Loop delta: {loop_delta}')
     print('===========================================')
