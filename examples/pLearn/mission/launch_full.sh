@@ -6,6 +6,7 @@ CMD_ARGS=""
 NO_M200=""
 NO_SHORESIDE=""
 NO_GUI=""
+DEPLOY=""
 
 #-------------------------------------------------------
 #  Part 1: Check for and handle command-line arguments
@@ -26,6 +27,8 @@ for ARGI; do
         echo "Just building files; no vehicle launch."
     elif [ "${ARGI}" = "--no_gui" ]; then 
         NO_GUI="--no_gui"
+    elif [ "${ARGI}" = "--deploy" ]; then 
+        DEPLOY="yes"
     elif [ "${ARGI}" = "--verbose" -o "${ARGI}" = "-v" ] ; then
         VERBOSE="-v" 
         echo "Excuting launch verbosly."
@@ -61,7 +64,7 @@ if [[ -z $NO_M200 ]]; then
     ./launch_m200.sh $TIME_WARP $JUST_BUILD $VERBOSE -e -b -s --DEFEND &
     # Felix Red
     ./launch_m200.sh $TIME_WARP $JUST_BUILD $VERBOSE -f -r -s &
-    fi
+  fi
   cd ..
 fi
 
@@ -80,6 +83,11 @@ if [[ -z $NO_SHORESIDE ]]; then
 fi
 
 sleep 3
+
+if [[ -n $DEPLOY ]]; then
+  echo "DEPLOYING"
+  uPokeDB shoreside/targ_shoreside.moos  DEPLOY_ALL=true MOOS_MANUAL_OVERRIDE_ALL=false RETURN_ALL=false STATION_KEEP_ALL=false
+fi
 #-------------------------------------------------------
 #  Part 4: Launching uMAC
 #-------------------------------------------------------

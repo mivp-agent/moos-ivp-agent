@@ -17,6 +17,8 @@ ProcessConfig = pEpisodeManager
   reset_post = var=UNTAG_REQUEST,val=vname=$(VNAME)
   reset_post = var=TAGGED,val=false
 
+  max_duration = 100
+
   RESET_POS = $(START_POS)
   VNAME     = $(VNAME)
 }

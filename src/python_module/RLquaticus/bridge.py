@@ -24,12 +24,22 @@ ModelBridgeClient (MOOSDB SIDE):
 
 # Socket Helpers ===========================
 
-HEADER_SIZE=4
+TYPE_CTRL=0
+TYPE_ACTION=1
+TYPE_MUST_POST=2
+TYPE_STATE=3
+
+TYPES = (TYPE_CTRL, TYPE_ACTION, TYPE_MUST_POST, TYPE_STATE)
+
+HEADER_SIZE=8
 MAX_BUFFER_SIZE=8192
 
 def recv_full(socket, timeout=None):
-  messages = []
+  messages = {}
+  for type in TYPES:
+    messages[type] = []
   current_len = None
+  current_type = None
   # Create byte string for storing the header in
   tmp_data = b''
 
@@ -52,7 +62,7 @@ def recv_full(socket, timeout=None):
 
       if len(tmp_data) >= HEADER_SIZE:
         # We can construct a header (current_len)
-        current_len = struct.unpack('>i', tmp_data[:HEADER_SIZE])[0]
+        current_len, current_type = struct.unpack('>ii', tmp_data[:HEADER_SIZE])
         
         # Remove header data from our data store
         tmp_data = tmp_data[HEADER_SIZE:]
@@ -62,7 +72,7 @@ def recv_full(socket, timeout=None):
       # We should be looking for a message
       if len(tmp_data) >= current_len:
         # We can construct a packed
-        messages.append(tmp_data[:current_len])
+        messages[current_type].append(tmp_data[:current_len])
 
         # Remove the packet just constructed from out data store
         tmp_data = tmp_data[current_len:]
@@ -71,10 +81,10 @@ def recv_full(socket, timeout=None):
   return messages
 
 
-def send_full(socket, data):
+def send_full(socket, data, type):
   # Create C struct (in python bytes)
   # '>i' specifies a big-endian encoded integer (a standard size of 4 bytes)
-  packed_size = struct.pack('>i', len(data))
+  packed_size = struct.pack('>ii', len(data), type)
   # Concat the size (our 4 bytes header) and data then send
   result = socket.sendall(packed_size+data)
   assert result is None
@@ -103,6 +113,9 @@ def checkState(state):
   assert isinstance(state, dict), "State must be dict"
   assert "NAV_X" in state, "State must have 'NAV_X' key"
   assert "NAV_Y" in state, "State must have 'NAV_Y' key"
+
+def checkMustPost(must_post):
+  assert isinstance(must_post, dict), "TYPE_MUST_POSTs must have type"
 
 class ModelBridgeServer:
   def __init__(self, hostname="localhost", port=57722):
@@ -141,7 +154,23 @@ class ModelBridgeServer:
       return False
 
     try:
-      send_full(self._client, pickle.dumps(action))
+      send_full(self._client, pickle.dumps(action), TYPE_ACTION)
+    except ConnectionResetError:
+      # Client has left
+      self.close_client()
+      return False
+
+    return True
+  
+  def send_must_post(self, post):
+    checkMustPost(post)
+
+    # Fail if no client connected
+    if self._client is None:
+      return False
+
+    try:
+      send_full(self._client, pickle.dumps(post), TYPE_MUST_POST)
     except ConnectionResetError:
       # Client has left
       self.close_client()
@@ -158,7 +187,12 @@ class ModelBridgeServer:
     except socket.timeout:
       return False
 
-    state = pickle.loads(msgs[len(msgs)-1]) # Only use most recent state
+    for type in TYPES:
+      if type != TYPE_STATE:
+        assert len(msgs[type]) == 0, "Only state messages should be sent through this channel."
+    states = msgs[TYPE_STATE]
+
+    state = pickle.loads(states[len(states)-1]) # Only use most recent state
     checkState(state)
 
     return state
@@ -181,6 +215,11 @@ class ModelBridgeClient:
     self.port = port
 
     self._socket = None
+    self._last_action = {
+      'speed': 0,
+      'course': 0,
+      'MOOS_VARS': {}
+    }
   
   def __enter__(self):
     return self
@@ -215,7 +254,7 @@ class ModelBridgeClient:
     checkState(state)
 
     try:
-      send_full(self._socket, pickle.dumps(state))
+      send_full(self._socket, pickle.dumps(state), TYPE_STATE)
     except BrokenPipeError:
       # Server has disconnected, reset
       self.close()
@@ -231,11 +270,31 @@ class ModelBridgeClient:
       msgs = recv_full(self._socket, timeout=timeout)
     except socket.timeout:
       return False
-    action = pickle.loads(msgs[len(msgs)-1])
+
+    must_posts = [pickle.loads(msg) for msg in msgs[TYPE_MUST_POST]]
+    for mp in must_posts:
+      checkMustPost(mp)
+    len_actions = len(msgs[TYPE_ACTION])
+
+
+    # TODO: REALLY hacky code... combing mps should not be done
+    # change the interface
+    action = self._last_action
+    if len_actions != 0:
+      action = pickle.loads(msgs[TYPE_ACTION][len_actions-1])
+    else:
+      action['MOOS_VARS'] = {}
+
+    for mp in must_posts:
+      for key in mp:
+        action['MOOS_VARS'][key] = mp[key] # TODO: This is the goal of the hacky bit
+
 
     checkAction(action)
 
-    return action
+    self._last_action = action 
+
+    return action 
   
   def close(self):
     if self._socket is not None:

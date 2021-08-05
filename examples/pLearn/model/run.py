@@ -1,29 +1,21 @@
 #!/usr/bin/env python3
-
-
+import sys
 import argparse
 import numpy as np
-from keras.models import load_model
-from trained.topModel.environment import Constants
 
 from RLquaticus.bridge import ModelBridgeServer
 from RLquaticus.util.display import ModelConsole
+from RLquaticus.util.parse import csp_to_dict
 from state import make_state
 
 from util.validate import check_model_dir
 from util.constants import PLEARN_ACTIONS, PLEARN_TOPMODEL, ENEMY_FLAG
 from util.state import state2vec, dist
+from util.model_loader import load_pLearn_model
 
 def run_model(args):
-    const = Constants()
-    models = {}
-
     print('Loading model...')
-    if const.alg_type == "fitted":
-        for a in PLEARN_ACTIONS:
-            models[a] = load_model(f'{args.model}/{a}.h5')
-    else:
-        raise TypeError(f'Unimplmented pLearn algorithm "{const.alg_type}"')
+    models, const = load_pLearn_model(args.model)
 
     print('Starting server...')
     with ModelBridgeServer() as server:
@@ -35,6 +27,15 @@ def run_model(args):
         while True:
             # Get state from BHV_Agent client and translate
             MOOS_STATE = server.listen_state()
+            if MOOS_STATE['EPISODE_MNGR_REPORT'] is not None:
+                report = csp_to_dict(MOOS_STATE['EPISODE_MNGR_REPORT'])
+                report['DURATION'] = float(report['DURATION'])
+
+                if report['DURATION'] < 4:
+                    print('ERROR: Small duration value', file=sys.stderr)
+                    print(report, file=sys.stderr)
+                print(report)
+                
             model_state = make_state(const.state, const.num_states, MOOS_STATE)
             state_vec = state2vec(model_state, const)
 
@@ -48,11 +49,14 @@ def run_model(args):
 
             # Send optimal action to BHV_Agent client
             action = optimal[1]
+            action['MOOS_VARS'] = {}
+            
             if abs(dist((MOOS_STATE['NAV_X'], MOOS_STATE['NAV_Y']), ENEMY_FLAG)) < 10:
-                action['MOOS_VARS'] = {
-                'FLAG_GRAB_REQUEST': f'vname={MOOS_STATE["VNAME"]}'
-                }
-
+                action['MOOS_VARS']['FLAG_GRAB_REQUEST'] = f'vname={MOOS_STATE["VNAME"]}'
+            if console.iteration == 0:
+                server.send_must_post({
+                    'EPISODE_MNGR_CTRL': 'type=start'
+                })
             server.send_action(optimal[1])
 
             console.tick(MOOS_STATE)

@@ -31,6 +31,7 @@ BHV_Agent::BHV_Agent(IvPDomain domain) :
   // Add any variables this behavior needs to subscribe for
   addInfoVars("NAV_X, NAV_Y", "NAV_HEADING");
   addInfoVars("NODE_REPORT_LOCAL");
+  addInfoVars("EPISODE_MNGR_REPORT");
 
   if(true)
     setbuf(stdout, NULL);
@@ -253,7 +254,7 @@ void BHV_Agent::tickBridge(bool running){
       }
     }
 
-    //TODO: Construct actuall VarDataPair vector
+    // Look for vars that are subscribed to
     std::vector<VarDataPair> vd_pairs;
     vsize = m_sub_vars.size();
     for(i=0; i<vsize; i++){
@@ -273,6 +274,14 @@ void BHV_Agent::tickBridge(bool running){
         postWMessage("Subscription var '"+m_sub_vars[i]+"' not found in info buffer");
       }
     }
+
+    // Add pEpisodeManager report or null if not present
+    bool report_ok;
+    string report = m_info_buffer->sQuery("EPISODE_MNGR_REPORT", report_ok);
+    if(!report_ok)
+      report = "null";
+    VarDataPair pair("EPISODE_MNGR_REPORT", report);
+    vd_pairs.push_back(pair);
 
     // Send update through bridge
     bool ok = bridge.sendState(getBufferCurrTime(), NAV_X, NAV_Y, NAV_HEADING, VNAME, node_reports, vd_pairs);

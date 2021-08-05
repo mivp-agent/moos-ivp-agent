@@ -13,23 +13,23 @@ from bridge import ModelBridgeServer, ModelBridgeClient
 DUMMY_ACTION = {
   'speed': 2.0,
   'course': 90,
-  'MOOS_VARS': ()
+  'MOOS_VARS': {}
 }
 
 DUMMY_ACTION_2 = {
   'speed': 2.0,
   'course': 180,
-  'MOOS_VARS': ()
+  'MOOS_VARS': {}
 }
 
 DUMMY_ACTION_NO_SPEED = {
   'course': 90,
-  'MOOS_VARS': ()
+  'MOOS_VARS': {}
 }
 
 DUMMY_ACTION_NO_COURSE = {
   'speed': 2.0,
-  'MOOS_VARS': ()
+  'MOOS_VARS': {}
 }
 
 DUMMY_ACTION_NO_MOOS_VARS = {
@@ -40,7 +40,15 @@ DUMMY_ACTION_NO_MOOS_VARS = {
 DUMMY_STATE = {
   'NAV_X': 58.1,
   'NAV_Y': 76.0,
-  'MOOS_VARS': ()
+  'MOOS_VARS': {}
+}
+
+DUMMY_MUST_POST = {
+  'EPISODE_MNGR_CTRL': 'type=start'
+}
+
+DUMMY_MUST_POST_2 = {
+  'I_HATE': 'programming'
 }
 
 
@@ -95,6 +103,7 @@ class TestSocket(unittest.TestCase):
           client.connect()
           t.join()
 
+          # Test action order
           self.assertTrue(server.send_action(DUMMY_ACTION))
           self.assertTrue(server.send_action(DUMMY_ACTION))
           self.assertTrue(server.send_action(DUMMY_ACTION))
@@ -104,6 +113,17 @@ class TestSocket(unittest.TestCase):
           action = client.listen_action(timeout=None)
 
           self.assertEqual(action, DUMMY_ACTION_2)
+
+          # And test must posts
+          self.assertTrue(server.send_action(DUMMY_ACTION_2))
+          self.assertTrue(server.send_action(DUMMY_ACTION))
+          self.assertTrue(server.send_must_post(DUMMY_MUST_POST))
+          self.assertTrue(server.send_must_post(DUMMY_MUST_POST_2))
+
+          action = client.listen_action(timeout=None)
+
+          # TODO: Fix these tests
+          self.assertEqual(action, DUMMY_ACTION)
 
   def test_socket_send_state(self):
     with ModelBridgeServer() as server:

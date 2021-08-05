@@ -2,7 +2,7 @@ import time
 
 class ModelConsole:
   def __init__(self):
-    self._iteration = 0
+    self.iteration = 0
     self._last_loop_time = None
     self._last_MOOS_time = None
   
@@ -26,11 +26,11 @@ class ModelConsole:
     self._last_MOOS_time = MOOS_STATE['HELM_TIME']
 
     print('\n===========================================')
-    print(f' Iteration: {self._iteration}')
+    print(f' Iteration: {self.iteration}')
     print(f' HELM_TIME: {MOOS_STATE["HELM_TIME"]}\n')
     print(f' MOOS delta: {MOOS_delta}')
     print(f' Loop delta: {loop_delta}')
     print('===========================================')
 
     # Updated needed vars 
-    self._iteration += 1
+    self.iteration += 1

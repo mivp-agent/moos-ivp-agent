@@ -49,6 +49,8 @@ class EpisodeManager : public AppCastingMOOSApp
    double m_reset_y;
    std::string m_reset_heading = "";
 
+   double m_max_duration;
+
   // TODO: m_unpause_conditions, m_unpause_posts, m_continous -> m_paused
   // m_paused set by m_end_posts?? (prob not delay to get new mail?)
 

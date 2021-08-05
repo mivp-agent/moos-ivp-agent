@@ -31,6 +31,8 @@ EpisodeManager::EpisodeManager()
   m_episode_cnt = 0;
   m_success_cnt = 0;
   m_failure_cnt = 0;
+
+  m_max_duration = -1;
 }
 
 //---------------------------------------------------------
@@ -140,6 +142,8 @@ bool EpisodeManager::Iterate()
     end = success = checkConditions(m_end_success_conditions);
     if(!end)
       end = checkConditions(m_end_failure_conditions);
+    if(!end && m_max_duration != -1 && (MOOSTime()-m_episode_start) >= m_max_duration)
+      end = true;
 
     if(end)
       endEpisode(success);
@@ -268,6 +272,9 @@ bool EpisodeManager::OnStartUp()
        m_current_state = RUNNING;
       else
         reportConfigWarning("paused parameter should be boolean");
+      handled = true;
+    }else if(param == "max_duration"){
+      m_max_duration = std::atof(stripBlankEnds(value).c_str());
       handled = true;
     }
 
@@ -459,6 +466,8 @@ bool EpisodeManager::buildReport()
   m_msgs << "RESET_X:       " << m_reset_x << endl;
   m_msgs << "RESET_Y:       " << m_reset_y << endl;
   m_msgs << "RESET_HEADING: " << m_reset_heading << endl;
+  if(m_max_duration != -1)
+    m_msgs << "MAX_DURATION:  " << m_max_duration << endl;
 
   m_msgs << "State Variables" << endl;
   m_msgs << "----------------------------------" << endl;

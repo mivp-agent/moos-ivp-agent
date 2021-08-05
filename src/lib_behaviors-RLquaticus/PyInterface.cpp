@@ -181,7 +181,7 @@ std::vector<VarDataPair> PyInterface::listenAction(){
   PyObject* result = PyObject_CallMethod(m_bridge_client, "listen_action", NULL);
 
   if(result == NULL){
-    fprintf(stderr, "ERROR: Failed to call connect function from client object\n\n");
+    fprintf(stderr, "ERROR: Failed to call listen_action function from client object\n\n");
     PyErr_Print();
     return action;
   }
@@ -250,13 +250,11 @@ std::vector<VarDataPair> PyInterface::listenAction(){
       }
     }else{
       // Clean up and throw
-      Py_DECREF(MOOS_VARS);
       Py_DECREF(result);
       throw runtime_error("Unimplement python type in MOOS_VARS");
     }
   }
 
-  Py_DECREF(MOOS_VARS);
   Py_DECREF(result);
   
   return action;
@@ -280,8 +278,6 @@ PyObject* PyInterface::constructState(double helm_time, double NAV_X, double NAV
   for(int i=0; i<vsize; i++){
     std::string name = tokStringParse(node_reports[i], "NAME", ',', '=');
     PyObject* report_dict = nodeReportToDict(node_reports[i]);
-
-    
 
     PyDict_SetItemString(node_reports_dict, name.c_str(), report_dict);
     Py_DECREF(report_dict);
@@ -319,6 +315,9 @@ PyObject* PyInterface::constructState(double helm_time, double NAV_X, double NAV
       }else if(tolower(sdata) == "true"){
         Py_INCREF(Py_True);
         pydata = Py_True;
+      }else if(tolower(sdata) == "null"){
+        Py_INCREF(Py_None);
+        pydata = Py_None;
       }else{
         pydata = Py_BuildValue("s", sdata.c_str());
       }
@@ -356,15 +355,16 @@ bool PyInterface::validateAction(PyObject* action){
   PyObject* course = Py_BuildValue("s", "course");
   PyObject* moos_vars = Py_BuildValue("s", "MOOS_VARS");
 
-  int ok = PyDict_Contains(action, speed);
+  bool valid = false;
 
+  int ok = PyDict_Contains(action, speed);
   // This is expanded to not loose an error if two happen at same time
   if(ok > -1){
     ok = PyDict_Contains(action, course);
     if(ok > -1){
       ok = PyDict_Contains(action, moos_vars);
       if(ok > -1){
-        return true; // No errors with the dict
+        valid = true; // No errors with the dict
       }
     }
   }
@@ -377,7 +377,7 @@ bool PyInterface::validateAction(PyObject* action){
   Py_DECREF(course);
   Py_DECREF(moos_vars);
 
-  return false;
+  return valid;
 }
 
 PyInterface::~PyInterface(){
