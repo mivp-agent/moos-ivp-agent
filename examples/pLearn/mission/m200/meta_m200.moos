@@ -23,8 +23,8 @@ ProcessConfig = ANTLER
   Run = uFldMessageHandler @ NewConsole = false
   Run = pRangeEvent        @ NewConsole = false
   Run = pNodeReportParse   @ NewConsole = false
-  Run = pEpisodeManager    @ NewConsole = false
 #ifdef BEH ATTACK
+  Run = pEpisodeManager    @ NewConsole = false
   Run = uXMS               @ NewConsole = false
 #endif
 }

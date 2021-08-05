@@ -15,9 +15,9 @@ Processconfig = ANTLER
   Run = MOOSDB          @ NewConsole = false
   Run = pLogger         @ NewConsole = false
   Run = uProcessWatch   @ NewConsole = false
-
+#ifdef NO_GUI false
   Run = pMarineViewer   @ NewConsole = false
-
+#endif
   Run = pHostInfo       @ NewConsole = false
   Run = pShare          @ NewConsole = false
   Run = uFldShoreBroker @ NewConsole = false

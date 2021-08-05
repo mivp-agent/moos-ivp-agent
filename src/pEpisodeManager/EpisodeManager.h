@@ -13,6 +13,8 @@
 #include "InfoBuffer.h"
 #include "VarDataPair.h"
 
+enum ManagerState {RUNNING, STOPPING_HELM, RESETING, PAUSED};
+
 class EpisodeManager : public AppCastingMOOSApp
 {
  public:
@@ -30,32 +32,49 @@ class EpisodeManager : public AppCastingMOOSApp
 
  protected:
    void registerVariables();
-   bool stopEpisode();
+   void startEpisode();
+   void endEpisode(bool success);
+   void resetVehicle();
 
-   bool resetVarsValid();
+   bool resetPosValid();
    bool updateInfoBuffer(CMOOSMsg&);
-   bool checkConditions();
+   bool checkConditions(std::vector<LogicCondition> conditions);
+   void postPosts(std::vector<VarDataPair> posts);
 
  private: // Configuration variables
    //TODO: Move initalization to the constructor
    std::string m_vname = "";
 
-   std::string m_reset_x = "";
-   std::string m_reset_y = "";
+   double m_reset_x;
+   double m_reset_y;
    std::string m_reset_heading = "";
-
-   bool m_episode_running;
-   bool m_continuous;
 
   // TODO: m_unpause_conditions, m_unpause_posts, m_continous -> m_paused
   // m_paused set by m_end_posts?? (prob not delay to get new mail?)
 
-   std::vector<LogicCondition> m_end_conditions;
-   std::vector<VarDataPair> m_end_posts;
+   std::vector<LogicCondition> m_end_success_conditions;
+   std::vector<LogicCondition> m_end_failure_conditions;
+   std::vector<VarDataPair> m_start_posts;
+   std::vector<VarDataPair> m_reset_posts;
+   std::vector<VarDataPair> m_pause_posts;
 
  private: // State variables
-   InfoBuffer *m_info_buffer;
+   ManagerState m_current_state;
+   ManagerState m_previous_state;
+   bool m_pause_request;
+   bool m_run_request;
+
    int m_episode_cnt;
+   int m_success_cnt;
+   int m_failure_cnt;
+
+   InfoBuffer *m_info_buffer;
+   double m_nav_x;
+   double m_nav_y;
+   std::string m_helm_state;
+
+
+   double m_episode_start;
 };
 
 #endif 

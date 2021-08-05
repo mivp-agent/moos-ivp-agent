@@ -11,6 +11,7 @@ SHORE_LISTEN="9300"
 BLUE_FLAG="x=-58,y=-71"
 RED_FLAG="x=50,y=-24"
 VERBOSE=""
+NO_GUI="false"
 
 for ARGI; do
     if [ "${ARGI}" = "--help" -o "${ARGI}" = "-h" ] ; then
@@ -28,6 +29,8 @@ for ARGI; do
         SHORE_IP="${ARGI#--shore-ip=*}"
     elif [ "${ARGI:0:13}" = "--shore-port=" ] ; then
         SHORE_LISTEN=${ARGI#--shore-port=*}
+    elif [ "${ARGI}" = "--no_gui" ]; then 
+        NO_GUI="true"
     elif [ "${ARGI}" = "--verbose" -o "${ARGI}" = "-v" ] ; then
         VERBOSE="-v" 
         echo "Excuting launch verbosly."
@@ -43,7 +46,7 @@ done
 nsplug meta_shoreside.moos targ_shoreside.moos -f WARP=$TIME_WARP    \
        SNAME="shoreside"  SHARE_LISTEN=$SHORE_LISTEN  SPORT="9000"   \
        VTEAM1=$VTEAM1 VTEAM2=$VTEAM2 SHORE_IP=$SHORE_IP              \
-       RED_FLAG=${RED_FLAG} BLUE_FLAG=${BLUE_FLAG}
+       RED_FLAG=${RED_FLAG} BLUE_FLAG=${BLUE_FLAG} NO_GUI=$NO_GUI
 
 if [ ! -e targ_shoreside.moos ]; then echo "no targ_shoreside.moos"; exit 1; fi
 

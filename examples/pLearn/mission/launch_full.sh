@@ -5,6 +5,7 @@ VERBOSE=""
 CMD_ARGS=""
 NO_M200=""
 NO_SHORESIDE=""
+NO_GUI=""
 
 #-------------------------------------------------------
 #  Part 1: Check for and handle command-line arguments
@@ -23,6 +24,8 @@ for ARGI; do
         JUST_BUILD="-j" 
         # Pass $JUST_BUILD directly to the launch commands, this will be blank if not just building
         echo "Just building files; no vehicle launch."
+    elif [ "${ARGI}" = "--no_gui" ]; then 
+        NO_GUI="--no_gui"
     elif [ "${ARGI}" = "--verbose" -o "${ARGI}" = "-v" ] ; then
         VERBOSE="-v" 
         echo "Excuting launch verbosly."
@@ -69,9 +72,9 @@ if [[ -z $NO_SHORESIDE ]]; then
   echo "Lauching shoreside..."
   cd ./shoreside
   if [[ -z $VERBOSE ]]; then
-    ./launch_shoreside.sh $TIME_WARP $JUST_BUILD >& /dev/null &
+    ./launch_shoreside.sh $TIME_WARP $JUST_BUILD $NO_GUI >& /dev/null &
   else
-    ./launch_shoreside.sh $TIME_WARP $JUST_BUILD $VERBOSE &
+    ./launch_shoreside.sh $TIME_WARP $JUST_BUILD $NO_GUI $VERBOSE &
   fi
   cd ..
 fi

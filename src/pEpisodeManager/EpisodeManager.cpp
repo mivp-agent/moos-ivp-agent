@@ -9,6 +9,7 @@
 #include "MBUtils.h"
 #include "ACTable.h"
 #include "EpisodeManager.h"
+#include <cmath>
 
 using namespace std;
 
@@ -17,11 +18,19 @@ using namespace std;
 
 EpisodeManager::EpisodeManager()
 {
+  m_current_state = RUNNING;
+  m_previous_state = PAUSED; // So start vars get posted
+  m_pause_request = false;
+  m_run_request = false;
+
   m_info_buffer = new InfoBuffer;
+  m_nav_x = 0;
+  m_nav_y = 0;
+  m_helm_state = "uninitalized";
 
   m_episode_cnt = 0;
-  m_episode_running = true;
-  m_continuous = true;
+  m_success_cnt = 0;
+  m_failure_cnt = 0;
 }
 
 //---------------------------------------------------------
@@ -53,9 +62,31 @@ bool EpisodeManager::OnNewMail(MOOSMSG_LIST &NewMail)
     bool   mstr  = msg.IsString();
 #endif
 
-    if(key == "SOME_KEY_HERE"){
-      // TODO: Other stuff?
-    }else{
+    if(key == "EPISODE_MNGR_CTRL"){
+      string sval = msg.GetString();
+      string type = tokStringParse(sval, "type", ',', '=');
+      if(type == "pause"){
+        if(m_current_state == PAUSED)
+          reportRunWarning("Got pause signal while in PAUSED STATE. Ignoring.");
+        else
+          m_pause_request = true;
+      }else if(type == "start"){
+        if(m_current_state == RUNNING){
+          reportRunWarning("Got run signal while in RUNNING state. Ignoring");
+        }else{
+          m_run_request = true;
+        }
+      }else{
+        reportRunWarning("Unimplemented control message: "+type);
+      }
+    }else if(key == "NAV_X"){
+      m_nav_x = msg.GetDouble();
+    }else if(key == "NAV_Y"){
+      m_nav_y = msg.GetDouble();
+    }else if(key == "IVPHELM_STATE"){
+      m_helm_state = msg.GetString();
+    }
+    else{
       updateInfoBuffer(msg);
     }
   }
@@ -98,14 +129,36 @@ bool EpisodeManager::OnConnectToServer()
 bool EpisodeManager::Iterate()
 {
   AppCastingMOOSApp::Iterate();
+  
+  if(m_current_state == PAUSED){
+    if(m_run_request){
+      m_run_request = false;
+      startEpisode(); // Transition to RUNNING and other init stuff
+    }
+  }else if(m_current_state == RUNNING){
+    bool end, success;
+    end = success = checkConditions(m_end_success_conditions);
+    if(!end)
+      end = checkConditions(m_end_failure_conditions);
 
-  if(m_episode_running){
-    
-    bool end = checkConditions();
+    if(end)
+      endEpisode(success);
+  }else if(m_current_state == STOPPING_HELM){
+    if(m_helm_state == "PARK"){
+      resetVehicle();
+    }
+  }else if(m_current_state == RESETING){
+    if(std::abs(m_nav_x-m_reset_x) < 1 && std::abs(m_nav_y-m_reset_y) < 1){
+      postPosts(m_reset_posts);
 
-    // Handle episode ending 
-    if (end)
-      stopEpisode();
+      m_previous_state = m_current_state;
+      if(m_pause_request){
+        m_pause_request = false;
+        m_current_state = PAUSED;
+      }else{
+        startEpisode(); // Transition to RUNNING and other init stuff
+      }
+    }
   }
 
   AppCastingMOOSApp::PostReport();
@@ -133,17 +186,27 @@ bool EpisodeManager::OnStartUp()
     string value = line;
 
     bool handled = false;
-    if(param == "end_condition"){
+    if(param == "end_success_condition"){
       // Following example from TS_MOOSApp
       LogicCondition new_condition;
       bool ok = new_condition.setCondition(value);
       if(ok)
-        m_end_conditions.push_back(new_condition);
+        m_end_success_conditions.push_back(new_condition);
       else
         reportConfigWarning("Invalid logic condition: " + value);
       
       handled = true;
-    }else if(param == "end_post"){
+    }else if(param == "end_failure_condition"){
+      // Following example from TS_MOOSApp
+      LogicCondition new_condition;
+      bool ok = new_condition.setCondition(value);
+      if(ok)
+        m_end_failure_conditions.push_back(new_condition);
+      else
+        reportConfigWarning("Invalid logic condition: " + value);
+      
+      handled = true;
+    }else if(param == "reset_post" || param == "start_post"){
       // Add a new end post
       string new_var;
       string new_val;
@@ -171,8 +234,11 @@ bool EpisodeManager::OnStartUp()
       }
 
       if(new_var != "" && new_val != ""){
-        VarDataPair new_pair(new_var, new_val, "Auto");
-        m_end_posts.push_back(new_pair);
+        VarDataPair new_pair(new_var, new_val, "auto");
+        if(param == "reset_post")
+          m_reset_posts.push_back(new_pair);
+        else if (param == "start_post")
+          m_start_posts.push_back(new_pair);
       }else{
         // TODO: Will double post with first one of these in some conditions
         reportConfigWarning("Invalid end post: "+ value);
@@ -180,11 +246,11 @@ bool EpisodeManager::OnStartUp()
 
       handled = true;
     }else if(param == "reset_pos") {
-      m_reset_x = biteStringX(value, ',');
-      m_reset_y = biteStringX(value, ',');
+      m_reset_x = std::atof(biteStringX(value, ',').c_str());
+      m_reset_y = std::atof(biteStringX(value, ',').c_str());
       m_reset_heading = biteStringX(value, ',');
 
-      if(!resetVarsValid()){
+      if(!resetPosValid()){
         reportConfigWarning("Invalid START_POS config");
       }
 
@@ -192,6 +258,16 @@ bool EpisodeManager::OnStartUp()
     }
     else if (param == "vname"){
       m_vname = value;
+      handled = true;
+    }else if(param == "paused"){
+      value = tolower(stripBlankEnds(value));
+      if(value == "true"){
+        m_current_state = PAUSED;
+      }
+      else if(value == "false")
+       m_current_state = RUNNING;
+      else
+        reportConfigWarning("paused parameter should be boolean");
       handled = true;
     }
 
@@ -209,12 +285,25 @@ bool EpisodeManager::OnStartUp()
 void EpisodeManager::registerVariables()
 {
   AppCastingMOOSApp::RegisterVariables();
+  // Register vars needed for state machine
+  Register("IVPHELM_STATE");
+  Register("NAV_X", 0);
+  Register("NAV_Y", 0);
+
+  // Register for control var
+  Register("EPISODE_MNGR_CTRL", 0);
+
 
   // Again following TS_MOOSApp example
   vector<string> all_vars;
-  unsigned int i, vsize = m_end_conditions.size();
+  unsigned int i, vsize = m_end_success_conditions.size();
   for(i=0; i<vsize; i++) {
-    vector<string> svector = m_end_conditions[i].getVarNames();
+    vector<string> svector = m_end_success_conditions[i].getVarNames();
+    all_vars = mergeVectors(all_vars, svector);
+  }
+  vsize = m_end_failure_conditions.size();
+  for(i=0; i<vsize; i++) {
+    vector<string> svector = m_end_failure_conditions[i].getVarNames();
     all_vars = mergeVectors(all_vars, svector);
   }
   all_vars = removeDuplicates(all_vars);
@@ -227,8 +316,9 @@ void EpisodeManager::registerVariables()
   }
 }
 
-bool EpisodeManager::resetVarsValid(){
-  return m_reset_x != "" && m_reset_y != "" && m_reset_heading != "";
+bool EpisodeManager::resetPosValid(){
+  //TODO: Fix this
+  return m_reset_heading != "";
 }
 
 //-----------------------------------------------------------
@@ -237,7 +327,7 @@ bool EpisodeManager::resetVarsValid(){
 //            of conditions is met, given the snapshot of variable
 //            values in the info_buffer.
 
-bool EpisodeManager::checkConditions()
+bool EpisodeManager::checkConditions(std::vector<LogicCondition> conditions)
 {
   if(!m_info_buffer) 
     return(false);
@@ -246,9 +336,9 @@ bool EpisodeManager::checkConditions()
 
   // Phase 1: get all the variable names from all present conditions.
   vector<string> all_vars;
-  csize = m_end_conditions.size();
+  csize = conditions.size();
   for(i=0; i<csize; i++) {
-    vector<string> svector = m_end_conditions[i].getVarNames();
+    vector<string> svector = conditions[i].getVarNames();
     all_vars = mergeVectors(all_vars, svector);
   }
   all_vars = removeDuplicates(all_vars);
@@ -263,68 +353,99 @@ bool EpisodeManager::checkConditions()
     double d_result = m_info_buffer->dQuery(varname, ok_d);
 
     for(j=0; (j<csize)&&(ok_s); j++)
-      m_end_conditions[j].setVarVal(varname, s_result);
+      conditions[j].setVarVal(varname, s_result);
     for(j=0; (j<csize)&&(ok_d); j++)
-      m_end_conditions[j].setVarVal(varname, d_result);
+      conditions[j].setVarVal(varname, d_result);
   }
 
   // Phase 3: evaluate all logic conditions. Return true only if all
   // conditions evaluate to be true.
   for(i=0; i<csize; i++) {
-    bool satisfied = m_end_conditions[i].eval();
+    bool satisfied = conditions[i].eval();
     if(!satisfied)
       return(false);
   }
   return(true);
 }
 
-//---------------------------------------------------------
-// Procedure: registerVariables
+void EpisodeManager::startEpisode(){
+  // Change state to running
+  m_previous_state = m_current_state;
+  m_current_state = RUNNING;
 
-bool EpisodeManager::stopEpisode(){
-  if(!resetVarsValid()){
-    reportRunWarning("Cannot stop episode due to invalid reset point.");
-    return false;
+  Notify("MOOS_MANUAL_OVERRIDE", "false");
+
+  if(m_previous_state == PAUSED){
+    postPosts(m_start_posts);
   }
-  
-  Notify("USM_RESET", "x="+m_reset_x+",y="+m_reset_y+",speed=0,heading="+m_reset_heading+"depth=0");
 
+  m_episode_cnt += 1;
+  m_episode_start = MOOSTime();  
+}
+
+void EpisodeManager::endEpisode(bool success){
+  if(success)
+    m_success_cnt += 1;
+  else
+    m_failure_cnt += 1;
+
+  std::string report = "EPISODE="+intToString(m_episode_cnt);
+  report += ",SUCCESS="+boolToString(success);
+  report += ",DURATION="+doubleToString(MOOSTime()-m_episode_start);
+  report += ",WILL_PAUSE="+boolToString(m_pause_request);
+  Notify("EPISODE_MNGR_REPORT", report);
+  reportEvent("Episode over: "+report);
+
+  // Stop helm and transition state
+  Notify("MOOS_MANUAL_OVERRIDE", "true");
+  m_previous_state = m_current_state;
+  m_current_state = STOPPING_HELM;
+}
+
+void EpisodeManager::resetVehicle(){
+  if(!resetPosValid()){
+    reportRunWarning("Cannot reset vehicle due to invalid reset position.");
+    return;
+  }
+
+  m_previous_state = m_current_state;
+  m_current_state = RESETING;
+
+  std::string reset_string = "x="+doubleToString(m_reset_x);
+  reset_string += ",y="+doubleToString(m_reset_y);
+  reset_string += ",heading="+m_reset_heading;
+  reset_string += ",speed=0,depth=0";
+
+  Notify("USM_RESET", reset_string);
+}
+
+void EpisodeManager::postPosts(std::vector<VarDataPair> posts){
   // Notify end posts
-  unsigned int i, vsize = m_end_posts.size();
+  unsigned int i, vsize = posts.size();
   for(i=0; i<vsize; i++){
-    string var = m_end_posts[i].get_var();
+    string var = posts[i].get_var();
 
-    if(!m_end_posts[i].is_string()){
-      double dval = m_end_posts[i].get_ddata();
+    if(!posts[i].is_string()){
+      double dval = posts[i].get_ddata();
       Notify(var, dval);
       // TODO: Booleans do not get printed nicely here
       reportEvent("Posted float "+var+"="+doubleToString(dval));
     }else{
-      string sval = m_end_posts[i].get_sdata();
+      string sval = posts[i].get_sdata();
 
-      if(isNumber(sval) && !m_end_posts[i].is_quoted()){
+      // Notify vars & add to local info buffer
+      if(isNumber(sval) && !posts[i].is_quoted()){
         double dval = atof(sval.c_str());
+        m_info_buffer->setValue(var, dval);
         Notify(var, dval);
         reportEvent("Posted \""+sval+"\" as float "+var+"="+doubleToString(dval));
       }else{
+        m_info_buffer->setValue(var, sval);
         Notify(var, sval);
         reportEvent("Posted string "+var+"="+sval);
       }
     }
   }
-
-  // Report app casting event
-  if(!m_continuous){
-    m_episode_running = false;
-    reportEvent("Episode #"+ intToString(m_episode_cnt) + " has_ended.");
-  }else{
-    reportEvent("Episode #"+ intToString(m_episode_cnt) + " has_ended. Starting next...");
-  }
-
-  // Update state vars
-  m_episode_cnt++;
-
-  return true;
 }
 
 //------------------------------------------------------------
@@ -338,11 +459,25 @@ bool EpisodeManager::buildReport()
   m_msgs << "RESET_X:       " << m_reset_x << endl;
   m_msgs << "RESET_Y:       " << m_reset_y << endl;
   m_msgs << "RESET_HEADING: " << m_reset_heading << endl;
-  m_msgs << "Continous:     " << std::boolalpha << m_continuous << endl << endl;
 
   m_msgs << "State Variables" << endl;
   m_msgs << "----------------------------------" << endl;
-  m_msgs << "episode_cnt: " << m_episode_cnt << endl;
+  m_msgs << "state:           "; 
+  if(m_current_state == RUNNING)
+    m_msgs << "RUNNING" << endl;
+  else if(m_current_state == STOPPING_HELM)
+    m_msgs << "STOPPING_HELM (reset loop)" << endl;
+  else if(m_current_state == RESETING)
+    m_msgs << "RESETING (reset loop)" << endl;
+  else if(m_current_state == PAUSED)
+    m_msgs << "PAUSED" << endl;
+  
+  m_msgs << "pause_request:   " << std::boolalpha << m_pause_request << endl;
+  m_msgs << "run_request:     " << std::boolalpha << m_run_request << endl;
+
+  m_msgs << "episode_cnt:     " << m_episode_cnt << endl;
+  m_msgs << "success_cnt:     " << m_success_cnt << endl;
+  m_msgs << "failure_cnt:     " << m_failure_cnt << endl;
 
   return(true);
 }
