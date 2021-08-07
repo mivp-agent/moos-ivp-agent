@@ -2,7 +2,8 @@ import os
 THISDIR = os.path.dirname(os.path.realpath(__file__))
 
 # Models
-PLEARN_TOPMODEL = os.path.abspath(os.path.join(THISDIR, '../trained/topModel'))
+PLEARN_TOPMODEL = os.path.abspath(os.path.join(THISDIR, '../trained/topModel/model'))
+JAYLAN_TESTDIR = os.path.abspath(os.path.join(THISDIR, '../trained/the-attack-of-jaylan'))
 
 # Translate pLearn actions 
 PLEARN_ACTIONS = {

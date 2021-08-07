@@ -60,7 +60,7 @@ class TestSocket(unittest.TestCase):
       self.assertFalse(server.listen_state())
     with ModelBridgeClient() as client:
       self.assertFalse(client.send_state(DUMMY_STATE))
-      self.assertFalse(client.listen_action())
+      self.assertFalse(client.listen())
   
   def test_socket_send_action(self):
     with ModelBridgeServer() as server:
@@ -74,10 +74,12 @@ class TestSocket(unittest.TestCase):
       # Part 2: Check simple action sending
       with ModelBridgeClient() as client:
         def dummy_connect_client(client):
-          client.connect()
-          action = client.listen_action()
+          time.sleep(1)
 
-          self.assertEqual(action, DUMMY_ACTION)
+          client.connect()
+          rsp = client.listen()
+
+          self.assertEqual(rsp['action'], DUMMY_ACTION)
 
         # Use another thread to connect client
         t =  Thread(target=dummy_connect_client, args=(client,))
@@ -110,9 +112,9 @@ class TestSocket(unittest.TestCase):
           self.assertTrue(server.send_action(DUMMY_ACTION))
           self.assertTrue(server.send_action(DUMMY_ACTION_2))
 
-          action = client.listen_action(timeout=None)
+          rsp = client.listen(timeout=None)
 
-          self.assertEqual(action, DUMMY_ACTION_2)
+          self.assertEqual(rsp['action'], DUMMY_ACTION_2)
 
           # And test must posts
           self.assertTrue(server.send_action(DUMMY_ACTION_2))
@@ -120,10 +122,10 @@ class TestSocket(unittest.TestCase):
           self.assertTrue(server.send_must_post(DUMMY_MUST_POST))
           self.assertTrue(server.send_must_post(DUMMY_MUST_POST_2))
 
-          action = client.listen_action(timeout=None)
+          rsp = client.listen(timeout=None)
 
-          # TODO: Fix these tests
-          self.assertEqual(action, DUMMY_ACTION)
+          # TODO: Test for dummy posts
+          self.assertEqual(rsp['action'], DUMMY_ACTION)
 
   def test_socket_send_state(self):
     with ModelBridgeServer() as server:
@@ -165,8 +167,33 @@ class TestSocket(unittest.TestCase):
         t.join() # Don't need the server for the rest of the tests
 
         # Assert that timout happens 
-        self.assertFalse(client.listen_action())
-  
+        self.assertFalse(client.listen())
+
+  def test_spam_state(self):
+    # Part 2: Check that client gets most recent action
+      with ModelBridgeClient() as client:
+        with ModelBridgeServer() as server: 
+          def dummy_connect_client(client):
+            client.connect()
+          
+          # Use another thread to connect client
+          t =  Thread(target=dummy_connect_client, args=(client,))
+          t.start()
+          server.accept()
+          t.join()
+
+          self.assertTrue(client.send_state(DUMMY_STATE))
+          rsp, _ = server.listen_state()
+          self.assertEqual(rsp, DUMMY_STATE)
+
+
+          for x in range(1, 40):
+            for i in range(x):
+              self.assertTrue(client.send_state(DUMMY_STATE))
+            rsp, _ = server.listen_state()
+            self.assertEqual(rsp, DUMMY_STATE)
+
+
 
 if __name__ == '__main__':
   unittest.main()

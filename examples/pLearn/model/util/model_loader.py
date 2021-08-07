@@ -10,7 +10,7 @@ def load_pLearn_model(model_dir, enviroment_dir=None):
   if enviroment_dir is not None:
     sys.path.append(enviroment_dir)
   else:
-    sys.path.append(model_dir)
+    sys.path.append(os.path.join(model_dir, '..'))
   from environment import Constants
 
   const = Constants()

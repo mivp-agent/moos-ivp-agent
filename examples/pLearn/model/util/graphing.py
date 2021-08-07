@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
+import os
+import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 
@@ -49,6 +52,70 @@ def plot_rewards(reward_function, defender=False):
 
   plt.show()
 
+class TestGrapher:
+    def __init__(self, save_dir=None):
+      # Parse args
+      self.save_dir = save_dir
+
+      # Setup matplotlib
+      matplotlib.use('TkAgg')
+      plt.ion()
+
+      # Configure axes
+      self.fig, self.axs = plt.subplots(2,2)
+      self.axs[0, 0].set_title("Success Precent")
+      self.axs[0, 1].set_title("Min Dist to Flag")
+      self.axs[1, 0].set_title("Avg Durration")
+
+      self.success, = self.axs[0,0].plot([], [], 'g-')
+      self.min_dist, = self.axs[0,1].plot([], [], 'b-')
+      self.avg_duration, = self.axs[1,0].plot([], [], 'r-')
+
+      # Stylisitic details
+      self.fig.tight_layout(pad=2.0)
+      self.fig.set_size_inches(8, 7)
+      
+      # Create data structures
+      self.iters = []
+      self.success_data = []
+      self.min_dist_data = []
+      self.avg_duration_data = []
+      self.max_iter = -1
+
+    
+    def add_iteration(self, iter, success_pcnt, min_dist, avg_duration, plot=True):
+      self.iters.append(iter)
+      self.success_data.append(success_pcnt)
+      self.min_dist_data.append(min_dist)
+      self.avg_duration_data.append(min_dist)
+
+      if iter > self.max_iter:
+        self.max_iter = iter
+
+      if plot:
+        self._plot()
+
+    def _plot(self):
+      self.success.set_data(self.iters, self.success_data)
+      self.axs[0,0].relim()
+      self.axs[0,0].autoscale_view()
+      #self.axs[0,0].set_ylim(bottom=0.0)
+
+      self.min_dist.set_data(self.iters, self.min_dist_data)
+      self.axs[0,1].relim()
+      self.axs[0,1].autoscale_view()
+      #self.axs[0,0].set_ylim(bottom=0.0)
+
+      self.avg_duration.set_data(self.iters, self.avg_duration_data)
+      self.axs[1,0].relim()
+      self.axs[1,0].autoscale_view()
+      #self.axs[0,0].set_ylim(bottom=0.0)
+
+      self.fig.canvas.draw()
+      self.fig.canvas.flush_events()
+
+      if self.save_dir != None:
+        plt.savefig(os.path.join(self.save_dir, 'test_graph.png'))
 
 
       

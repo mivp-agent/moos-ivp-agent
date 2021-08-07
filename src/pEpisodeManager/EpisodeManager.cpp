@@ -69,7 +69,7 @@ bool EpisodeManager::OnNewMail(MOOSMSG_LIST &NewMail)
       string type = tokStringParse(sval, "type", ',', '=');
       if(type == "pause"){
         if(m_current_state == PAUSED)
-          reportRunWarning("Got pause signal while in PAUSED STATE. Ignoring.");
+          reportRunWarning("Got pause signal while in PAUSED state. Ignoring.");
         else
           m_pause_request = true;
       }else if(type == "start"){
@@ -77,6 +77,15 @@ bool EpisodeManager::OnNewMail(MOOSMSG_LIST &NewMail)
           reportRunWarning("Got run signal while in RUNNING state. Ignoring");
         }else{
           m_run_request = true;
+        }
+      }else if(type == "hardstop"){
+        if(m_current_state == PAUSED){
+          reportRunWarning("Got hardstop singal in state PAUSED state. Ignoring");
+        }else{
+          // End episode immediatly and go to stop state
+          if(m_current_state == RUNNING)
+            endEpisode(false);
+          m_pause_request = true;
         }
       }else{
         reportRunWarning("Unimplemented control message: "+type);
@@ -133,11 +142,13 @@ bool EpisodeManager::Iterate()
   AppCastingMOOSApp::Iterate();
   
   if(m_current_state == PAUSED){
+    Notify("EPISODE_MNGR_STATE", "PAUSED");
     if(m_run_request){
       m_run_request = false;
       startEpisode(); // Transition to RUNNING and other init stuff
     }
   }else if(m_current_state == RUNNING){
+    Notify("EPISODE_MNGR_STATE", "RUNNING");
     bool end, success;
     end = success = checkConditions(m_end_success_conditions);
     if(!end)
@@ -148,16 +159,22 @@ bool EpisodeManager::Iterate()
     if(end)
       endEpisode(success);
   }else if(m_current_state == STOPPING_HELM){
+    Notify("EPISODE_MNGR_STATE", "STOPPING_HELM");
     if(m_helm_state == "PARK"){
       resetVehicle();
     }
   }else if(m_current_state == RESETING){
+    Notify("EPISODE_MNGR_STATE", "RESETING");
     if(std::abs(m_nav_x-m_reset_x) < 1 && std::abs(m_nav_y-m_reset_y) < 1){
       postPosts(m_reset_posts);
+      Notify("MOOS_MANUAL_OVERRIDE", "false");
 
       m_previous_state = m_current_state;
       if(m_pause_request){
         m_pause_request = false;
+
+        postPosts(m_pause_posts);
+
         m_current_state = PAUSED;
       }else{
         startEpisode(); // Transition to RUNNING and other init stuff
@@ -210,7 +227,7 @@ bool EpisodeManager::OnStartUp()
         reportConfigWarning("Invalid logic condition: " + value);
       
       handled = true;
-    }else if(param == "reset_post" || param == "start_post"){
+    }else if(param == "reset_post" || param == "pause_post" || param == "start_post"){
       // Add a new end post
       string new_var;
       string new_val;
@@ -243,6 +260,8 @@ bool EpisodeManager::OnStartUp()
           m_reset_posts.push_back(new_pair);
         else if (param == "start_post")
           m_start_posts.push_back(new_pair);
+        else if (param == "pause_post")
+          m_pause_posts.push_back(new_pair);
       }else{
         // TODO: Will double post with first one of these in some conditions
         reportConfigWarning("Invalid end post: "+ value);
@@ -379,8 +398,6 @@ void EpisodeManager::startEpisode(){
   // Change state to running
   m_previous_state = m_current_state;
   m_current_state = RUNNING;
-
-  Notify("MOOS_MANUAL_OVERRIDE", "false");
 
   if(m_previous_state == PAUSED){
     postPosts(m_start_posts);

@@ -29,7 +29,7 @@ public:
 
 protected: // Local Utility functions
   void         postBridgeState(std::string state);
-  void         tickBridge(bool running);
+  void         tickBridge(bool running, std::vector<VarDataPair> *action);
 
 protected: // Configuration parameters
   std::vector<std::string> m_sub_vars;

@@ -17,6 +17,7 @@ GRABR_POS=""
 GRABL_POS=""
 UNTAG_POS=""
 BEH="ATTACK"
+DEPLOY="no"
 
 #-------------------------------------------------------
 #  Part 1: Check for and handle command-line arguments
@@ -71,6 +72,8 @@ for ARGI; do
     elif [ "${ARGI}" = "--verbose" -o "${ARGI}" = "-v" ] ; then
         VERBOSE="-v" 
         echo "Excuting launch verbosly."
+    elif [ "${ARGI}" = "--deploy" ]; then
+        DEPLOY="yes"
     elif [ "${ARGI}" = "--sim" -o "${ARGI}" = "-s" ] ; then
         SIM="SIM"
         echo "Simulation mode ON."
@@ -173,6 +176,7 @@ nsplug meta_m200.moos targ_${VNAME}.moos -f \
     VTEAM=$VTEAM                 \
     START_POS=$START_POS         \
     BEH=$BEH                     \
+    DEPLOY=$DEPLOY               \
     $SIM
 
 echo "Assembling BHV file targ_${VNAME}.bhv"
@@ -185,8 +189,7 @@ nsplug meta_m200.bhv targ_${VNAME}.bhv -f  \
     GRABL_POS=$GRABL_POS        \
     UNTAG_POS=$UNTAG_POS        \
 	FLAG=$START_POS             \
-	BEH=$BEH
-
+	BEH=$BEH                    \
 
 if [ ${JUST_BUILD} = "yes" ] ; then
     echo "Files assembled; vehicle not launched; exiting per request."

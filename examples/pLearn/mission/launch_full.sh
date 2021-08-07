@@ -28,7 +28,7 @@ for ARGI; do
     elif [ "${ARGI}" = "--no_gui" ]; then 
         NO_GUI="--no_gui"
     elif [ "${ARGI}" = "--deploy" ]; then 
-        DEPLOY="yes"
+        DEPLOY="--deploy"
     elif [ "${ARGI}" = "--verbose" -o "${ARGI}" = "-v" ] ; then
         VERBOSE="-v" 
         echo "Excuting launch verbosly."
@@ -58,12 +58,12 @@ if [[ -z $NO_M200 ]]; then
     # Evan Blue
     ./launch_m200.sh $TIME_WARP $JUST_BUILD -e -b -s --DEFEND >& /dev/null &
     # Felix Red
-    ./launch_m200.sh $TIME_WARP $JUST_BUILD -f -r -s >& /dev/null &
+    ./launch_m200.sh $TIME_WARP $JUST_BUILD $DEPLOY -f -r -s >& /dev/null &
   else
     # Evan Blue
     ./launch_m200.sh $TIME_WARP $JUST_BUILD $VERBOSE -e -b -s --DEFEND &
     # Felix Red
-    ./launch_m200.sh $TIME_WARP $JUST_BUILD $VERBOSE -f -r -s &
+    ./launch_m200.sh $TIME_WARP $JUST_BUILD $DEPLOY $VERBOSE -f -r -s &
   fi
   cd ..
 fi

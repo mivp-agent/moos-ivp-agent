@@ -135,7 +135,6 @@ bool PyInterface::connect(){
 bool PyInterface::sendState(double helm_time, double NAV_X, double NAV_Y, double NAV_H, std::string VNAME, std::vector<std::string> node_reports, std::vector<VarDataPair> vd_pairs){
   if(!isConnected())
     return false;
-
   // Create the state object
   PyObject* state_dict = constructState(helm_time, NAV_X, NAV_Y, NAV_H, VNAME, node_reports, vd_pairs);
 
@@ -169,21 +168,19 @@ bool PyInterface::sendState(double helm_time, double NAV_X, double NAV_Y, double
   // Clean up and return
   bool success = PyObject_IsTrue(result);
   Py_DECREF(result);
-  return result;
+  return success;
 }
 
-std::vector<VarDataPair> PyInterface::listenAction(){
-  std::vector<VarDataPair> action; // Will return with size = 0 on failure
-
+void PyInterface::listen(std::vector<VarDataPair> *mps, std::vector<VarDataPair> *action){
   if(!isConnected())
-    return action;
+    return;
 
-  PyObject* result = PyObject_CallMethod(m_bridge_client, "listen_action", NULL);
+  PyObject* result = PyObject_CallMethod(m_bridge_client, "listen", NULL);
 
   if(result == NULL){
-    fprintf(stderr, "ERROR: Failed to call listen_action function from client object\n\n");
+    fprintf(stderr, "ERROR: Failed to call listen function from client object\n\n");
     PyErr_Print();
-    return action;
+    return;
   }
 
   if(PyBool_Check(result)){
@@ -195,7 +192,7 @@ std::vector<VarDataPair> PyInterface::listenAction(){
       // Not what we are expecting so raise our own error
       throw runtime_error("ModelBridgeClient's listen_state function returned True (invalid protocol)");
     }
-    return action; // Fail normally
+    return; // Fail normally
   }
 
   if(!PyDict_Check(result)){
@@ -203,61 +200,60 @@ std::vector<VarDataPair> PyInterface::listenAction(){
     throw runtime_error("Method 'listen_action' did not fail or return dict");
   }
 
-  if(!validateAction(result)){
+  // Assert both keys are present
+  PyObject* py_action = Py_BuildValue("s", "action");
+  PyObject* py_mps = Py_BuildValue("s", "must_posts");
+
+  if(!PyDict_Contains(result, py_action) || !PyDict_Contains(result, py_mps)){
     Py_DECREF(result);
-    throw runtime_error("Unable to unpack dictionary");
+    Py_DECREF(py_action);
+    Py_DECREF(py_mps);
+    throw runtime_error("Message from bridge.listen() does not contain proper keys");
   }
+  Py_DECREF(py_action);
+  Py_DECREF(py_mps);
 
-  // Parse out speed and course
-  double speed, course;
-  PyObject* speed_key = Py_BuildValue("s", "speed");
-  PyObject* course_key = Py_BuildValue("s", "course");
+  py_action = PyDict_GetItemString(result, "action");
 
-  // PyDict_GetItem returns borrowed reference so no need to decref
-  // Python code should do type checking for us
-  speed = PyFloat_AsDouble(PyDict_GetItem(result, speed_key));
-  course = PyFloat_AsDouble(PyDict_GetItem(result, course_key));
+  if(action != NULL && py_action != Py_None){
+    if(!validateAction(py_action)){
+      Py_DECREF(result);
+      throw runtime_error("Unable to unpack dictionary");
+    }
 
-  Py_DECREF(speed_key);
-  Py_DECREF(course_key);
+    // Parse out speed and course
+    double speed, course;
+    // PyDict_GetItem returns borrowed reference so no need to decref
+    // Python code should do type checking for us
+    speed = PyFloat_AsDouble(PyDict_GetItemString(py_action, "speed"));
+    course = PyFloat_AsDouble(PyDict_GetItemString(py_action, "course"));
 
-  // Push into return vector
-  VarDataPair speed_pair("speed", speed);
-  VarDataPair course_pair("course", course);
+    // Push into return vector
+    VarDataPair speed_pair("speed", speed);
+    VarDataPair course_pair("course", course);
 
-  action.push_back(speed_pair);
-  action.push_back(course_pair);
+    action->push_back(speed_pair);
+    action->push_back(course_pair);
 
-  // TODO: Parse MOOS_VARS as actions  
-  PyObject* MOOS_VARS = PyDict_GetItemString(result, "MOOS_VARS");
-  PyObject *key, *value;
-  Py_ssize_t pos = 0;
-  while (PyDict_Next(MOOS_VARS, &pos, &key, &value)){
-    std::string moos_name = PyUnicode_AsUTF8(key);
-
-    if(PyObject_TypeCheck(value, &PyUnicode_Type)){
-      std::string moos_value = PyUnicode_AsUTF8(value);
-
-      VarDataPair pair(moos_name, moos_value);
-      action.push_back(pair);
-    }else if(PyBool_Check(value)){
-      if(PyObject_IsTrue(value)){
-        VarDataPair pair(moos_name, "true", "auto");
-        action.push_back(pair);
-      }else{
-        VarDataPair pair(moos_name, "false", "auto");
-        action.push_back(pair);
-      }
-    }else{
+    // Parse MOOS_VARS as into action  
+    PyObject* MOOS_VARS = PyDict_GetItemString(py_action, "MOOS_VARS");
+    bool ok = dictToVarDataPair(MOOS_VARS, action);
+    if(!ok){
       // Clean up and throw
       Py_DECREF(result);
-      throw runtime_error("Unimplement python type in MOOS_VARS");
+      throw runtime_error("Error translating python dict to std::vector<VarDataPair>");
     }
+  }
+  
+  py_mps = PyDict_GetItemString(result, "must_posts");
+  bool ok = dictToVarDataPair(py_mps, mps);
+  if(!ok){
+    Py_DECREF(result);
+    throw runtime_error("Error translating python dict to std::vector<VarDataPair>");
   }
 
   Py_DECREF(result);
-  
-  return action;
+  return;
 }
 
 bool PyInterface::failureState(){
@@ -267,6 +263,32 @@ bool PyInterface::failureState(){
 
 bool PyInterface::isConnected(){
   return m_is_connected;
+}
+
+bool PyInterface::dictToVarDataPair(PyObject* dict, std::vector<VarDataPair> *vdp){
+  PyObject *key, *value;
+  Py_ssize_t pos = 0;
+  while (PyDict_Next(dict, &pos, &key, &value)){
+    std::string sname = PyUnicode_AsUTF8(key);
+
+    if(PyObject_TypeCheck(value, &PyUnicode_Type)){
+      std::string svalue = PyUnicode_AsUTF8(value);
+
+      VarDataPair pair(sname, svalue);
+      vdp->push_back(pair);
+    }else if(PyBool_Check(value)){
+      if(PyObject_IsTrue(value)){
+        VarDataPair pair(sname, "true", "auto");
+        vdp->push_back(pair);
+      }else{
+        VarDataPair pair(sname, "false", "auto");
+        vdp->push_back(pair);
+      }
+    }else{
+      return false;
+    }
+  }
+  return true;
 }
 
 PyObject* PyInterface::constructState(double helm_time, double NAV_X, double NAV_Y, double NAV_H, std::string VNAME, std::vector<std::string> node_reports, std::vector<VarDataPair> vd_pairs){
@@ -368,9 +390,6 @@ bool PyInterface::validateAction(PyObject* action){
       }
     }
   }
-
-  // Print error
-  PyErr_Print();
 
   // Clean up local vars
   Py_DECREF(speed);

@@ -32,6 +32,7 @@ BHV_Agent::BHV_Agent(IvPDomain domain) :
   addInfoVars("NAV_X, NAV_Y", "NAV_HEADING");
   addInfoVars("NODE_REPORT_LOCAL");
   addInfoVars("EPISODE_MNGR_REPORT");
+  addInfoVars("EPISODE_MNGR_STATE");
 
   if(true)
     setbuf(stdout, NULL);
@@ -97,7 +98,7 @@ void BHV_Agent::onHelmStart()
 
 void BHV_Agent::onIdleState()
 {
-  tickBridge(false);
+  tickBridge(false, NULL);
 }
 
 //---------------------------------------------------------------
@@ -105,7 +106,7 @@ void BHV_Agent::onIdleState()
 
 void BHV_Agent::onCompleteState()
 {
-  tickBridge(false);
+  tickBridge(false, NULL);
 }
 
 //---------------------------------------------------------------
@@ -139,10 +140,9 @@ void BHV_Agent::onRunToIdleState()
 IvPFunction* BHV_Agent::onRunState()
 {
   IvPFunction *ipf = 0;
-  tickBridge(true);
 
-  // Listen for action from bridge
-  std::vector<VarDataPair> action = bridge.listenAction();
+  std::vector<VarDataPair> action;
+  tickBridge(true, &action);
   
   int vsize = action.size();
   if(vsize > 0){
@@ -201,92 +201,117 @@ void BHV_Agent::postBridgeState(std::string state){
 //---------------------------------------------------------------
 // Procedure: tickBridge()
 //   Purpose: Used to tick the bridge
-void BHV_Agent::tickBridge(bool running){
+void BHV_Agent::tickBridge(bool running, std::vector<VarDataPair> *action){
   // Post status if failed
   if(bridge.failureState()){
     postBridgeState("Failed");
     return;
   }
 
+
   // Post status if connected
   if(!bridge.isConnected()){
     bridge.connect();
     postBridgeState("Not Connected");
     return; // Nothing else to do
-  }
-  
+  }  
   postBridgeState("Connected");
-  // Send the current state
-  if(running){
-    // Pull NAV_X and NAV_Y from the Helm info buffer
-    bool x_ok, y_ok, h_ok;
-    double NAV_X = getBufferDoubleVal("NAV_X", x_ok);
-    if(!x_ok){
-      postWMessage("NAV_X not found in info buffer. Can't send state update.");
-      return;
-    }
-    double NAV_Y = getBufferDoubleVal("NAV_Y", y_ok);
-    if(!y_ok){
-      postWMessage("NAV_Y not found in info buffer. Can't send state update.");
-      return;
-    }
-    double NAV_HEADING = getBufferDoubleVal("NAV_HEADING", h_ok);
-    if(!h_ok){
-      postWMessage("NAV_HEADING not found in info buffer. Can't send state update.");
-      return;
-    }
 
-    bool name_ok;
-    std::string node_local = getBufferStringVal("NODE_REPORT_LOCAL", name_ok);
-    if(!name_ok){
-      postWMessage("NODE_REPORT_LOCAL not found in info buffer. Can't sent state update.");
-    }
-    std::string VNAME = tokStringParse(node_local, "NAME", ',', '=');
+  // PART 1: Listen to bridge
+  std::vector<VarDataPair> mps;
+  bridge.listen(&mps, action);
 
-    // Post other node reports
-    std::vector<std::string> node_reports;
-    unsigned int i, vsize = m_sub_vehicles.size();
-    for(i=0; i<vsize; i++){
-      bool ok;
-      std::string result = getBufferStringVal("NODE_REPORT_"+m_sub_vehicles[i], ok);
-      if(ok){
-        node_reports.push_back(result);
-      }
-    }
-
-    // Look for vars that are subscribed to
-    std::vector<VarDataPair> vd_pairs;
-    vsize = m_sub_vars.size();
-    for(i=0; i<vsize; i++){
-      // Access buffer directly as we don't know what type
-      // Calls through Helm will throw un wanted warnings
-      bool ok_s, ok_d;
-      string s_result = m_info_buffer->sQuery(m_sub_vars[i], ok_s);
-      double d_result = m_info_buffer->dQuery(m_sub_vars[i], ok_d);
-
-      if(ok_d){
-        VarDataPair pair(m_sub_vars[i], d_result);
-        vd_pairs.push_back(pair);
-      }else if(ok_s){
-        VarDataPair pair(m_sub_vars[i], s_result);
-        vd_pairs.push_back(pair);
+  unsigned int vsize = mps.size();
+  if(vsize > 0){
+    fprintf(stderr, "mps size %d\n", vsize);
+    // We have a "must_post" message
+    for(int i=0; i<vsize; i++){
+      string var = mps[i].get_var();
+      if(mps[i].is_string()){
+        postRepeatableMessage(var, mps[i].get_sdata());
       }else{
-        postWMessage("Subscription var '"+m_sub_vars[i]+"' not found in info buffer");
+        postRepeatableMessage(var, mps[i].get_ddata());
       }
     }
+  }
 
-    // Add pEpisodeManager report or null if not present
-    bool report_ok;
-    string report = m_info_buffer->sQuery("EPISODE_MNGR_REPORT", report_ok);
-    if(!report_ok)
-      report = "null";
-    VarDataPair pair("EPISODE_MNGR_REPORT", report);
-    vd_pairs.push_back(pair);
+  // PART 2: Send the current state
+  // Pull NAV_X and NAV_Y from the Helm info buffer
+  bool x_ok, y_ok, h_ok;
+  double NAV_X = getBufferDoubleVal("NAV_X", x_ok);
+  if(!x_ok){
+    postWMessage("NAV_X not found in info buffer. Can't send state update.");
+    return;
+  }
+  double NAV_Y = getBufferDoubleVal("NAV_Y", y_ok);
+  if(!y_ok){
+    postWMessage("NAV_Y not found in info buffer. Can't send state update.");
+    return;
+  }
+  double NAV_HEADING = getBufferDoubleVal("NAV_HEADING", h_ok);
+  if(!h_ok){
+    postWMessage("NAV_HEADING not found in info buffer. Can't send state update.");
+    return;
+  }
 
-    // Send update through bridge
-    bool ok = bridge.sendState(getBufferCurrTime(), NAV_X, NAV_Y, NAV_HEADING, VNAME, node_reports, vd_pairs);
-    if (!ok){
-      postWMessage("Bridge says connected but failed to send state.");
+  bool name_ok;
+  std::string node_local = getBufferStringVal("NODE_REPORT_LOCAL", name_ok);
+  if(!name_ok){
+    postWMessage("NODE_REPORT_LOCAL not found in info buffer. Can't sent state update.");
+  }
+  std::string VNAME = tokStringParse(node_local, "NAME", ',', '=');
+
+  // Post other node reports
+  std::vector<std::string> node_reports;
+  vsize = m_sub_vehicles.size();
+  for(int i=0; i<vsize; i++){
+    bool ok;
+    std::string result = getBufferStringVal("NODE_REPORT_"+m_sub_vehicles[i], ok);
+    if(ok){
+      node_reports.push_back(result);
     }
+  }
+
+  // Look for vars that are subscribed to
+  std::vector<VarDataPair> vd_pairs;
+  vsize = m_sub_vars.size();
+  for(int i=0; i<vsize; i++){
+    // Access buffer directly as we don't know what type
+    // Calls through Helm will throw un wanted warnings
+    bool ok_s, ok_d;
+    string s_result = m_info_buffer->sQuery(m_sub_vars[i], ok_s);
+    double d_result = m_info_buffer->dQuery(m_sub_vars[i], ok_d);
+
+    if(ok_d){
+      VarDataPair pair(m_sub_vars[i], d_result);
+      vd_pairs.push_back(pair);
+    }else if(ok_s){
+      VarDataPair pair(m_sub_vars[i], s_result);
+      vd_pairs.push_back(pair);
+    }else{
+      postWMessage("Subscription var '"+m_sub_vars[i]+"' not found in info buffer");
+    }
+  }
+
+  // Add pEpisodeManager report or null if not present
+  bool report_ok;
+  string report = m_info_buffer->sQuery("EPISODE_MNGR_REPORT", report_ok);
+  if(!report_ok)
+    report = "null";
+  VarDataPair pair("EPISODE_MNGR_REPORT", report);
+  vd_pairs.push_back(pair);
+
+  // Add pEpisodeManager state or null if not present
+  bool state_ok;
+  string state = m_info_buffer->sQuery("EPISODE_MNGR_STATE", state_ok);
+  if(!state_ok)
+    state = "null";
+  VarDataPair pair2("EPISODE_MNGR_STATE", state);
+  vd_pairs.push_back(pair2);
+
+  // Send update through bridge
+  bool ok = bridge.sendState(getBufferCurrTime(), NAV_X, NAV_Y, NAV_HEADING, VNAME, node_reports, vd_pairs);
+  if (!ok){
+    postWMessage("Bridge says connected but failed to send state.");
   }
 }
