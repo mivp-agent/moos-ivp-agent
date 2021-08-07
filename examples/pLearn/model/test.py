@@ -8,6 +8,7 @@ from tqdm.auto import trange
 from tqdm.std import tqdm
 
 warnings.filterwarnings("ignore", message=r"Passing", category=FutureWarning)
+import keras
 
 from RLquaticus.bridge import ModelBridgeServer
 from RLquaticus.util.display import ModelConsole
@@ -53,6 +54,11 @@ def test_dir(args):
         graph = TestGrapher(save_dir=args.test_dir)
 
         for i in trange(len(iterations), desc="Total Progress"):
+            # Clear kera's backend so we don't slow down
+            # See: https://www.tensorflow.org/api_docs/python/tf/keras/backend/clear_session
+            keras.backend.clear_session()
+
+            # Load model
             iteration_num = iterations[i]
             tqdm.write(f'Loading model #{iteration_num}...')
             model_path = os.path.join(args.test_dir, f'iteration_{iteration_num}')
