@@ -7,12 +7,12 @@ JAYLAN_TESTDIR = os.path.abspath(os.path.join(THISDIR, '../trained/the-attack-of
 
 # Translate pLearn actions 
 PLEARN_ACTIONS = {
-    '(2, 0)': {'speed':2.0, 'course':0.0, 'MOOS_VARS': {}},
-    '(2, 60)': {'speed':2.0, 'course':60.0, 'MOOS_VARS': {}},
-    '(2, 120)': {'speed':2.0, 'course':120.0, 'MOOS_VARS': {}},
-    '(2, 180)': {'speed':2.0, 'course':180.0, 'MOOS_VARS': {}},
-    '(2, 240)': {'speed':2.0, 'course':240.0, 'MOOS_VARS': {}},
-    '(2, 300)': {'speed':2.0, 'course':300.0, 'MOOS_VARS': {}}
+    '(2, 0)': {'speed':2.0, 'course':0.0},
+    '(2, 60)': {'speed':2.0, 'course':60.0},
+    '(2, 120)': {'speed':2.0, 'course':120.0},
+    '(2, 180)': {'speed':2.0, 'course':180.0},
+    '(2, 240)': {'speed':2.0, 'course':240.0},
+    '(2, 300)': {'speed':2.0, 'course':300.0}
 }
 
 # Aquaticus X/Y pairsx

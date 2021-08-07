@@ -22,12 +22,11 @@ class PyInterface
   // Do things functions TODO: name?
   bool connect();
   bool sendState(double helm_time, double NAV_X, double NAV_Y, double NAV_H, std::string VNAME, std::vector<std::string> node_reports, std::vector<VarDataPair> vd_pairs);
-  void listen(std::vector<VarDataPair> *mps, std::vector<VarDataPair> *action);
+  void listen(double &speed, double &course, std::vector<VarDataPair> &posts, std::string &ctrl_msg);
 
   // State exposure
   bool failureState();
   bool isConnected();
-
 
  private:
   // Python functions
@@ -35,7 +34,7 @@ class PyInterface
   bool unloadModule();
   
   // Helper functions
-  bool dictToVarDataPair(PyObject* dict, std::vector<VarDataPair> *vdp);
+  bool dictToVarDataPair(PyObject* dict, std::vector<VarDataPair> &vdp);
   PyObject* constructState(double helm_time, double NAV_X, double NAV_Y, double NAV_H, std::string VNAME, std::vector<std::string> node_reports, std::vector<VarDataPair> vd_pairs);
   PyObject* nodeReportToDict(std::string report);
   bool validateAction(PyObject* action);

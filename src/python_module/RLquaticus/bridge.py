@@ -32,17 +32,12 @@ TYPE_STATE=3
 
 TYPES = (TYPE_CTRL, TYPE_ACTION, TYPE_MUST_POST, TYPE_STATE)
 
-HEADER_SIZE=8
-#MAX_BUFFER_SIZE=524288
-MAX_BUFFER_SIZE=131072
-#MAX_BUFFER_SIZE=65536
+HEADER_SIZE=4
+MAX_BUFFER_SIZE=8192
 
 def recv_full(connection, timeout=None, return_read=False):
-  messages = {}
-  for type in TYPES:
-    messages[type] = []
+  messages = []
   current_len = None
-  current_type = None
   last_read = None
   total_read = None
   # Create byte string for storing the header in
@@ -89,7 +84,7 @@ def recv_full(connection, timeout=None, return_read=False):
       # We should be looking for a header
       if len(tmp_data) >= HEADER_SIZE:
         # We can construct a header (current_len)
-        current_len, current_type = struct.unpack('>ii', tmp_data[:HEADER_SIZE])
+        current_len = struct.unpack('>i', tmp_data[:HEADER_SIZE])[0]
         # Remove header data from our data store
         tmp_data = tmp_data[HEADER_SIZE:]
     
@@ -98,7 +93,7 @@ def recv_full(connection, timeout=None, return_read=False):
       # We should be looking for a message
       if len(tmp_data) >= current_len:
         # We can construct a packed
-        messages[current_type].append(tmp_data[:current_len])
+        messages.append(tmp_data[:current_len])
 
         # Remove the packet just constructed from out data store
         tmp_data = tmp_data[current_len:]
@@ -114,7 +109,7 @@ def send_full(connection, data, type):
   # Create C struct (in python bytes)
   # '>i' specifies a big-endian encoded integer (a standard size of 4 bytes)
   # '>ii' does two big-endian numbers
-  packed_size = struct.pack('>ii', len(data), type)
+  packed_size = struct.pack('>i', len(data))
   # Concat the size (our 8 bytes header) and data then send
   result = connection.sendall(packed_size+data)
   assert result is None
@@ -127,17 +122,20 @@ def checkFloat(var, error_string):
   except ValueError:
     raise ValueError(error_string)
 
-def checkAction(action):
-  assert isinstance(action, dict), "Action must be a dict"
+def checkInstruction(instr):
+  assert isinstance(instr, dict), "Instruction must be a dict"
 
-  assert "speed" in action, "Action must have key 'speed'"
-  action['speed'] = checkFloat(action['speed'], "action['speed'] must be a float")
+  assert "speed" in instr, "Instruction must have key 'speed'"
+  instr['speed'] = checkFloat(instr['speed'], "Instruction['speed'] must be a float")
   
-  assert "course" in action, "Action must have key 'course'"
-  action['course'] = checkFloat(action['course'], "action['course'] must be a float")
+  assert "course" in instr, "Action must have key 'course'"
+  instr['course'] = checkFloat(instr['course'], "Instruction['course'] must be a float")
 
-  assert "MOOS_VARS" in action, "Action must have key 'MOOS_VARS'"
-  assert isinstance(action["MOOS_VARS"], dict), "MOOS_VARS must be a dict"
+  assert "posts" in instr, "Instruction must have key 'posts'"
+  assert isinstance(instr["posts"], dict), "posts must be a dict"
+
+  assert "ctrl_msg" in instr, "Instruction must have key 'ctrl_str'"
+  assert isinstance(instr['ctrl_msg'], str), 'ctrl_msg must be string'
 
 def checkState(state):
   assert isinstance(state, dict), "State must be dict"
@@ -159,6 +157,7 @@ class ModelBridgeServer:
 
     self._client = None
     self._address = None
+    self.last_read = 0
 
   def __enter__(self):
     return self
@@ -175,32 +174,16 @@ class ModelBridgeServer:
     self._client, self._address = self._socket.accept()
     print(f"Client connected from {self._address}")
   
-  def send_action(self, action):
-    # Test submitted action
-    checkAction(action)
+  def send_instr(self, instr):
+    # Test submitted instruction
+    checkInstruction(instr)
 
     # Fail if no client connected
     if self._client is None:
       return False
 
     try:
-      send_full(self._client, pickle.dumps(action), TYPE_ACTION)
-    except ConnectionResetError:
-      # Client has left
-      self.close_client()
-      return False
-
-    return True
-  
-  def send_must_post(self, post):
-    checkMustPost(post)
-
-    # Fail if no client connected
-    if self._client is None:
-      return False
-
-    try:
-      send_full(self._client, pickle.dumps(post), TYPE_MUST_POST)
+      send_full(self._client, pickle.dumps(instr), TYPE_ACTION)
     except ConnectionResetError:
       # Client has left
       self.close_client()
@@ -213,19 +196,15 @@ class ModelBridgeServer:
       return False
 
     try:
-      msgs, read = recv_full(self._client, timeout=timeout, return_read=True)
+      msgs, self.last_read = recv_full(self._client, timeout=timeout, return_read=True)
     except socket.timeout:
       return False
 
-    for type in TYPES:
-      if type != TYPE_STATE:
-        assert len(msgs[type]) == 0, "Only state messages should be sent through this channel."
-    states = msgs[TYPE_STATE]
-
-    state = pickle.loads(states[len(states)-1]) # Only use most recent state
+    assert len(msgs) == 1, 'State should only come one at a time'
+    state = pickle.loads(msgs[0])
     checkState(state)
 
-    return state, read
+    return state
 
   def close_client(self):
     if self._client is not None:
@@ -296,26 +275,12 @@ class ModelBridgeClient:
     except socket.timeout:
       return False
 
-    must_posts = {}
-    mp_msgs = [pickle.loads(msg) for msg in msgs[TYPE_MUST_POST]]
-    for mp in mp_msgs:
-      checkMustPost(mp)
-      for key in mp:
-        must_posts[key] = mp[key]
+    assert len(msgs) == 1, 'Instructions should only come one at a time'
+    instr = pickle.loads(msgs[0])
 
-    action = None
-    len_actions = len(msgs[TYPE_ACTION])
-    if len_actions != 0:
-      action = pickle.loads(msgs[TYPE_ACTION][len_actions-1])
-      checkAction(action)
-  
-    if len(must_posts) > 0:
-      print(must_posts)
+    checkInstruction(instr)
 
-    return {
-      'action': action,
-      'must_posts': must_posts
-    } 
+    return instr
   
   def close(self):
     if self._socket is not None:

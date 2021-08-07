@@ -24,8 +24,6 @@ PyInterface::PyInterface()
 
   Py_Initialize();
   loadModule();
-
-  setvbuf(stdout, NULL, _IOLBF, 0);
 }
 
 //---------------------------------------------------------
@@ -171,7 +169,7 @@ bool PyInterface::sendState(double helm_time, double NAV_X, double NAV_Y, double
   return success;
 }
 
-void PyInterface::listen(std::vector<VarDataPair> *mps, std::vector<VarDataPair> *action){
+void PyInterface::listen(double &speed, double &course, std::vector<VarDataPair> &posts, std::string &ctrl_msg){
   if(!isConnected())
     return;
 
@@ -192,66 +190,26 @@ void PyInterface::listen(std::vector<VarDataPair> *mps, std::vector<VarDataPair>
       // Not what we are expecting so raise our own error
       throw runtime_error("ModelBridgeClient's listen_state function returned True (invalid protocol)");
     }
-    return; // Fail normally
+    return; // TODO: Propogate failure up to IvP BHV for warnings
   }
 
   if(!PyDict_Check(result)){
     Py_DECREF(result);
     throw runtime_error("Method 'listen_action' did not fail or return dict");
   }
-
-  // Assert both keys are present
-  PyObject* py_action = Py_BuildValue("s", "action");
-  PyObject* py_mps = Py_BuildValue("s", "must_posts");
-
-  if(!PyDict_Contains(result, py_action) || !PyDict_Contains(result, py_mps)){
-    Py_DECREF(result);
-    Py_DECREF(py_action);
-    Py_DECREF(py_mps);
-    throw runtime_error("Message from bridge.listen() does not contain proper keys");
-  }
-  Py_DECREF(py_action);
-  Py_DECREF(py_mps);
-
-  py_action = PyDict_GetItemString(result, "action");
-
-  if(action != NULL && py_action != Py_None){
-    if(!validateAction(py_action)){
-      Py_DECREF(result);
-      throw runtime_error("Unable to unpack dictionary");
-    }
-
-    // Parse out speed and course
-    double speed, course;
-    // PyDict_GetItem returns borrowed reference so no need to decref
-    // Python code should do type checking for us
-    speed = PyFloat_AsDouble(PyDict_GetItemString(py_action, "speed"));
-    course = PyFloat_AsDouble(PyDict_GetItemString(py_action, "course"));
-
-    // Push into return vector
-    VarDataPair speed_pair("speed", speed);
-    VarDataPair course_pair("course", course);
-
-    action->push_back(speed_pair);
-    action->push_back(course_pair);
-
-    // Parse MOOS_VARS as into action  
-    PyObject* MOOS_VARS = PyDict_GetItemString(py_action, "MOOS_VARS");
-    bool ok = dictToVarDataPair(MOOS_VARS, action);
-    if(!ok){
-      // Clean up and throw
-      Py_DECREF(result);
-      throw runtime_error("Error translating python dict to std::vector<VarDataPair>");
-    }
-  }
   
-  py_mps = PyDict_GetItemString(result, "must_posts");
-  bool ok = dictToVarDataPair(py_mps, mps);
+  // PyDict_GetItemString returns borrowed references so no need to DECREF
+  speed = PyFloat_AsDouble(PyDict_GetItemString(result, "speed"));
+  course = PyFloat_AsDouble(PyDict_GetItemString(result, "course"));
+  ctrl_msg = PyUnicode_AsUTF8(PyDict_GetItemString(result, "ctrl_msg"));
+  bool ok = dictToVarDataPair(PyDict_GetItemString(result, "posts"), posts);
   if(!ok){
+    // Clean up and throw
     Py_DECREF(result);
     throw runtime_error("Error translating python dict to std::vector<VarDataPair>");
   }
 
+  // Clean up an return normally
   Py_DECREF(result);
   return;
 }
@@ -265,24 +223,25 @@ bool PyInterface::isConnected(){
   return m_is_connected;
 }
 
-bool PyInterface::dictToVarDataPair(PyObject* dict, std::vector<VarDataPair> *vdp){
+bool PyInterface::dictToVarDataPair(PyObject* dict, std::vector<VarDataPair> &vdp){
   PyObject *key, *value;
   Py_ssize_t pos = 0;
   while (PyDict_Next(dict, &pos, &key, &value)){
     std::string sname = PyUnicode_AsUTF8(key);
 
+
     if(PyObject_TypeCheck(value, &PyUnicode_Type)){
       std::string svalue = PyUnicode_AsUTF8(value);
 
       VarDataPair pair(sname, svalue);
-      vdp->push_back(pair);
+      vdp.push_back(pair);
     }else if(PyBool_Check(value)){
       if(PyObject_IsTrue(value)){
         VarDataPair pair(sname, "true", "auto");
-        vdp->push_back(pair);
+        vdp.push_back(pair);
       }else{
         VarDataPair pair(sname, "false", "auto");
-        vdp->push_back(pair);
+        vdp.push_back(pair);
       }
     }else{
       return false;
@@ -368,35 +327,6 @@ PyObject* PyInterface::nodeReportToDict(std::string report){
   );
 
   return dict;
-}
-
-bool PyInterface::validateAction(PyObject* action){
-  // NOTE: Most checking will be done python size. This is just for C API errors
-  // Define expected keys as python strings
-  PyObject* speed = Py_BuildValue("s", "speed");
-  PyObject* course = Py_BuildValue("s", "course");
-  PyObject* moos_vars = Py_BuildValue("s", "MOOS_VARS");
-
-  bool valid = false;
-
-  int ok = PyDict_Contains(action, speed);
-  // This is expanded to not loose an error if two happen at same time
-  if(ok > -1){
-    ok = PyDict_Contains(action, course);
-    if(ok > -1){
-      ok = PyDict_Contains(action, moos_vars);
-      if(ok > -1){
-        valid = true; // No errors with the dict
-      }
-    }
-  }
-
-  // Clean up local vars
-  Py_DECREF(speed);
-  Py_DECREF(course);
-  Py_DECREF(moos_vars);
-
-  return valid;
 }
 
 PyInterface::~PyInterface(){

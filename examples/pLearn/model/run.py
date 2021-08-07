@@ -14,6 +14,16 @@ from util.state import state2vec, dist
 from util.model_loader import load_pLearn_model
 
 def run_model(args):
+    # Create instruction for use later
+    instr_action = {
+        'speed': 0.0,
+        'course': 0.0,
+        'posts': { # This will only be sent the first time, after that it is turrned off
+            'EPISODE_MNGR_CTRL': 'type=start'
+        },
+        'ctrl_msg': 'SEND_STATE'
+    }
+
     print('Loading model...')
     models, const = load_pLearn_model(args.model)
 
@@ -24,6 +34,9 @@ def run_model(args):
         MOOS_STATE = None
         model_state = None
         console = ModelConsole()
+
+        # Send a dummy instr to get a state back
+        server.send_instr(instr_action)
         while True:
             # Get state from BHV_Agent client and translate
             MOOS_STATE = server.listen_state()
@@ -48,17 +61,14 @@ def run_model(args):
                     optimal = (value, PLEARN_ACTIONS[a])
 
             # Send optimal action to BHV_Agent client
-            action = optimal[1]
-            action['MOOS_VARS'] = {}
+            instr_action['course'] = optimal[1]['course']
+            instr_action['speed'] = optimal[1]['speed']
+            instr_action['posts'] = {}
             
             if abs(dist((MOOS_STATE['NAV_X'], MOOS_STATE['NAV_Y']), ENEMY_FLAG)) < 10:
-                action['MOOS_VARS']['FLAG_GRAB_REQUEST'] = f'vname={MOOS_STATE["VNAME"]}'
-            if console.iteration == 0:
-                server.send_must_post({
-                    'EPISODE_MNGR_CTRL': 'type=start'
-                })
-            server.send_action(optimal[1])
-
+                instr_action['posts']['FLAG_GRAB_REQUEST'] = f'vname={MOOS_STATE["VNAME"]}'
+            
+            server.send_instr(instr_action)
             console.tick(MOOS_STATE)
 
 if __name__ == '__main__':

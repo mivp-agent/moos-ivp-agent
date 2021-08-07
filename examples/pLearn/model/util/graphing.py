@@ -64,12 +64,17 @@ class TestGrapher:
       # Configure axes
       self.fig, self.axs = plt.subplots(2,2)
       self.axs[0, 0].set_title("Success Precent")
-      self.axs[0, 1].set_title("Min Dist to Flag")
-      self.axs[1, 0].set_title("Avg Durration")
+      self.success, = self.axs[0,0].plot([], [], '-go')
+      self.axs[0,0].set_ylim(-5,100)
 
-      self.success, = self.axs[0,0].plot([], [], 'g-')
-      self.min_dist, = self.axs[0,1].plot([], [], 'b-')
-      self.avg_duration, = self.axs[1,0].plot([], [], 'r-')
+      self.axs[0, 1].set_title("Min Dist to Flag")
+      self.min_dist, = self.axs[0,1].plot([], [], '-bo')
+
+      self.axs[1, 0].set_title("Avg Durration")
+      self.avg_duration, = self.axs[1,0].plot([], [], '-mo')
+      self.axs[1,0].set_ylim(0,100)
+
+      self.other, = self.axs[1,1].plot([], [], '-ro')
 
       # Stylisitic details
       self.fig.tight_layout(pad=2.0)
@@ -80,14 +85,19 @@ class TestGrapher:
       self.success_data = []
       self.min_dist_data = []
       self.avg_duration_data = []
+      self.other_data = []
       self.max_iter = -1
 
+      # Show graph just for the nice-ness factor :)
+      self._plot()
+
     
-    def add_iteration(self, iter, success_pcnt, min_dist, avg_duration, plot=True):
+    def add_iteration(self, iter, success_pcnt, min_dist, avg_duration, other, plot=True):
       self.iters.append(iter)
       self.success_data.append(success_pcnt)
       self.min_dist_data.append(min_dist)
-      self.avg_duration_data.append(min_dist)
+      self.avg_duration_data.append(avg_duration)
+      self.other_data.append(other)
 
       if iter > self.max_iter:
         self.max_iter = iter
@@ -96,20 +106,24 @@ class TestGrapher:
         self._plot()
 
     def _plot(self):
+      right_bound = max(self.max_iter, 1) # So matplotlib doesn yell about set_xlim(0,0)
+
       self.success.set_data(self.iters, self.success_data)
-      self.axs[0,0].relim()
-      self.axs[0,0].autoscale_view()
-      #self.axs[0,0].set_ylim(bottom=0.0)
+      self.axs[0,0].set_xlim(0, right_bound)
 
       self.min_dist.set_data(self.iters, self.min_dist_data)
       self.axs[0,1].relim()
-      self.axs[0,1].autoscale_view()
-      #self.axs[0,0].set_ylim(bottom=0.0)
+      self.axs[0,1].set_xlim(0, right_bound)
+      self.axs[0,1].autoscale()
 
       self.avg_duration.set_data(self.iters, self.avg_duration_data)
-      self.axs[1,0].relim()
-      self.axs[1,0].autoscale_view()
-      #self.axs[0,0].set_ylim(bottom=0.0)
+      self.axs[1,0].set_xlim(0, right_bound)
+
+      self.other.set_data(self.iters, self.other_data)
+      self.axs[1,1].relim()
+      self.axs[1,1].set_xlim(0, right_bound)
+      self.axs[1,1].autoscale()
+
 
       self.fig.canvas.draw()
       self.fig.canvas.flush_events()
