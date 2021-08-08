@@ -1,5 +1,31 @@
 # moos-ivp-agent
 
+Model agnostic ML framework for MOOS-IvP. See very simple implementation below
+
+```
+instr = {
+  'speed': 0.0,
+  'course': 0.0,
+  'ctrl_msg': 'SEND_STATE'
+}
+
+with ModelBridgeServer() as server:
+  server.accept()
+  server.send_instr(instr)
+  while True:
+    MOOS_STATE = server.listen_state()
+
+    if MOOS_STATE['NAV_X'] < -10:
+      instr['speed'] = 2.0
+      instr['course'] = 90.0
+    if MOOS_STATE['NAV_X'] > 10:
+      instr['speed'] = 2.0
+      instr['course'] = 270.0
+    
+    server.send_instr(instr)
+```
+
+
 This project builds upon the ground work done by [moos-ivp-pLearn](https://github.com/mnovitzky/moos-ivp-pLearn). It implements a "model bridge" from [moos-ivp](https://oceanai.mit.edu/moos-ivp/pmwiki/pmwiki.php?n=Main.HomePage) to python 3.x land.
 
 Currently, see [here](examples/pLearn) for an implementation of pLearn using moos-ivp-agent's `ModelBridgeServer`.
