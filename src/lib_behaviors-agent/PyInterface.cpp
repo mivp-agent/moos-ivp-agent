@@ -38,7 +38,7 @@ bool PyInterface::loadModule()
   }
   
   // Load module
-  PyObject* m_bridge_module = PyImport_ImportModule("RLquaticus.bridge");
+  PyObject* m_bridge_module = PyImport_ImportModule("mivp_agent.bridge");
 
   if(!m_bridge_module){
     fprintf(stderr, "ERROR: Failed to import bridge module\n");

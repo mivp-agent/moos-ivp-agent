@@ -6,9 +6,9 @@ import numpy as np
 
 warnings.filterwarnings("ignore", message=r"Passing", category=FutureWarning)
 
-from RLquaticus.bridge import ModelBridgeServer
-from RLquaticus.util.display import ModelConsole
-from RLquaticus.util.parse import csp_to_dict
+from mivp_agent.bridge import ModelBridgeServer
+from mivp_agent.util.display import ModelConsole
+from mivp_agent.util.parse import csp_to_dict
 from state import make_state
 
 from util.validate import check_model_dir

@@ -8,7 +8,7 @@ import numpy as np
 
 from tqdm import tqdm
 from util.constants import PLEARN_ACTIONS, plearn_action_to_text
-from RLquaticus.util.data_structures import LimitedHistory
+from mivp_agent.util.data_structures import LimitedHistory
 
 def plot_rewards(reward_function, defender=False):
   # Init lists to graph

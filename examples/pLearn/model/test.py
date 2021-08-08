@@ -10,9 +10,9 @@ from tqdm.std import tqdm
 warnings.filterwarnings("ignore", message=r"Passing", category=FutureWarning)
 import keras
 
-from RLquaticus.bridge import ModelBridgeServer
-from RLquaticus.util.display import ModelConsole
-from RLquaticus.util.parse import parse_report
+from mivp_agent.bridge import ModelBridgeServer
+from mivp_agent.util.display import ModelConsole
+from mivp_agent.util.parse import parse_report
 from state import make_state
 
 from util.validate import check_test_dir

@@ -28,13 +28,13 @@ USER moos
 RUN svn co "https://oceanai.mit.edu/svn/${MOOS}-oai/trunk/" "${HOME}/${MOOS}"
 RUN cd "${HOME}/${MOOS}" && ./build.sh
 
-# RLquaticus tree
-ENV RLQUATICUS="moos-ivp-RLquaticus"
-ENV PATH="/home/moos/${RLQUATICUS}/bin:${PATH}"
-ENV PYTHONPATH="${PYTHONPATH}:/home/moos/${RLQUATICUS}/src/python_module"
-ENV IVP_BEHAVIOR_DIRS="${IVP_BEHAVIOR_DIRS}:/home/moos/${RLQUATICUS}/lib"
+# mivp-agent tree
+ENV MIVP_AGENT="moos-ivp-agent"
+ENV PATH="/home/moos/${MIVP_AGENT}/bin:${PATH}"
+ENV PYTHONPATH="${PYTHONPATH}:/home/moos/${MIVP_AGENT}/src/python_module"
+ENV IVP_BEHAVIOR_DIRS="${IVP_BEHAVIOR_DIRS}:/home/moos/${MIVP_AGENT}/lib"
 
-RUN mkdir -p moos-ivp-RLquaticus
-COPY --chown=moos:moos . moos-ivp-RLquaticus/
+RUN mkdir -p ${MIVP_AGENT}
+COPY --chown=moos:moos . ${MIVP_AGENT}/
 
-RUN cd ${RLQUATICUS} && ./build.sh
+RUN cd ${MIVP_AGENT} && ./build.sh

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import time
 from util.getch import Getch
-from RLquaticus.bridge import ModelBridgeServer
+from mivp_agent.bridge import ModelBridgeServer
 
 if __name__ == '__main__':
   with ModelBridgeServer() as server:

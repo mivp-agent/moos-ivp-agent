@@ -7,7 +7,7 @@ sys.path.append(os.path.join(THISDIR, '../'))
 from state import make_state
 from trained.topModel.environment import Constants
 
-from RLquaticus.bridge import ModelBridgeServer
+from mivp_agent.bridge import ModelBridgeServer
 
 const = Constants()
 
