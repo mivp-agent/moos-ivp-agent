@@ -1,5 +1,10 @@
 # moos-ivp-agent's pLearn implementation
 
+Clips below are speed up
+
+![DebuggingDemo](../../assets/DebuggingDemo.gif)
+![TestingDemo](../../assets/TestingDemo.gif)
+
 **DISCLAIMER:** 
 - Currently only the **default fitted-Q algorithm** from pLearn is implemented. If someone is using another algorithm lmk (open an issue) as it should be straightforward to get working.
 - Both running and testing is supported (training shortly as it needs more translation from python 2.7 to python 3.x).
