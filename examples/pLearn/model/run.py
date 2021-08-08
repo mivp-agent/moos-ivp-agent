@@ -55,7 +55,7 @@ def run_model(args):
                 if report['DURATION'] < 4:
                     print('ERROR: Small duration value', file=sys.stderr)
                     print(report, file=sys.stderr)
-                print(report)
+                #print(report)
                 
             model_state = make_state(const.state, const.num_states, MOOS_STATE)
             state_vec = state2vec(model_state, const)
