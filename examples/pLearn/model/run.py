@@ -8,7 +8,7 @@ warnings.filterwarnings("ignore", message=r"Passing", category=FutureWarning)
 
 from mivp_agent.bridge import ModelBridgeServer
 from mivp_agent.util.display import ModelConsole
-from mivp_agent.util.parse import csp_to_dict
+from mivp_agent.util.parse import parse_report
 from state import make_state
 
 from util.validate import check_model_dir
@@ -31,7 +31,12 @@ def run_model(args):
     print('Loading model...')
     models, const = load_pLearn_model(args.model)
 
+    # Construct debugging info
     graph = None
+    last_episode_num = None
+    expected_reward = []
+    episode_iters = []
+    episode_iter = 0
     if args.debug:
         graph = DebugGrapher()
 
@@ -49,14 +54,24 @@ def run_model(args):
             # Get state from BHV_Agent client and translate
             MOOS_STATE = server.listen_state()
             if MOOS_STATE['EPISODE_MNGR_REPORT'] is not None:
-                report = csp_to_dict(MOOS_STATE['EPISODE_MNGR_REPORT'])
-                report['DURATION'] = float(report['DURATION'])
-
+                report = parse_report(MOOS_STATE['EPISODE_MNGR_REPORT'])
+                
+                # Watch for pEpisodeManager bug
                 if report['DURATION'] < 4:
                     print('ERROR: Small duration value', file=sys.stderr)
                     print(report, file=sys.stderr)
-                #print(report)
                 
+                # Reset expected value tracking for debugging
+                if args.debug:
+                    if last_episode_num is None or last_episode_num != report['EPISODE']:
+                        # We have a new episode 
+                        episode_iter = 0
+                        episode_iters = []
+                        expected_reward = []
+
+                    last_episode_num = report['EPISODE']
+
+            # Translate state to be readable by model  
             model_state = make_state(const.state, const.num_states, MOOS_STATE)
             state_vec = state2vec(model_state, const)
 
@@ -71,18 +86,37 @@ def run_model(args):
                 if optimal[1] is None or optimal[0] < value:
                     optimal = (value, PLEARN_ACTIONS[a])
 
-            # Send optimal action to BHV_Agent client
+            # Create optimal action for BHV_Agent client
             instr_action['course'] = optimal[1]['course']
             instr_action['speed'] = optimal[1]['speed']
             instr_action['posts'] = {}
             
+            # Add FLAG_GRAB_REQUEST if in range
             if abs(dist((MOOS_STATE['NAV_X'], MOOS_STATE['NAV_Y']), ENEMY_FLAG)) < 10:
                 instr_action['posts']['FLAG_GRAB_REQUEST'] = f'vname={MOOS_STATE["VNAME"]}'
             
+            # Send action to BHV_Agent
             server.send_instr(instr_action)
+
+            # Update the console output
             console.tick(MOOS_STATE)
             if args.debug and console.iteration % 6 == 0:
-                graph.add_iteration(console.iteration, values, console.last_MOOS_delta)
+                # Track the expect value over the iteration
+                expected_reward.append(optimal[0])
+                episode_iters.append(episode_iter)
+                
+                # Send debugging info to be graphed
+                graph.add_iteration(
+                    console.iteration,
+                    values,
+                    episode_iters,
+                    expected_reward,
+                    console.last_MOOS_delta
+                )
+
+                #Update the 
+                episode_iter += 1
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

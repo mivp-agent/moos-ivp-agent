@@ -2,6 +2,7 @@
 import os
 import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 import matplotlib.animation as animation
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
@@ -80,6 +81,7 @@ class TestGrapher:
       # Stylisitic details
       self.fig.tight_layout(pad=2.0)
       self.fig.set_size_inches(8, 7)
+      self.fig.canvas.manager.set_window_title('pLearn Tester')
       
       # Create data structures
       self.iters = []
@@ -146,29 +148,45 @@ class DebugGrapher:
       # Create data structures
       self.data_entries = len(PLEARN_ACTIONS) + 2 # 2 for iters and td_data
       self.history = LimitedHistory(self.FRAME_SIZE, self.data_entries)
+      self.episode_iters = []
+      self.expected_reward = []
 
-      # Configure axes
-      self.fig, self.axs = plt.subplots(2)
-
-      self.axs[0].set_title("~Relative~ Action Value")
-      self.action_lines = {}
-      self.action_labels = {}
-      for a in PLEARN_ACTIONS:
-        self.action_lines[a], = self.axs[0].plot([], [])
-        self.action_labels[a] = self.axs[0].text(0, 0, "")
-      
-      self.axs[1].set_title("TD")
-      self.td, = self.axs[1].plot([], [],)
+      # Configure figure
+      # Gridspec reference: https://matplotlib.org/stable/tutorials/intermediate/gridspec.html
+      self.fig = plt.figure(constrained_layout=True)
+      gs = self.fig.add_gridspec(2, 2)
+      self.ax1 = self.fig.add_subplot(gs[0,:]) # First row all columns
+      self.ax2 = self.fig.add_subplot(gs[1,0])
+      self.ax3 = self.fig.add_subplot(gs[1,1])
 
       # Stylisitic details
       self.fig.tight_layout(pad=2.0)
       self.fig.set_size_inches(8, 7)
+      self.fig.canvas.manager.set_window_title('pLearn Debugging Charts')
       
+      # Setup lines
+      self.ax1.set_title("~Relative~ Action Value")
+      self.action_lines = {}
+      self.action_labels = {}
+      for a in PLEARN_ACTIONS:
+        self.action_lines[a], = self.ax1.plot([], [])
+        self.action_labels[a] = self.ax1.text(0, 0, "")
+      
+      self.ax2.set_title("Expected Reward")
+      self.reward, = self.ax2.plot(self.episode_iters, self.expected_reward)
+
+      self.ax3.set_title("Loop Time (in seconds)")
+      self.td, = self.ax3.plot([], [],)
+
       # Show graph just for the nice-ness factor :)
       self._plot()
 
     
-    def add_iteration(self, iter, action_values, td, plot=True):
+    def add_iteration(self, iter, action_values, episode_iters, expected_reward, td, plot=True):
+      # Store reward info
+      self.episode_iters = episode_iters
+      self.expected_reward = expected_reward
+
       # Construct data frame
       frame_data = [iter, td]
       for a in PLEARN_ACTIONS:
@@ -194,11 +212,12 @@ class DebugGrapher:
 
           # Reset labels
           self.action_labels[a].set_visible(False)
-          self.action_labels[a] = self.axs[0].text(
+          self.action_labels[a] = self.ax1.text(
             iters[0]+3,         # X position
             a_values[:,i][0],   # Y position
             f'{plearn_action_to_text(a)} {a}')
       
+      self.reward.set_data(self.episode_iters, self.expected_reward)
       self.td.set_data(iters, td)
 
       # Rescale
@@ -211,12 +230,15 @@ class DebugGrapher:
       except ValueError:
         pass
 
-      self.axs[0].relim()
-      self.axs[0].autoscale()
-      self.axs[0].set_xlim(x_min, x_max)
+      self.ax1.relim()
+      self.ax1.autoscale()
+      self.ax1.set_xlim(x_min, x_max)
 
-      self.axs[1].relim()
-      self.axs[1].autoscale()
+      self.ax2.relim()
+      self.ax2.autoscale()
+
+      self.ax3.relim()
+      self.ax3.autoscale()
 
       self.fig.canvas.draw()
       self.fig.canvas.flush_events()
