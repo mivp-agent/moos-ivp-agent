@@ -23,3 +23,17 @@ LOWER_RIGHT_CORNER = (82, -56)
 
 MY_FLAG = (50.0, -24.0)
 ENEMY_FLAG = (-58.0, -71.0)
+
+def plearn_action_to_text(action):
+    if action == '(2, 240)':
+        return 'forward'
+    elif action == '(2, 300)':
+        return 'right'
+    elif action == '(2, 0)':
+        return 'hard right'
+    elif action == '(2, 60)':
+        return 'backward'
+    elif action == '(2, 120)':
+        return 'hard left'
+    elif action == '(2, 180)':
+        return 'left'

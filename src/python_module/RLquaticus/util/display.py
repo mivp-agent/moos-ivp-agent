@@ -3,6 +3,8 @@ import time
 class ModelConsole:
   def __init__(self):
     self.iteration = 0
+    self.last_MOOS_delta = 0
+
     self._last_loop_time = None
     self._last_MOOS_time = None
   
@@ -23,6 +25,7 @@ class ModelConsole:
       MOOS_delta = 'n/a'
     else:
       MOOS_delta = MOOS_STATE['HELM_TIME'] - self._last_MOOS_time
+      self.last_MOOS_delta = MOOS_delta
     self._last_MOOS_time = MOOS_STATE['HELM_TIME']
 
     print('\n===========================================')
