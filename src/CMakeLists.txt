@@ -17,6 +17,7 @@ INCLUDE_DIRECTORIES(${LOCAL_LIBRARY_DIRS})
 #============================================================================
 ADD_SUBDIRECTORY(lib_behaviors-agent)
 ADD_SUBDIRECTORY(pEpisodeManager)
+ADD_SUBDIRECTORY(uFldTagManagerAgent)
 
 ##############################################################################
 #                           END of CMakeLists.txt
