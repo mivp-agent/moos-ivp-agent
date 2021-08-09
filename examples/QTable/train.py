@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import time
+import wandb
 import argparse
 from tqdm import tqdm
 
@@ -118,6 +119,15 @@ def train(args):
             console_report += f", Avg Delta: {round(sum(loop_times)/len(loop_times),2)}"
             tqdm.write(console_report)
 
+            wandb.log({
+              'episode': episode_count,
+              'epsilon': epsilon,
+              'duration': round(MOOS_STATE[MNGR_REPORT]['DURATION'],2),
+              'success': MOOS_STATE[MNGR_REPORT]['SUCCESS'],
+              'min_dist': round(min_dist, 2),
+              'avg_delta': round(sum(loop_times)/len(loop_times),2),
+            })
+
             # If succeeded, set q value
             if MOOS_STATE[MNGR_REPORT]['SUCCESS']:
               q.set_qvalue(last_state, current_action, 0)
@@ -180,4 +190,7 @@ if __name__ == '__main__':
   
   args = parser.parse_args()
 
-  train(args)
+
+  wandb.login(key='')
+  with wandb.init(project='mivp_qtable'):
+    train(args)

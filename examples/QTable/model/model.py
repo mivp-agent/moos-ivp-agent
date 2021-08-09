@@ -54,7 +54,7 @@ class QLearn:
   def get_action(self, state, e=None):
     # If called with epsilon value, run e-greedy
     if e is not None:
-      assert e >= 0 and e <= 1, 'Epsilon should be in range [0,1]'
+      min(max(0, e), 1)
       
       if np.random.random() < e:
         return np.random.randint(0, self._action_space_size)
