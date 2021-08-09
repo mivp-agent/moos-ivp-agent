@@ -18,3 +18,8 @@ CMakeFiles
 # python files
 *.pyc 
 
+# Any trained model folder
+**/trained/*
+
+# Weights and biases
+**/wandb/*

@@ -13,7 +13,7 @@ MNGR_STATE = 'EPISODE_MNGR_STATE'
 MNGR_REPORT = 'EPISODE_MNGR_REPORT'
 
 def run(args):
-  q = load_model(args.model)
+  q, actions = load_model(args.model)
 
   with ModelBridgeServer() as server:
     print('Waiting for sim connection...')
@@ -53,8 +53,8 @@ def run(args):
         last_state = model_state
       
       # Construct instruction for BHV_Agent
-      instr['speed'] = ACTIONS[current_action]['speed']
-      instr['course'] = ACTIONS[current_action]['course']
+      instr['speed'] = actions[current_action]['speed']
+      instr['course'] = actions[current_action]['course']
       instr['posts'] = {}
 
       flag_dist = abs(dist((MOOS_STATE['NAV_X'], MOOS_STATE['NAV_Y']), FIELD_BLUE_FLAG))

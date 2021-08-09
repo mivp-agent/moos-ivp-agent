@@ -1,5 +1,6 @@
 import os
 import time
+import json 
 import numpy as np
 
 from mivp_agent.aquaticus.field import FieldDiscretizer
@@ -20,37 +21,51 @@ def construct_qtable(shape, print_shape=False):
   return table
 
 def load_model(path):
-  q = QLearn()
+  config_path = os.path.dirname(path)
+  config_path = os.path.join(config_path, 'config.json')
+
+  config = None
+  with open(config_path, 'r') as config_file:
+    config = json.load(config_file)
+
+  q = QLearn(
+    lr=config['lr'],
+    gamma=config['gamma'],
+    action_space_size=config['action_space_size'],
+    field_res=config['field_res']
+  )
   qtable = np.load(path)
   q._qtable = qtable
 
-  return q
+  return q, config['actions']
 
 class QLearn:
   def __init__(
     self,
     lr=LEARNING_RATE,
     gamma=DISCOUNT,
-    action_space=ACTION_SPACE_SIZE,
+    action_space_size=ACTION_SPACE_SIZE,
+    field_res=FIELD_RESOLUTION,
     save_dir=None,
     verbose=False
   ):
     self._lr = lr
     self._gamma = gamma
-    self._action_space_size = action_space
+    self._action_space_size = action_space_size
+    self._field_res = field_res
     self.save_dir = save_dir
     self.verbose = verbose
 
     # Initalize the continous -> discrete mapping
-    self._discrete_field = FieldDiscretizer(resolution=FIELD_RESOLUTION)
+    self._discrete_field = FieldDiscretizer(resolution=self._field_res)
 
     # Initalize qtable
-    self.qtable_shape = (
+    self._qtable_shape = (
       self._discrete_field.space_size, # For own position
       self._discrete_field.space_size, # For enemy position
       self._action_space_size # Google "QTable"
     )
-    self._qtable = construct_qtable(self.qtable_shape, print_shape=self.verbose)
+    self._qtable = construct_qtable(self._qtable_shape, print_shape=self.verbose)
   
   def get_state(self, own_x, own_y, enemy_x, enemy_y):
     own_idx = self._discrete_field.to_discrete_idx(own_x, own_y)
@@ -81,7 +96,7 @@ class QLearn:
   def set_qvalue(self, state, action, q):
     self._qtable[state + (action,)] = q
   
-  def save(self, save_dir=None, name=None):
+  def save(self, actions, save_dir=None, name=None):
     if save_dir is None:
       if self.save_dir is None:
         raise RuntimeError('Model cannot save without save_dir')
@@ -93,5 +108,21 @@ class QLearn:
     if not os.path.isdir(save_dir):
       os.makedirs(save_dir)
     
+    config_path = os.path.join(save_dir, 'config.json')
+    if not os.path.isfile(config_path):
+      # Construct config dict
+      config = {
+        'lr': self._lr,
+        'gamma': self._gamma,
+        'action_space_size': self._action_space_size,
+        'actions': actions,
+        'field_res': self._field_res,
+        'qtable_shape': self._qtable_shape
+      }
+
+      with open(os.path.join(save_dir, 'config.json'), 'w') as config_file:
+        json.dump(config, config_file, indent=4)
+
+    # Save model
     np.save(os.path.join(save_dir, f'{name}.npy'), self._qtable)
   

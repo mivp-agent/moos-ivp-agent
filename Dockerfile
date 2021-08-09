@@ -20,7 +20,7 @@ RUN pip3 install --no-cache-dir numpy matplotlib 'tensorflow==1.5' 'keras==2.0.8
 # Matplotlib X11 forwarding with GTK
 ENV DEBIAN_FRONTEND="noninteractive"
 RUN apt-get install -y python3-tk
-RUN pip3 install tqdm
+RUN pip3 install tqdm wandb
 
 USER moos
 

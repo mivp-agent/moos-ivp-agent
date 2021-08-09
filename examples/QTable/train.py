@@ -119,14 +119,15 @@ def train(args):
             console_report += f", Avg Delta: {round(sum(loop_times)/len(loop_times),2)}"
             tqdm.write(console_report)
 
-            wandb.log({
-              'episode': episode_count,
-              'epsilon': epsilon,
-              'duration': round(MOOS_STATE[MNGR_REPORT]['DURATION'],2),
-              'success': MOOS_STATE[MNGR_REPORT]['SUCCESS'],
-              'min_dist': round(min_dist, 2),
-              'avg_delta': round(sum(loop_times)/len(loop_times),2),
-            })
+            if args.wandb_key is not None:
+              wandb.log({
+                'episode': episode_count,
+                'epsilon': epsilon,
+                'duration': round(MOOS_STATE[MNGR_REPORT]['DURATION'],2),
+                'success': MOOS_STATE[MNGR_REPORT]['SUCCESS'],
+                'min_dist': round(min_dist, 2),
+                'avg_delta': round(sum(loop_times)/len(loop_times),2),
+              })
 
             # If succeeded, set q value
             if MOOS_STATE[MNGR_REPORT]['SUCCESS']:
@@ -145,7 +146,7 @@ def train(args):
               epsilon -= EPSILON_DECAY_AMT
             # Save model
             if episode_count % SAVE_EVERY == 0:
-              q.save()
+              q.save(ACTIONS, name=f'episode_{episode_count}')
 
           # Reset vars regardless of good or bad episode
           last_state = None
@@ -187,10 +188,13 @@ if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument('--debug', action='store_true')
   parser.add_argument('--save_dir', default=save_dir)
+  parser.add_argument('--wandb_key', default=None)
   
   args = parser.parse_args()
 
-
-  wandb.login(key='')
-  with wandb.init(project='mivp_qtable'):
+  if args.wandb_key is None:
     train(args)
+  else:
+    wandb.login(key=args.wandb_key)
+    with wandb.init(project='mivp_qtable'):
+      train(args)
