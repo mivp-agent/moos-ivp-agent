@@ -6,7 +6,7 @@ from mivp_agent.util.parse import parse_report
 from mivp_agent.util.math import dist
 from mivp_agent.aquaticus.const import FIELD_BLUE_FLAG
 
-from model.util.constants import ACTIONS
+from model.util.constants import DEFAULT_RUN_MODEL
 from model.model import load_model
 
 MNGR_STATE = 'EPISODE_MNGR_STATE'
@@ -65,6 +65,6 @@ def run(args):
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
-  parser.add_argument('--model')
+  parser.add_argument('--model', default=DEFAULT_RUN_MODEL)
   args = parser.parse_args()
   run(args)
