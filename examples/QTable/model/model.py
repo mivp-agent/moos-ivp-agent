@@ -19,6 +19,13 @@ def construct_qtable(shape, print_shape=False):
   
   return table
 
+def load_model(path):
+  q = QLearn()
+  qtable = np.load(path)
+  q._qtable = qtable
+
+  return q
+
 class QLearn:
   def __init__(
     self,
