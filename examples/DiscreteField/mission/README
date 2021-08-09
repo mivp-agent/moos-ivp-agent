@@ -1,0 +1,33 @@
+Created by: Arjun Gupta
+Date: December 4 2017
+
+This directory holds all the infrastructure necessary to run the simulation.
+
+Important Files:
+
+--> "m200/launch_m200_attack.sh" - script used to launch the robot in
+    simulation. Random initialization
+
+--> "m200/meta_m200.bhv" - behavior file script for the robot. Controls which
+    bheavior occurs and how they switch. Currently hardwired with the launch
+    script such that it always is in BHV_Input mode.
+
+--> "m200/meta_m200.moos" - moos file for the the robot. Controls which
+    processes are running in the MOOSDB and what variables get shared. 
+
+--> "shoreside/meta_shoreside.moos" - moos file for shoreside. Controls which
+    processes are running on shoreside and which variables get shared out.
+
+Directory Structure:
+
+--> "m200/" - holds relevant files to launching and simulating the robots
+
+--> "shoreside/" - holds all relevant files to launching and simulating the
+    shoreside
+
+--> "mokai/" - holds relevant files to simulating motorized kayaks, very
+    similar to robot directory in terms of contents
+
+--> "plug_*" files - files that are called by the .moos files for vehicles
+    and shoreside that control specific processes
+

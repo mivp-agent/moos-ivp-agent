@@ -1,0 +1,11 @@
+//------------------------------------------------
+// uXMS for debugging mivp-agent things
+
+ProcessConfig = uXMS
+{
+  AppTick   = 4
+  CommsTick = 4
+
+  var = MODE
+  var = AGENT_BRIDGE_STATE
+}
