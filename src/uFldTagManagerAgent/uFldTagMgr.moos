@@ -1,0 +1,9 @@
+=============================================================== 
+uFldTagMgr Example MOOS Configuration                     
+=============================================================== 
+                                                                
+ProcessConfig = uFldTagMgr
+{                                                               
+  AppTick   = 4                                                 
+  CommsTick = 4                                                 
+}                                      
