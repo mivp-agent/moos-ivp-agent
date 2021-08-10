@@ -46,6 +46,16 @@ git clone https://github.com/CarterFendley/moos-ivp-agent.git
 
 Install [XQuartz](https://content.byui.edu/file/cddfb9c0-a825-4cfe-9858-28d5b4c218fe/1/Course/Setup-XQuartz.html) for the GUI components to render properly.
 
+#### Fix multi-threading issue
+
+`pMarineViewer` has a compatibility issue with connections inside of the docker container on some versions of OSX. On your **host NOT docker** terminal enter the following command.
+
+```
+defaults write org.macosforge.xquartz.X11 enable_iglx -bool true
+```
+
+[Reference](https://unix.stackexchange.com/questions/429760/opengl-rendering-with-x11-forwarding/642954#642954)
+
 ## Using the docker script
 
 This repo comes with the `docker.sh` script for OSX and Linux to make managing it's docker container easier.
