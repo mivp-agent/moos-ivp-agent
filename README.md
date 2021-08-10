@@ -42,6 +42,10 @@ See [this](https://docs.docker.com/get-docker/) page for instructions for each m
 git clone https://github.com/CarterFendley/moos-ivp-agent.git
 ```
 
+### If on OSX
+
+Install [XQuartz](https://content.byui.edu/file/cddfb9c0-a825-4cfe-9858-28d5b4c218fe/1/Course/Setup-XQuartz.html) for the GUI components to render properly.
+
 ## Using the docker script
 
 This repo comes with the `docker.sh` script for OSX and Linux to make managing it's docker container easier.
