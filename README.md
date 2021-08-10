@@ -56,6 +56,16 @@ defaults write org.xquartz.X11 enable_iglx -bool true
 
 [Reference](https://unix.stackexchange.com/questions/429760/opengl-rendering-with-x11-forwarding/642954#642954)
 
+#### Allow networked connections
+
+Run the following command to start XQuartz (again, on a host terminal).
+
+```
+xhost +x
+```
+
+After the command completes go to the task bar and `XQuarts > Preferences > Security` and check the box labeled `Allow connections from network clients`
+
 ## Using the docker script
 
 This repo comes with the `docker.sh` script for OSX and Linux to make managing it's docker container easier.
