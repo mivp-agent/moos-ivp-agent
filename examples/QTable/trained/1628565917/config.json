@@ -1,0 +1,25 @@
+{
+    "lr": 0.1,
+    "gamma": 0.95,
+    "action_space_size": 3,
+    "actions": [
+        {
+            "speed": 2.0,
+            "course": 180.0
+        },
+        {
+            "speed": 2.0,
+            "course": 240.0
+        },
+        {
+            "speed": 2.0,
+            "course": 300.0
+        }
+    ],
+    "field_res": 15,
+    "qtable_shape": [
+        50,
+        50,
+        3
+    ]
+}
