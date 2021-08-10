@@ -1,253 +1,121 @@
 #!/bin/bash
-TIME_WARP=1
 
-#SHORE_IP=192.168.1.150
+# Standard MOOS-IvP vars
+TIME_WARP=1
 SHORE_IP=localhost
 SHORE_LISTEN="9300"
+SHARE_LISTEN=""
+VPORT=""
+VNAME=""
 
-TRAIL_RANGE="3"
-TRAIL_ANGLE="330"
 HELP="no"
 JUST_BUILD="no"
-VTEAM=""
-VNAME=""
-RNAME=""
-VMODEL="M300"
 
-START_POS="56,16,240"
-RETURN_POS="5,0"
-LOITER_POS="x=100,y=-180"
-GRAB_POS=""
+# Aquaticus specific
+START_POS=""
+VTEAM=""
+OWN_FLAG=""
+ENEMY_FLAG=""
 GRABR_POS=""
 GRABL_POS=""
-UNTAG_POS=""
+BEHAVIOR="DEFEND"
 
-HERON_TEAMMATE=""
-HERON_TEAMMATE_VTEAM=""
-
-CID=000 #COMP ID
-
-START_ACTION="PROTECT"
+# MOOS-IvP-Agent specific
+ROLE=""
+ID=""
+COLOR="green"
 
 function help(){
     echo ""
-    echo "USAGE: $0 <heron_vehicle_name> <vehicle_role> <heron_teammate_vehicle_role> [SWITCHES]"
-    
-    echo ""
-    echo "POSSIBLE HERON VEHICLE NAMES:"
-    echo "  evan,         e   : Evan heron."
-    echo "  felix,        f   : Felix heron."
-    echo "  gus,          g   : Gus heron."
-    echo "  hal,          h   : Hal heron."
-    echo "  ida,          i   : Ida heron."
-    echo "  jing,         j   : Jing heron."
-    echo "  kirk,         k   : Kirk heron."
-    echo "  luke,         l   : Luke heron."
+    echo "USAGE: $0 <team> <role> <id> [SWITCHES]"
 
     echo ""
-    echo "POSSIBLE ROLES (and heron teammate_roles):"
-    echo "  blue_one,     b1  : Vehicle one on blue team."
-    echo "  blue_two,     b2  : Vehicle two on blue team."
-    echo "  blue_three,   b3  : Vehicle three on blue team."
-    echo "  blue_four,    b4  : Vehicle four on blue team."
+    echo "POSSIBLE ROLES:"
+    echo "  red,          r  : Red team."
+    echo "  blue,         b  : Blue team."
 
-    echo "  red_one,      r1  : Vehicle one on red team."
-    echo "  red_two,      r2  : Vehicle two on red team."
-    echo "  red_three,    r3  : Vehicle three on red team."
-    echo "  red_four,     r4  : Vehicle four on red team."
+    echo ""
+    echo "POSSIBLE ROLES:"
+    echo "  agent,        a  : Vehicle running behavior of interest."
+    echo "  drone,        d  : Vehicle running supporting behavior."
+    echo "                For example, a behavior to train against."
+
+    echo ""
+    echo "POSSIBLE IDs: [11,99]"
 
     echo ""
     echo "POSSIBLE SWITCHES:"
-    echo "  --sim,        -s  : Simulation mode."
-    echo "  --start-x=        : Start from x position (requires x y a)."
-    echo "  --start-y=        : Start from y position (requires x y a)."
-    echo "  --start-a=        : Start from angle (requires x y a)."
-    echo "  --cid             : Competition ID (for log file)"
-    echo "  --just_build, -J  : Just build targ files."
-    echo "  --help,       -H  : Display this message."
+    echo "  --just_build, -J      : Just build targ files."
+    echo "  --help,       -H      : Display this message."
+    echo "  --behavior=<behavior> : Set the vehicle's color"
+    echo "  --color=<some_color>  : Set the vehicle's color"
     exit 0
 }
 
 #-------------------------------------------------------
 #  Part 1: Check for and handle command-line arguments
 #-------------------------------------------------------
-case "$1" in
-    e|evan)
-        HERON_IP=192.168.5.1
-        VNAME="EVAN"
-        echo "EVAN heron selected."
-        ;;
-    f|felix)
-        HERON_IP=192.168.6.1
-        VNAME="FELIX"
-        echo "FELIX heron selected."
-        ;;
-    g|gus)
-        HERON_IP=192.168.7.1
-        VNAME="GUS"
-        echo "GUS heron selected."
-        ;;
-    h|hal)
-        HERON_IP=192.168.8.1
-        VNAME="HAL"
-        echo "HAL heron selected."
-        ;;
-    i|ida)
-        HERON_IP=192.168.9.1
-        VNAME="IDA"
-        echo "IDA heron selected."
-        ;;
-    j|jing)
-        HERON_IP=192.168.10.1
-        VNAME="JING"
-        echo "JING heron selected."
-        ;;
-    k|kirk)
-        HERON_IP=192.168.11.1
-        VNAME="KIRK"
-        echo "KIRK heron selected."
-        ;;
-    l|luke)
-	    HERON_IP=192.168.12.1
-        VNAME="LUKE"
-	    echo "LUKE heron selected."
-	    ;;
-    *)
-        echo "!!! Error invalid positional argument $1 !!!"
-        ;;
-esac
 
-case "$2" in
-    r1|red_one)
+# Handle teams
+case "$1" in
+    red|r)
         VTEAM="red"
-        RNAME="red_one"
-        VPORT="9011"
-	VR_PORT="9811"
-        SHARE_LISTEN="9311"
-	START_ACTION="DEFEND"
-        echo "Vehicle set to red one."
+        echo "Vehicle added to red team."
         ;;
-    r2|red_two)
-        VTEAM="red"
-        RNAME="red_two"
-        VPORT="9012"
-	VR_PORT="9812"
-        SHARE_LISTEN="9312"
-	START_ACTION="ATTACK_LEFT"
-        echo "Vehicle set to red two."
-        ;;
-    r3|red_three)
-        VTEAM="red"
-        RNAME="red_three"
-        VPORT="9013"
-	VR_PORT="9813"
-        SHARE_LISTEN="9313"
-	START_ACTION="DEFEND"
-        echo "Vehicle set to red two."
-        ;;
-    r4|red_four)
-        VTEAM="red"
-        RNAME="red_four"
-        VPORT="9014"
-	VR_PORT="9814"
-        SHARE_LISTEN="9314"
-	START_ACTION="ATTACK_RIGHT"
-        echo "Vehicle set to red two."
-        ;;
-    b1|blue_one)
+    blue|b)
         VTEAM="blue"
-        RNAME="blue_one"
-        VPORT="9015"
-	VR_PORT="9815"
-        SHARE_LISTEN="9315"
-	START_ACTION="DEFEND"
-        echo "Vehicle set to blue one."
-        ;;
-    b2|blue_two)
-        VTEAM="blue"
-        RNAME="blue_two"
-        VPORT="9016"
-	VR_PORT="9816"
-        SHARE_LISTEN="9316"
-	PLAYERS="b1,b3,b4"
-	START_ACTION="ATTACK_LEFT"
-        echo "Vehicle set to blue two."
-        ;;
-    b3|blue_three)
-        VTEAM="blue"
-        RNAME="blue_three"
-        VPORT="9017"
-	VR_PORT="9817"
-        SHARE_LISTEN="9317"
-	START_ACTION="DEFEND"
-        echo "Vehicle set to blue three."
-        ;;
-    b4|blue_four)
-        VTEAM="blue"
-        RNAME="blue_four"
-        VPORT="9018"
-	VR_PORT="9818"
-        SHARE_LISTEN="9318"
-	START_ACTION="ATTACK_RIGHT"
-        echo "Vehicle set to blue four."
+        echo "Vehicle added to blue team."
         ;;
     *)
-        echo "!!! Error invalid positional argument $2 !!!"
+        echo "!!! ERROR: expected team assignment got: $1 !!!"
         help
         ;;
 esac
 
-	
-case "$3" in
-    r1|red_one)
-        HERON_TEAMMATE="red_one"
-        HERON_TEAMMATE_VTEAM="red"
-        echo "Vehicle set to red one."
+if [ "${VTEAM}" = "red" ]; then
+    MY_FLAG="50,-24"
+    START_POS="50,-24,240"
+    ENEMY_FLAG="-52,-70"
+
+    GRABR_POS="-46,-42"
+    GRABL_POS="-29,-83"
+elif [ "${VTEAM}" = "blue" ]; then
+    MY_FLAG="-52,-70"
+    START_POS="-52,-70,60"
+    ENEMY_FLAG="50,-24"
+
+    GRABR_POS="42,-55"
+    GRABL_POS="19,-11"
+fi
+
+# Handle role assigment
+case "$2" in
+    agent|a)
+        ROLE="agent"
+        echo "Vehicle set as an agent."
         ;;
-    r2|red_two)
-        HERON_TEAMMATE="red_two"
-        HERON_TEAMMATE_VTEAM="red"
-        echo "Vehicle set to red two."
-        ;;
-    r3|red_three)
-        HERON_TEAMMATE="red_three"
-        HERON_TEAMMATE_VTEAM="red"
-        echo "Vehicle set to red three."
-        ;;
-    r4|red_four)
-        HERON_TEAMMATE="red_four"
-        HERON_TEAMMATE_VTEAM="red"
-        echo "Vehicle set to red four."
-        ;;
-    b1|blue_one)
-        HERON_TEAMMATE="blue_one"
-        HERON_TEAMMATE_VTEAM="blue"
-        echo "Vehicle set to blue one."
-        ;;
-    b2|blue_two)
-        HERON_TEAMMATE="blue_two"
-        HERON_TEAMMATE_VTEAM="blue"
-        echo "Vehicle set to blue two."
-        ;;
-    b3|blue_three)
-        HERON_TEAMMATE="blue_three"
-        HERON_TEAMMATE_VTEAM="blue"
-        echo "Vehicle set to blue three."
-        ;;
-    b4|blue_four)
-        HERON_TEAMMATE="blue_four"
-        HERON_TEAMMATE_VTEAM="blue"
-        echo "Vehicle set to blue four."
+    drone|d)
+        ROLE="drone"
+        echo "Vehicle set as a drone"
         ;;
     *)
-        echo "!!! Error invalid positional argument $3 !!!"
+        echo "!!! ERROR: expected role assignment got: $2 !!!"
+        help
         ;;
 esac
 
-if [[ "$HERON_TEAMMATE_VTEAM" != "$VTEAM" ]]; then
-    echo "!!! Error teammate team can not be different then vehicle team !!!"
+if [[ "$3" =~ ^-?[0-9]+$ ]] && [[ "$3" -ge 11 ]] && [[ "$3" -le 99 ]]; then
+    ID="$3"
+    SHARE_LISTEN="93${ID}"
+    VPORT="93${ID}"
+else
     help
 fi
+
+# Set VNAME based on role and id
+VNAME="${ROLE}_${ID}"
+
+echo "hi"
 
 for arg in "${@:4}"; do
     if [ "${arg}" = "--help" -o "${arg}" = "-H" ]; then
@@ -258,100 +126,43 @@ for arg in "${@:4}"; do
     elif [ "${arg}" = "--just_build" -o "${arg}" = "-J" ] ; then
         JUST_BUILD="yes"
         echo "Just building files; no vehicle launch."
-    elif [ "${arg}" = "--sim" -o "${arg}" = "-s" ] ; then
-        SIM="SIM"
-        echo "Simulation mode ON."
-    elif [ "${arg:0:10}" = "--start-x=" ] ; then
-        START_POS_X="${arg#--start-x=*}"
-    elif [ "${arg:0:10}" = "--start-y=" ] ; then
-        START_POS_Y="${arg#--start-y=*}"
-    elif [ "${arg:0:10}" = "--start-a=" ] ; then
-        START_POS_A="${arg#--start-a=*}"
-    elif [ "${arg:0:6}" = "--cid=" ] ; then
-        CID="${arg#--cid=*}"
-        CID=$(printf "%03d" $CID)
+    elif [ "${arg:0:8}" = "--color=" ]; then
+        COLOR="${arg#--color=*}"
+    elif [ "${arg:0:11}" = "--behavior=" ]; then
+        BEHAVIOR="${arg#--behavior=*}"
     else
         echo "Undefined switch:" $arg
         help
     fi
 done
 
-#HERON_NAME=`get_vname.sh`
-#echo "Heron name:"$HERON_NAME
-
-
-
-
-if [ "${VTEAM}" = "red" ]; then
-    GRAB_POS="-52,-70"
-    GRABR_POS="-46,-42"
-    GRABL_POS="-29,-83"
-    UNTAG_POS="50,-24"
-    RETURN_POS="5,0"
-    START_POS="50,-24,240"
-    echo "Red team selected."
-elif [ "${VTEAM}" = "blue" ]; then
-    GRAB_POS="50,-24"
-    GRABR_POS="42,-55"
-    GRABL_POS="19,-11"
-    UNTAG_POS="-52,-70"
-    RETURN_POS="5,0"
-    START_POS="-52,-70,60"
-    echo "Blue team selected."
-fi
-   
 #-------------------------------------------------------
 #  Part 2: Create the .moos and .bhv files.
 #-------------------------------------------------------
 
-if [[ -n $START_POS_X && (-n $START_POS_Y && -n $START_POS_A)]]; then
-  START_POS="$START_POS_X,$START_POS_Y,$START_POS_A"
-  echo "Starting from " $START_POS
-elif [[ -z $START_POS_X && (-z $START_POS_Y && -z $START_POS_A) ]]; then
-  echo "Starting from default postion: " $START_POS
-else [[ -z $START_POS_X || (-z $START_POS_Y || -z $START_POS_A) ]]
-  echo "When specifying a starting coordinate, all 3 should be specified (x,y,a)."
-  echo "See help (-h)."
-  exit 1
-fi
-
-echo "Assembling MOOS file targ_${RNAME}.moos"
-
-
-nsplug meta_heron.moos targ_${RNAME}.moos -f \
-    VNAME=$VNAME                 \
-    RNAME=$RNAME                 \
-    VPORT=$VPORT                 \
-    VR_PORT=$VR_PORT             \
-    WARP=$TIME_WARP              \
-    SHARE_LISTEN=$SHARE_LISTEN   \
-    SHORE_LISTEN=$SHORE_LISTEN   \
+echo "Assembling MOOS file targ_${VNAME}.moos"
+nsplug meta_heron.moos targ_${VNAME}.moos -f \
     SHORE_IP=$SHORE_IP           \
-    HERON_IP=$HERON_IP             \
-    HOSTIP_FORCE="localhost"     \
-    LOITER_POS=$LOITER_POS       \
-    VARIATION=$VARIATION         \
-    VMODEL=$VMODEL               \
+    SHORE_LISTEN=$SHORE_LISTEN   \
+    SHARE_LISTEN=$SHARE_LISTEN   \
+    VPORT=$VPORT                 \
+    VNAME=$VNAME                 \
+    WARP=$TIME_WARP              \
     VTYPE="kayak"                \
     VTEAM=$VTEAM                 \
     START_POS=$START_POS         \
-    CID=$CID                     \
-    $SIM
+    COLOR=$COLOR
 
-echo "Assembling BHV file targ_${RNAME}.bhv"
-nsplug meta_heron.bhv targ_${RNAME}.bhv -f  \
-        RETURN_POS=${RETURN_POS}    \
-        TRAIL_RANGE=$TRAIL_RANGE    \
-        TRAIL_ANGLE=$TRAIL_ANGLE    \
-        VTEAM=$VTEAM                \
-        VNAME=$VNAME                \
-        RNAME=$RNAME                 \
-        GRAB_POS=$GRAB_POS          \
-        GRABR_POS=$GRABR_POS           \
-        GRABL_POS=$GRABL_POS             \
-        UNTAG_POS=$UNTAG_POS        \
-        HERON_TEAMMATE=$HERON_TEAMMATE \
-	START_ACTION=$START_ACTION
+echo "Assembling BHV file targ_${VNAME}.bhv"
+nsplug meta_heron.bhv targ_${VNAME}.bhv -f  \
+        VTEAM=$VTEAM                        \
+        VNAME=$VNAME                        \
+        ROLE=$ROLE                          \
+        MY_FLAG=$MY_FLAG                    \
+        ENEMY_FLAG=$ENEMY_FLAG              \
+        GRABR_POS=$GRABR_POS                \
+        GRABL_POS=$GRABL_POS                \
+	    BEHAVIOR=$BEHAVIOR
 
 
 if [ ${JUST_BUILD} = "yes" ] ; then
@@ -363,10 +174,10 @@ fi
 #  Part 3: Launch the processes
 #-------------------------------------------------------
 
-echo "Launching $RNAME MOOS Community "
-pAntler targ_${RNAME}.moos >& /dev/null &
+echo "Launching $VNAME MOOS Community "
+pAntler targ_${VNAME}.moos >& /dev/null &
 
-uMAC targ_${RNAME}.moos
+uMAC targ_${VNAME}.moos
 
 echo "Killing all processes ..."
 kill -- -$$

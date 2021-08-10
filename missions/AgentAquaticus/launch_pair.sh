@@ -40,29 +40,11 @@ fi
 #-------------------------------------------------------
 if [[ -z $NO_HERON ]]; then
   cd ./heron
-  # Gus Red
-  ./launch_heron.sh g r1 r3 $TIME_WARP -s --start-x=50 --start-y=-50 --start-a=240 > /dev/null &
+  # Launch a red agent
+  ./launch_heron.sh red agent 11 --behavior=ATTACK_LEFT --color=orange $TIME_WARP > /dev/null &
   sleep 1
-  # Luke Red
-  ./launch_heron.sh l r2 r4 $TIME_WARP -s --start-x=50 --start-y=-45 --start-a=240 > /dev/null &
-  sleep 1
-  # Kirk Blue
-  ./launch_heron.sh k b1 b3 $TIME_WARP -s --start-x=-52 --start-y=-55 --start-a=60 > /dev/null &
-  sleep 1
-  # Jing Blue
-  ./launch_heron.sh j b2 b4 $TIME_WARP -s --start-x=-52 --start-y=-70 --start-a=60 > /dev/null &
-  sleep 1
-  # Evan Red
-  ./launch_heron.sh e r3 r4 $TIME_WARP -s --start-x=50 --start-y=-18 --start-a=240 > /dev/null &
-  sleep 1
-  # Felix Blue
-  ./launch_heron.sh f b3 b4 $TIME_WARP -s --start-x=-52 --start-y=-50 --start-a=60 > /dev/null &
-  sleep 1
-  # Hal Red
-  ./launch_heron.sh h r4 r3 $TIME_WARP -s --start-x=50 --start-y=-40 --start-a=240 > /dev/null &
-  sleep 1
-  # Ida Blue
-  ./launch_heron.sh i b4 b3 $TIME_WARP -s --start-x=-52 --start-y=-75 --start-a=60 > /dev/null &
+  # Launch a blue drone
+  ./launch_heron.sh blue drone 12 --behavior=DEFEND --color=orange $TIME_WARP > /dev/null &
   sleep 1
   cd ..
 fi

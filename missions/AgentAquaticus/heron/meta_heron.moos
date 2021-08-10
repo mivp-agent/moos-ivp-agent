@@ -1,6 +1,6 @@
 ServerHost = localhost
 ServerPort = $(VPORT)
-Community  = $(RNAME)
+Community  = $(VNAME)
 
 #include ../plug_origin_warp.moos
 
@@ -16,21 +16,19 @@ ProcessConfig = ANTLER
   Run = pNodeReporter      @ NewConsole = false
   Run = pMarinePID         @ NewConsole = false
   Run = pHelmIvP           @ NewConsole = false
-  Run = pBasicContactMgr   @ NewConsole = false
   Run = pHostInfo          @ NewConsole = false
   Run = uFldNodeBroker     @ NewConsole = false
   Run = pDeadManPost       @ NewConsole = false
-#ifdef SIM
   Run = uSimMarine         @ NewConsole = false
-#else
-  #actual robot driver removed for demo
-#endif
   Run = uFldMessageHandler @ NewConsole = false
-  Run = pRangeEvent        @ NewConsole = false
   Run = pNodeReportParse   @ NewConsole	= false
+  Run = pRangeEvent        @ NewConsole = false
+  //Run = pEpisodeManager    @ NewConsole = false
 }
 
 #include ../plug_pShare.moos
+
+#include plug_pEpisodeManager.moos
 
 #include ../plug_pDeadManPost.moos
 
@@ -49,8 +47,6 @@ ProcessConfig = ANTLER
 #include ../plug_uFldMessageHandler.moos
 
 #include plug_uProcessWatch.moos
-
-#include plug_pBasicContactMgr.moos
 
 #include plug_uSimMarine.moos
 

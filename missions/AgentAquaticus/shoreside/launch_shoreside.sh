@@ -13,8 +13,6 @@ BLUE_FLAG="x=-52,y=-70"
 RED_FLAG="x=50,y=-24"
 VR_PORT="9800"
 
-CID=000 # Competiton id
-
 for ARGI; do
     if [ "${ARGI}" = "--help" -o "${ARGI}" = "-h" ] ; then
         echo "$0 [SWITCHES]"
@@ -35,9 +33,6 @@ for ARGI; do
         SHORE_IP="${ARGI#--shore-ip=*}"
     elif [ "${ARGI:0:13}" = "--shore-port=" ] ; then
         SHORE_LISTEN=${ARGI#--shore-port=*}
-    elif [ "${ARGI:0:6}" = "--cid=" ] ; then
-        CID="${ARGI#--cid=*}"
-        CID=$(printf "%03d" $CID)
     else
         echo "Bad Argument: " $ARGI
         exit 1
@@ -49,7 +44,7 @@ done
 #-------------------------------------------------------
 nsplug meta_shoreside.moos targ_shoreside.moos -f WARP=$TIME_WARP    \
        SNAME="shoreside"  SHARE_LISTEN=$SHORE_LISTEN  SPORT="9000"   \
-       VTEAM1=$VTEAM1 VTEAM2=$VTEAM2 SHORE_IP=$SHORE_IP CID=$CID     \
+       VTEAM1=$VTEAM1 VTEAM2=$VTEAM2 SHORE_IP=$SHORE_IP              \
        RED_FLAG=${RED_FLAG} BLUE_FLAG=${BLUE_FLAG} VR_PORT=${VR_PORT}
 
 if [ ! -e targ_shoreside.moos ]; then echo "no targ_shoreside.moos"; exit 1; fi
@@ -67,13 +62,11 @@ fi
 #  Part 3: Launch the Shoreside
 #-------------------------------------------------------
 
-
 echo "Launching $SNAME MOOS Community (WARP=$TIME_WARP)"
 pAntler targ_shoreside.moos >& /dev/null &
 echo "Done Launching Shoreside "
 
 uMAC targ_shoreside.moos
-
 
 sleep .2 # Give them a chance to exit with grace
 echo "Killing all processes ... "

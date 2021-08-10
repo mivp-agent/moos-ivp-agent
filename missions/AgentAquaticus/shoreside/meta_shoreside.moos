@@ -23,10 +23,8 @@ Processconfig = ANTLER
   Run = uFldShoreBroker @ NewConsole = false
   Run = uFldNodeComms   @ NewConsole = false
 
-  Run = uFldFlagManager @ NewConsole = false
-  Run = uFldTagManager  @ NewConsole = false
-
-  Run = iSay            @ NewConsole = false
+  Run = uFldFlagManager      @ NewConsole = false
+  Run = uFldTagManagerAgent  @ NewConsole = false
 }
 
 //--------------------------------------------------
@@ -89,7 +87,7 @@ ProcessConfig = uFldFlagManager
 //--------------------------------------------------
 // uFldTagManager Configuration Block
 
-ProcessConfig = uFldTagManager
+ProcessConfig = uFldTagManagerAgent
 {
   AppTick   = 4
   CommsTick = 4
@@ -249,7 +247,7 @@ ProcessConfig = pLogger
   AppTick       = 10
   CommsTick     = 10
 
-  File          = C%(CID)_LOG_SHORESIDE
+  File          = LOG_SHORESIDE
   PATH          = ./
   SyncLog       = true @ 0.2
   AsyncLog      = true
