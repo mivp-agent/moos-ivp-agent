@@ -1,0 +1,428 @@
+initialize DEPLOY     = false
+initialize RETURN     = false
+initialize ACTION     = $(START_ACTION)
+initialize TAGGED     = false
+initialize AGGRESSIVE = false
+initialize RECOVER    = false
+
+set MODE     = ACTIVE {
+  DEPLOY     = true
+} INACTIVE
+
+set MODE = RECOVERING {
+	MODE = ACTIVE
+  RECOVER = true
+}
+
+set MODE     = RETURNING {
+  MODE       = ACTIVE
+  RETURN     = true
+} INGAME
+
+set MODE     = SOLOPLAY {
+  MODE       = ACTIVE:INGAME
+  (((ACTION    = ATTACK) or ((ACTION = ATTACK_LEFT) or (ACTION = ATTACK_RIGHT))) or ((ACTION = INTERCEPT) or (ACTION = DEFEND))) or (ACTION = PROTECT)
+}
+
+set MODE     = TEAMPLAY {
+  MODE       = ACTIVE:INGAME
+  ((ACTION    = COVER) or ((ACTION = STATION) or (ACTION = TRAIL))) or (ACTION = SHIELD)
+}
+
+set MODE     = ATTACKING {
+  MODE       = ACTIVE:INGAME:SOLOPLAY
+  ACTION     = ATTACK
+}
+
+set MODE     = ATTACKING_LEFT {
+  MODE       = ACTIVE:INGAME:SOLOPLAY
+  ACTION     = ATTACK_LEFT
+}
+
+set MODE     = ATTACKING_RIGHT {
+  MODE       = ACTIVE:INGAME:SOLOPLAY
+  ACTION     = ATTACK_RIGHT
+}
+
+set MODE     = DEFENDING {
+  MODE       = ACTIVE:INGAME:SOLOPLAY
+}
+
+set MODE     = TAGGED {
+  MODE       = ACTIVE:INGAME:SOLOPLAY:ATTACKING
+  TAGGED     = true
+} UNTAGGED
+
+set MODE     = TAGGED {
+  MODE       = ACTIVE:INGAME:SOLOPLAY:ATTACKING_LEFT
+  TAGGED     = true
+} UNTAGGED
+
+set MODE     = TAGGED {
+  MODE       = ACTIVE:INGAME:SOLOPLAY:ATTACKING_RIGHT
+  TAGGED     = true
+} UNTAGGED
+
+set MODE     = AVOIDING {
+  MODE       = ACTIVE:INGAME:SOLOPLAY:ATTACKING:UNTAGGED
+  AGGRESSIVE = false
+}
+
+set MODE     = PASSIVE {
+  MODE       = ACTIVE:INGAME:SOLOPLAY:DEFENDING
+  ACTION     = DEFEND
+}
+
+set MODE     = PROTECTING {
+  MODE	     = ACTIVE:INGAME:SOLOPLAY:DEFENDING
+  ACTION     = PROTECT
+}
+
+set MODE     = TRAILING {
+  MODE       = ACTIVE:INGAME:TEAMPLAY
+  ACTION     = TRAIL
+}
+
+set MODE     = COVERING {
+  MODE       = ACTIVE:INGAME:TEAMPLAY
+  ACTION     = COVER
+}
+
+set MODE     = SHIELDING {
+  MODE       = ACTIVE:INGAME:TEAMPLAY
+  ACTION     = SHIELD
+}
+
+set MODE     = STATIONING {
+  MODE       = ACTIVE:INGAME:TEAMPLAY
+  ACTION     = STATION
+}
+
+//Behavior = BHV_AvoidCollision
+ {
+   // General Behavior Parameters
+   // ---------------------------
+   name         = avdcollision_
+   pwt          = 300
+   updates      = CONTACT_INFO
+  endflag = CONTACT_RESOLVED = $[CONTACT]
+   templating   = spawn
+
+
+   // General Contact Behavior Parameters
+   // -----------------------------------
+       bearing_lines = white:0, green:0.65, yellow:0.8, red:1.0   // example
+
+             contact = optional_vehicle_name
+               decay = 15,30
+         extrapolate = true
+    on_no_contact_ok = true
+
+
+   // Parameters specific to this behavior
+   // ------------------------------------
+      completed_dist = 15
+   max_util_cpa_dist = 10
+   min_util_cpa_dist = 5
+           pwt_grade = linear
+      pwt_inner_dist = 10
+      pwt_outer_dist = 20
+ }
+
+
+//----------------------------------------------
+Behavior = BHV_OpRegionRecover
+{
+  name         = recover
+  pwt          = 300
+  updates      = RECOVER_UPDATES
+  activeflag   = RECOVER = true
+  inactiveflag = RECOVER = false
+
+             polygon = pts={-85,-48 : 59,21 : 90.9,-52.4 : -53.1, -121.4}
+	trigger_entry_time = 1
+	trigger_exit_time  = 1
+}
+
+
+
+//#############################################################################
+//Behavior = BHV_AvdColregsV17
+{
+  name                    = active_avd_
+  pwt                     = 300
+
+  updates                 = CONTACT_INFO
+
+  condition               = (MODE == ACTIVE)
+  templating              = spawn
+
+  endflag                 = CONTACT_RESOLVED = $[CONTACT]
+
+  contact                 = optional_vehicle_name
+  decay                   = 15,30
+  on_no_contact_ok        = true
+  extrapolate             = false
+
+  completed_dist          = 15
+  max_util_cpa_dist       = 10
+  min_util_cpa_dist       = 5
+  pwt_grade               = linear
+  pwt_inner_dist          = 10
+  pwt_outer_dist          = 20
+}
+
+//#############################################################################
+Behavior = BHV_Waypoint
+{
+  name                    = waypt_return
+  pwt                     = 100
+
+  condition               = MODE == RETURNING
+  runflag                 = BOT_DIALOG_STATUS=Returning
+  endflag                 = STATION_KEEP = true
+
+  speed                   = 3.0
+  capture_radius          = 3.0
+  slip_radius             = 10.0
+  points                  = $(RETURN_POS)
+  lead                    = 8
+}
+
+//#############################################################################
+Behavior = BHV_Waypoint
+{
+  name                    = waypt_grab
+  pwt                     = 50
+  perpetual               = true
+
+  condition               = (MODE == UNTAGGED) and (MODE == ATTACKING)
+  runflag                 = BOT_DIALOG_STATUS=Attacking
+  endflag                 = FLAG_GRAB_REQUEST=vname=$(RNAME)
+  endflag                 = TAGGED=true
+
+  speed                   = 5 // meters per second
+  capture_line            = false
+  capture_radius          = 7.0
+  slip_radius             = 5.0
+
+  points                  = $(GRAB_POS)
+}
+
+//#############################################################################
+Behavior = BHV_Waypoint
+{
+  name                    = left_waypt_grab
+  pwt                     = 50
+  perpetual               = true
+  updates		  = UPDATE_WPT
+  condition               = (MODE == UNTAGGED) and (MODE == ATTACKING_LEFT)
+  runflag                 = BOT_DIALOG_STATUS=Attacking
+  endflag                 = FLAG_GRAB_REQUEST=vname=$(RNAME)
+  endflag                 = TAGGED=true
+
+  speed                   = 5 // meters per second
+  capture_line            = false
+  capture_radius          = 7.0
+  slip_radius             = 5.0
+
+  points                  = $(GRABL_POS):$(GRAB_POS)
+  visual_hints = vertex_size=0, edge_size=0
+  visual_hints = vertex_color=invisible, edge_color=invisible
+  visual_hints = nextpt_color=invisible, nextpt_lcolor=invisible
+}
+
+//#############################################################################
+Behavior = BHV_Waypoint
+{
+  name                    = right_waypt_grab
+  pwt                     = 50
+  perpetual               = true
+  updates		  = UPDATE_WPT
+  condition               = (MODE == UNTAGGED) and (MODE == ATTACKING_RIGHT)
+  runflag                 = BOT_DIALOG_STATUS=Attacking
+  endflag                 = FLAG_GRAB_REQUEST=vname=$(RNAME)
+  endflag                 = TAGGED=true
+
+  speed                   = 5 // meters per second
+  capture_line            = false
+  capture_radius          = 7.0
+  slip_radius             = 5.0
+
+  points                  = $(GRABR_POS):$(GRAB_POS)
+  visual_hints = vertex_size=0, edge_size=0
+  visual_hints = vertex_color=invisible, edge_color=invisible
+  visual_hints = nextpt_color=invisible, nextpt_lcolor=invisible
+}
+
+//#############################################################################
+//Behavior = BHV_AvdColregsV17
+{
+  name                    = avd_
+  pwt                     = 200
+
+  updates                 = CONTACT_INFO_AVOIDING
+
+  condition               = MODE == AVOIDING
+  templating              = spawn
+  endflag                 = CONTACT_AVOIDING_RESOLVED = $[CONTACT]
+
+  contact                 = optional_vehicle_name
+  decay                   = 15,30
+  on_no_contact_ok        = true
+  extrapolate             = false
+
+  completed_dist          = 30
+  max_util_cpa_dist       = 25
+  min_util_cpa_dist       = 15
+  pwt_grade               = linear
+  pwt_inner_dist          = 10
+  pwt_outer_dist          = 25
+}
+
+//#############################################################################
+Behavior = BHV_Waypoint
+{
+  name                    = waypt_untag
+  pwt                     = 50
+  perpetual               = true
+
+  condition               = MODE == TAGGED
+  runflag                 = BOT_DIALOG_STATUS=Returning to home flag
+  endflag                 = TAGGED=false
+  endflag		  = UPDATE_WPT=currix=100
+  endflag		  = UPDATE_WPT=currix=0
+
+  speed                   = 5 // meters per second
+  capture_line            = false
+  capture_radius          = 10.0
+  slip_radius             = 10.0
+
+  points                  = $(UNTAG_POS)
+}
+
+//#############################################################################
+Behavior = BHV_Loiter
+{
+  name                    = loiter_passive
+  pwt                     = 100
+  condition               = MODE==PASSIVE
+  runflag                 = BOT_DIALOG_STATUS=Defending
+  updates                 = LOITER_UPDATES
+
+  speed                   = 5
+
+  polygon                 = radial:: x=0,y=0,radius=10,pts=8 // example
+  center_assign           = $(UNTAG_POS)
+}
+
+//#############################################################################
+Behavior = BHV_StationKeep
+{
+  name                    = station_keep
+  pwt                     = 100
+  condition               = MODE==STATIONING // example
+  runflag                 = BOT_DIALOG_STATUS=Stationing
+
+  center_activate         = true
+  hibernation_radius      = 5
+  inner_radius            = 4
+  outer_radius            = 15
+  outer_speed             = 5
+  transit_speed           = 5
+  swing_time              = 3
+
+  visual_hints            = vertex_size = 1 // default
+  visual_hints            = edge_color = light_blue // default
+  visual_hints            = edge_size = 1 // default
+  visual_hints            = label_color = white // default
+  visual_hints            = vertex_color = red // default
+}
+
+//#############################################################################
+Behavior = BHV_Trail
+{
+  name                    = cover_mokai
+  pwt                     = 100
+  condition               = MODE == COVERING
+  runflag                 = BOT_DIALOG_STATUS=Covering
+  contact                 = $(VTEAM)_one
+  decay                   = 15,30
+  extrapolate             = false
+  on_no_contact_ok        = true
+  time_on_leg             = 60
+
+  nm_radius               = 10
+  no_alert_request        = false
+  post_trail_dist_on_idle = true
+  pwt_outer_dist          = 1000
+  radius                  = 5
+  trail_angle             = 0
+  trail_angle_type        = relative
+  trail_range             = 15
+
+  updates                 = COVER_UPDATES
+}
+
+//#############################################################################
+Behavior = BHV_Trail
+{
+  name                    = trail_mokai
+  pwt                     = 100
+  condition               = MODE == TRAILING
+  runflag                 = BOT_DIALOG_STATUS=Trailing
+  contact                 = $(VTEAM)_one
+  decay                   = 15,30
+  extrapolate             = false
+  on_no_contact_ok        = true
+  time_on_leg             = 60
+
+  nm_radius               = 1
+  no_alert_request        = false
+  post_trail_dist_on_idle = true
+  pwt_outer_dist          = 1000
+  radius                  = 2
+  trail_angle             = 180
+  trail_angle_type        = relative
+  trail_range             = 15
+
+  updates                 = TRAIL_UPDATES
+}
+
+//#############################################################################
+//Behavior = BHV_Defense_Multi
+{
+  name                    = protect
+  pwt                     = 100
+  condition               = MODE==PROTECTING
+  runflag                 = BOT_DIALOG_STATUS=Protecting
+
+  flag                    = $(UNTAG_POS)
+  enemy_flag       	  = $(GRAB_POS)
+  team	 		  = $(VTEAM)
+  self	 		  = $(RNAME)
+  teammate		  = $(HERON_TEAMMATE)
+
+  speed                   = 2  //default
+  distance_from_flag      = 20 //default
+
+}
+
+//#############################################################################
+Behavior = BHV_Cover
+{
+  name                    = shield
+  pwt                     = 100
+  condition               = MODE==SHIELDING
+  runflag                 = BOT_DIALOG_STATUS=Covering
+
+  team	                  = $(VTEAM)
+  requestor               = $(VTEAM)_one
+  enemy_flag		  = $(GRAB_POS)
+  self	     		  = $(RNAME)
+  updates		  = SHIELD_REQUEST
+
+  speed                   = 2  //default
+  distance_from_flag      = 10 //default
+
+}
