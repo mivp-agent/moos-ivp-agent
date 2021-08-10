@@ -11,7 +11,6 @@ SHORE_IP="localhost"
 SHORE_LISTEN="9300"
 BLUE_FLAG="x=-52,y=-70"
 RED_FLAG="x=50,y=-24"
-VR_PORT="9800"
 
 for ARGI; do
     if [ "${ARGI}" = "--help" -o "${ARGI}" = "-h" ] ; then
@@ -44,8 +43,8 @@ done
 #-------------------------------------------------------
 nsplug meta_shoreside.moos targ_shoreside.moos -f WARP=$TIME_WARP    \
        SNAME="shoreside"  SHARE_LISTEN=$SHORE_LISTEN  SPORT="9000"   \
-       VTEAM1=$VTEAM1 VTEAM2=$VTEAM2 SHORE_IP=$SHORE_IP              \
-       RED_FLAG=${RED_FLAG} BLUE_FLAG=${BLUE_FLAG} VR_PORT=${VR_PORT}
+       SHORE_IP=$SHORE_IP                                       \
+       RED_FLAG=${RED_FLAG} BLUE_FLAG=${BLUE_FLAG}
 
 if [ ! -e targ_shoreside.moos ]; then echo "no targ_shoreside.moos"; exit 1; fi
 

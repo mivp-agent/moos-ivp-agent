@@ -69,6 +69,9 @@ TagManager::TagManager()
   m_tag_events = 0;       // Counter for tag events
 
   m_time_last_onfield_post = 0;
+
+  // moos-ivp-agent edit
+  m_restrict_tagging = false;
 }
 
 //---------------------------------------------------------
@@ -96,6 +99,10 @@ bool TagManager::OnNewMail(MOOSMSG_LIST &NewMail)
       handled = true;
     else if(key == "PMV_CONNECT") 
       postZonePolys();
+    else if(key == "UPDATE_RESTRICT_TAGGING")
+      handleRestrictTag(sval);
+    else if(key == "UPDATE_CAN_TAG")
+      handleCanTag(sval);
     else
       handled = false;
     
@@ -156,6 +163,11 @@ bool TagManager::OnStartUp()
       handled = handleConfigRobotUnTagPost(value);
     else if(param == "notag_post")
       handled = handleConfigNoTagPost(value);
+    // moos-ivp agent update
+    else if(param == "restrict_tagging")
+      handled = handleRestrictTag(value);
+    else if(param == "can_tag")
+      handled = handleCanTag(value);
 
     else if(param == "tag_circle_color")
       handled = setColorOnString(m_tag_circle_color, value);
@@ -226,6 +238,9 @@ void TagManager::registerVariables()
   Register("TAG_REQUEST", 0);
   Register("UNTAG_REQUEST", 0);
   Register("PMV_CONNECT", 0);
+  // moos-ivp-agent edit
+  Register("UPDATE_RESTRICT_TAGGING", 0);
+  Register("UPDATE_CAN_TAG", 0);
 }
 
 //------------------------------------------------------------
@@ -334,6 +349,49 @@ bool TagManager::handleMailVTagPost(string launch_str)
 
   return(true);
 }
+
+//---------------------------------------------------------
+// Procedure: handleRestrictTag
+//   Example: false
+
+bool TagManager::handleRestrictTag(string value){
+  value = tolower(stripBlankEnds(value));
+
+  if (value == "true"){
+    m_restrict_tagging = true;
+  }else if (value == "false"){
+    m_restrict_tagging = false;
+  }else {
+    return false;
+  }
+
+  return true;
+}
+
+//---------------------------------------------------------
+// Procedure: handleCanTag
+//   Example: evan=felix,ida,jing
+
+bool TagManager::handleCanTag(string value){
+  // Get tagger name
+  string tagger = biteStringX(value, '=');
+  if(tagger == "")
+    return false;
+
+  // Assert taggable vehicles are present
+  vector<string> vehicles = parseString(value, ',');
+  unsigned int vsize = vehicles.size();
+  if(vsize == 0)
+    return false;
+
+  // Insert taggable vehicles into can_tag_map
+  for(unsigned int i=0; i<vsize; i++){
+    string vehicle = stripBlankEnds(vehicles[i]);
+    m_can_tag_map[tagger].insert(vehicle);
+  }
+  return true;
+}
+
 
 //------------------------------------------------------------
 // Procedure: postRangePulse
@@ -743,6 +801,25 @@ void TagManager::processVTag(VTag vtag)
     double targ_x    = p->second.getX();
     double targ_y    = p->second.getY();
 
+    // if tagging is restricted check, assert that this vehicle can tag the other
+    // moos-ivp-agent edit 
+    bool can_tag = true;
+    if(m_restrict_tagging){
+      can_tag = false;
+
+      map<string, set<string>>::iterator pp;
+      pp = m_can_tag_map.find(vname);
+      if(pp != m_can_tag_map.end()){
+        set<string> vehicles = pp->second;
+        set<string>::iterator qq;
+
+        for(qq=vehicles.begin(); qq!=vehicles.end(); qq++){
+          if(*qq == targ_name)
+            can_tag = true;
+        }
+      }
+    }
+
     // Check if target is currently untagged
     bool targ_currently_tagged = m_map_node_vtags_nowtagged[targ_name]; 
     
@@ -753,13 +830,13 @@ void TagManager::processVTag(VTag vtag)
     if((vteam == m_team_two) && (m_zone_two.contains(targ_x, targ_y)))
       targ_in_enemy_zone = true;
       
-    // Disregard members of the same team
-    if((targ_team != vteam) && targ_in_enemy_zone && !targ_currently_tagged) {
+    // Disregard members of the same team && check restricted tagging bool
+    if((targ_team != vteam) && targ_in_enemy_zone && !targ_currently_tagged && can_tag) {
       double targ_range = getTrueNodeRange(vx, vy, targ_name);
       map_node_range[targ_name] = targ_range;
       if((node_closest == "") || (targ_range < map_node_range[node_closest])) {
-	node_closest = targ_name;
-	node_closest_type = targ_type;
+        node_closest = targ_name;
+        node_closest_type = targ_type;
       }
     }
   }
@@ -1319,6 +1396,7 @@ bool TagManager::buildReport()
   m_msgs << "Tag Min Interval:   " << doubleToStringX(m_tag_min_interval,1) << endl;
   m_msgs << "Tag Duration:       " << doubleToStringX(m_tag_duration,1) << endl;
   m_msgs << "Tag Circle Enabled: " << boolToString(m_tag_circle) << endl;
+  m_msgs << "Restricted Tagging: " << boolToString(m_restrict_tagging) << endl;
 
   // Part 2: Produce the team structure
   map<string, set<string> >::iterator pp;

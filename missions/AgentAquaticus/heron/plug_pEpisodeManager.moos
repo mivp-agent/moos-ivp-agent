@@ -6,12 +6,7 @@ ProcessConfig = pEpisodeManager
   AppTick   = 4
   CommsTick = 4
 
-// TODO: Hacky fix this and don't call it DEPLOY
-// Just trying to get it to run automatically with ./run.py
-#ifdef DEPLOY yes
-  paused = true
   max_duration = 100
-#endif
 
   start_post = var=DEPLOY,val=true
 

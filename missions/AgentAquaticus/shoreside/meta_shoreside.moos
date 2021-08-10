@@ -40,48 +40,15 @@ ProcessConfig = uFldFlagManager
   flag = $(RED_FLAG), color=red, label=red
   flag = $(BLUE_FLAG), color=blue, label=blue
 
-//  grab_post = var=SAY_MOOS, sval={say={$VNAME has the $FLAG flag}}
-//  grab_post = var=SAY_MOOS_ALL, sval={say={$VNAME has the $FLAG flag}}
-
-  grab_post = var=SAY_MOOS, sval={file=sounds/grab_post_$VNAME.wav}
-  grab_post = var=SAY_MOOS_ALL, sval={file=sounds/grab_post_$VNAME.wav}
-
   grab_post = var=LED_HAVE_FLAG_$UP_VNAME, sval={true}  
-
-//  lose_post = var=SAY_MOOS, sval={say={the $FLAG flag has been returned}}
-//  lose_post = var=SAY_MOOS_ALL, sval={say={the $FLAG flag has been returned}}
-
-  lose_post = var=SAY_MOOS, sval={file=sounds/lose_post_$FLAG.wav}
-  lose_post = var=SAY_MOOS_ALL, sval={file=sounds/lose_post_$FLAG.wav}
-
   lose_post = var=LED_HAVE_FLAG_$UP_VNAME, sval={false}  
-
-  near_post = var=SAY_MOOS, sval={file=sounds/shipbell.wav}
-  near_post = var=SAY_MOOS_$UP_VNAME, sval={file=sounds/shipbell.wav}
-
   near_post = var=LED_IN_FLAG_ZONE_$VNAME, sval={true}  
-
-  away_post = var=SAY_MOOS, sval={file=sounds/buzzer.wav}
-  away_post = var=SAY_MOOS_$UP_VNAME, sval={file=sounds/buzzer.wav}
-
-  away_post = var=LED_IN_FLAG_ZONE_$VNAME, sval={false}  
-
-  deny_post = var=SAY_MOOS, sval={file=sounds/deny_post_$REASON.wav}
-  deny_post = var=SAY_MOOS_$UP_VNAME, sval={file=sounds/deny_post_$REASON.wav}
+  away_post = var=LED_IN_FLAG_ZONE_$VNAME, sval={false} 
+  home_post = var=LED_HAVE_FLAG_$UP_VNAME, sval={false} 
+  goal_post = var=LED_HAVE_FLAG_$UP_VNAME, sval={false}  
 
   home_post = var=UNTAG_REQUEST, sval={vname=$VNAME}
   home_post = var=FLAG_RESET, sval={vname=$VNAME}
-
-  home_post = var=LED_HAVE_FLAG_$UP_VNAME, sval={false} 
-
-//	goal_post = var=SAY_MOOS, sval={say={$VTEAM has scored}}
-//	goal_post = var=SAY_MOOS_ALL, sval={say={$VTEAM has scored}}
-
-	goal_post = var=SAY_MOOS, sval={file=sounds/goal_post_$VTEAM.wav}
-	goal_post = var=SAY_MOOS_ALL, sval={file=sounds/goal_post_$VTEAM.wav}
-
-  goal_post = var=LED_HAVE_FLAG_$UP_VNAME, sval={false} 
-
 }
 
 //--------------------------------------------------
@@ -103,55 +70,19 @@ ProcessConfig = uFldTagManagerAgent
 
   tag_duration = 10000
 
-  //robot_tag_post   = MOOS_MANUAL_OVERRIDE_$UP_TARGET=true
-//  human_tag_post   = SAY_MOOS_ALL=say={$TARGET_has_been_tagged},rate=200
-//  human_tag_post   = SAY_MOOS=say={$TARGET_has_been_tagged},rate=200
-
-  human_tag_post   = SAY_MOOS_ALL=file=tag_post_$TARGET.wav
-  human_tag_post   = SAY_MOOS=file=tag_post_$TARGET.wav
-
-  // human_tag_post   = SAY_MOOS_$UP_TARGET=say={you_have_been_tagged},rate=200
-//  robot_tag_post   = SAY_MOOS_ALL=say={$TARGET_has_been_tagged},rate=200
-//  robot_tag_post   = SAY_MOOS=say={$TARGET_has_been_tagged},rate=200
-
-  robot_tag_post   = SAY_MOOS_ALL=file=tag_post_$TARGET.wav
-  robot_tag_post   = SAY_MOOS=file=tag_post_$TARGET.wav
-
-  // robot_tag_post   = SAY_MOOS_$UP_TARGET=say={you_have_been_tagged},rate=200
-
   // Return Flag
   human_tag_post   = FLAG_RESET=vname=$TARGET
   robot_tag_post   = FLAG_RESET=vname=$TARGET
   human_tag_post   = TAGGED_$UP_TARGET=true
   robot_tag_post   = TAGGED_$UP_TARGET=true
 
-  robot_tag_post   = LED_TAGGED_$UP_TARGET=true
-  human_tag_post   = LED_TAGGED_$UP_TARGET=true
-
-  //robot_untag_post = MOOS_MANUAL_OVERRIDE_$UP_TARGET=false
-  // human_untag_post   = SAY_MOOS=say={$TARGET_has_been_untagged},rate=200
-  // human_untag_post   = SAY_MOOS_$UP_TARGET=say={you_have_been_untagged},rate=200
-  // robot_untag_post   = SAY_MOOS=say={$TARGET_has_been_untagged},rate=200
-  // robot_untag_post   = SAY_MOOS_$UP_TARGET=say={you_have_been_untagged},rate=200
-
-//  human_untag_post = SAY_MOOS_ALL=say={$TARGET_has_been_untagged},rate=200
-//  human_untag_post = SAY_MOOS=say={$TARGET_has_been_untagged},rate=200
-  human_untag_post = SAY_MOOS_ALL=file=sounds/untag_post_$TARGET.wav
-  human_untag_post = SAY_MOOS=file=sounds/untag_post_$TARGET.wav
   human_untag_post = TAGGED_$UP_TARGET=false
-
-  human_untag_post = LED_TAGGED_$UP_TARGET=false
-  
-//  robot_untag_post = SAY_MOOS_ALL=say={$TARGET_has_been_untagged},rate=200
-//  robot_untag_post = SAY_MOOS=say={$TARGET_has_been_untagged},rate=200
-  robot_untag_post = SAY_MOOS_ALL=file=sounds/untag_post_$TARGET.wav
-  robot_untag_post = SAY_MOOS=file=sounds/untag_post_$TARGET.wav
   robot_untag_post = TAGGED_$UP_TARGET=false
 
+  robot_tag_post   = LED_TAGGED_$UP_TARGET=true
+  human_tag_post   = LED_TAGGED_$UP_TARGET=true
+  human_untag_post = LED_TAGGED_$UP_TARGET=false
   robot_untag_post = LED_TAGGED_$UP_TARGET=false
-
-  //notag_post = SAY_MOOS_$UP_SOURCE=say={Tag Denied $REASON},rate=200
-  notag_post = SAY_MOOS_$UP_SOURCE=file=sounds/tag_denied.wav
   
   team_one=red
   team_two=blue
@@ -161,6 +92,9 @@ ProcessConfig = uFldTagManagerAgent
 
   zone_one_color = pink
   zone_two_color = dodger_blue
+
+  restrict_tagging = true
+  can_tag = drone_12=me,agent_11,me
 }
 
 //---------------------------------------------------------
@@ -172,7 +106,6 @@ ProcessConfig = pShare
   CommsTick  = 2
 
   input = route =  localhost:$(SHARE_LISTEN)
-//  input = route =  multicast_7
 }
 
 //--------------------------------------------------
@@ -215,7 +148,7 @@ ProcessConfig = uFldShoreBroker
 
   bridge   = src=IN_OWN_TERRITORY
   bridge   = src=IN_ENEMY_TERRITORY
-  bridge  = src=TAGGED_VEHICLES
+  bridge   = src=TAGGED_VEHICLES
   bridge   = src=UP_LOITER_$N, alias=UP_LOITER
   bridge   = src=HELM_MAP_CLEAR, alias=HELM_MAP_CLEAR
   bridge   = src=FLAG_SUMMARY
@@ -284,6 +217,7 @@ ProcessConfig = pMarineViewer
   scope = FLAG_GRAB_REPORT
   scope = NODE_BROKER_PING
   scope = DEPLOY_ALL
+  scope = TAG_REQUEST
 
   action = AQUATICUS_GAME_ALL = play
   action = AQUATICUS_GAME_ALL = pause
@@ -293,69 +227,14 @@ ProcessConfig = pMarineViewer
   button_one   = MOOS_MANUAL_OVERRIDE_ALL=false
   button_one   = RETURN_ALL=false # STATION_KEEP_ALL=false
 
-  button_two   = RETURN  # RETURN_ALL=true
-  button_two   = RETURN  # STATION_KEEP_ALL=false
-
-  button_three = CTF_RESET   # UNTAG_REQUEST=vname=red_one
-  button_three = UNTAG_REQUEST=vname=red_two
-  button_three = UNTAG_REQUEST=vname=red_three
-  button_three = UNTAG_REQUEST=vname=red_four
-  button_three = UNTAG_REQUEST=vname=blue_one
-  button_three = UNTAG_REQUEST=vname=blue_two
-  button_three = UNTAG_REQUEST=vname=blue_three
-  button_three = UNTAG_REQUEST=vname=blue_four
-  button_three = FLAG_RESET=all
-
-  button_four = PAUSE # DEPLOY_ALL=false
-  button_four = MOOS_MANUAL_OVERRIDE_ALL=true
-  button_four = AQUATICUS_GAME_STATE=pause
+  button_two = PAUSE # DEPLOY_ALL=false
+  button_two = MOOS_MANUAL_OVERRIDE_ALL=true
+  button_two = AQUATICUS_GAME_STATE=pause
 
   op_vertex = x=56,   y=16,  lwidth=1,lcolor=yellow,looped=true,group=moa
   op_vertex = x=-83, y=-49,  lwidth=1,lcolor=yellow,looped=true,group=moa
   op_vertex = x=-53, y=-114, lwidth=1,lcolor=yellow,looped=true,group=moa
   op_vertex = x=82,   y=-56, lwidth=1,lcolor=yellow,looped=true,group=moa
-
-
-  cmd = label=DEPLOY, var=DEPLOY,  sval=true,  receivers=all:red_one:red_two:red_three:red_four:blue_one:blue_two:blue_three:blue_four
-  cmd = label=DEPLOY, var=MOOS_MANUAL_OVERRIDE, sval=false, receivers=all:red_one:red_two:red_three:red_four:blue_one:blue_two:blue_three:blue_four
-  cmd = label=DEPLOY, var=RETURN,  sval=false,  receivers=all:red_one:red_two:red_three:red_four:blue_one:blue_two:blue_three:blue_four
-
-  cmd = label=RETURN, var=RETURN, sval=true, receivers=all:red_one:red_two:red_three:red_four:blue_one:blue_two:blue_three:blue_four
-
-  cmd = label=ATTACK, var=ACTION, sval=ATTACK, receivers=all:red_one:red_two:red_three:red_four:blue_one:blue_two:blue_three:blue_four
-  cmd = label=ATTACK, var=AGGRESSIVE, sval=true, receivers=all:red_one:red_two:red_three:red_four:blue_one:blue_two:blue_three:blue_four
-
-  cmd = label=ATTACK_NICELY, var=ACTION, sval=ATTACK, receivers=all:red_one:red_two:red_three:red_four:blue_one:blue_two:blue_three:blue_four
-  cmd = label=ATTACK_NICELY, var=AGGRESSIVE, sval=false, receivers=all:red_one:red_two:red_three:red_four:blue_one:blue_two:blue_three:blue_four
-
-  cmd = label=ATTACK_RIGHT, var=ACTION, sval=ATTACK_RIGHT, receivers=all:red_one:red_two:red_three:red_four:blue_one:blue_two:blue_three:blue_four
-
-  cmd = label=ATTACK_LEFT, var=ACTION, sval=ATTACK_LEFT, receivers=all:red_one:red_two:red_three:red_four:blue_one:blue_two:blue_three:blue_four
-
-  cmd = label=DEFEND, var=ACTION, sval=DEFEND, receivers=all:red_one:red_two:red_three:red_four:blue_one:blue_two:blue_three:blue_four
-
-  cmd = label=COVER, var=ACTION, sval=COVER, receivers=all:red_one:red_two:red_three:red_four:blue_one:blue_two:blue_three:blue_four
-
-  cmd = label=TRAIL, var=ACTION, sval=TRAIL, receivers=all:red_one:red_two:red_three:red_four:blue_one:blue_two:blue_three:blue_four
-
-  cmd = label=STATION, var=ACTION,  sval=STATION,  receivers=all:red_one:red_two:red_three:red_four:blue_one:blue_two:blue_three:blue_four
-
-  cmd = label=PROTECT, var=ACTION,  sval=PROTECT,  receivers=all:red_one:red_two:red_three:red_four:blue_one:blue_two:blue_three:blue_four
-  
-  cmd = label=SHIELD, var=ACTION,  sval=SHIELD,  receivers=all:red_one:red_two:red_three:red_four:blue_one:blue_two:blue_three:blue_four
-
-  cmd = label=SWITCH, var=SHIELD_REQUEST,  sval=requestor=blue_two,  receivers=blue_one:blue_two:blue_three:blue_four
-
-  cmd = label=SWITCH, var=SHIELD_REQUEST,  sval=requestor=red_two,  receivers=all:red_one:red_two:red_three:red_four
-
-  cmd = label=SWITCHA, var=SHIELD_REQUEST,  sval=requestor=red_two,  receivers=all:red_one:red_two:red_three:red_four:rA:rB:rC:rD:rE:rF:rG:rH
-
-  cmd = label=SWITCHB, var=SHIELD_REQUEST,  sval=requestor=red_two,  receivers=all:red_one:red_two:red_three:red_four
-
-  cmd = label=SWITCHC, var=SHIELD_REQUEST,  sval=requestor=red_two,  receivers=all:red_one:red_two:red_three:red_four
-
-  cmd = label=SWITCHD, var=SHIELD_REQUEST,  sval=requestor=red_two,  receivers=all:red_one:red_two:red_three:red_four
-
 }
 
 //--------------------------------------------------------

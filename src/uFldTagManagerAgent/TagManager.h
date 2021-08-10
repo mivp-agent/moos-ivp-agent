@@ -63,6 +63,10 @@ class TagManager : public AppCastingMOOSApp
   bool    handleMailVTagPost(std::string);
   bool    handleMailVUnTagPost(std::string);
 
+ protected: // moos-ivp-agent edit
+  bool    handleRestrictTag(std::string);
+  bool    handleCanTag(std::string);
+
  protected: // Processing Utilities
   double  getTrueNodeRange(double, double, std::string);
 
@@ -165,6 +169,10 @@ class TagManager : public AppCastingMOOSApp
   
   // Visual hints
   std::string   m_post_color;
+
+  // moos-ivp-agent edit
+  bool m_restrict_tagging;
+  std::map<std::string, std::set<std::string>> m_can_tag_map;
 };
 
 #endif
