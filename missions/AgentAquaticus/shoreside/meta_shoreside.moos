@@ -16,7 +16,9 @@ Processconfig = ANTLER
   Run = pLogger         @ NewConsole = false
   Run = uProcessWatch   @ NewConsole = false
 
+#ifdef GUI yes
   Run = pMarineViewer   @ NewConsole = false
+#endif
 
   Run = pHostInfo       @ NewConsole = false
   Run = pShare          @ NewConsole = false
@@ -94,7 +96,6 @@ ProcessConfig = uFldTagManagerAgent
   zone_two_color = dodger_blue
 
   restrict_tagging = true
-  can_tag = drone_12=me,agent_11,me
 }
 
 //---------------------------------------------------------

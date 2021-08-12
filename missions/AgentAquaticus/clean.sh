@@ -24,17 +24,12 @@ done
 #-------------------------------------------------------
 cd heron
 
-rm -rf  $VERBOSE   MOOSLog_*  C*_LOG_*
-rm -f   $VERBOSE   *~  targ_* *.moos++
-rm -f   $VERBOSE   .LastOpenedMOOSLogDirectory
+./clean.sh $VERBOSE
 
 cd ..
 
 cd shoreside
 
-rm -rf  $VERBOSE   MOOSLog_*  C*_LOG_*
-rm -f   $VERBOSE   *~  targ_* *.moos++
-rm -f   $VERBOSE   .LastOpenedMOOSLogDirectory
-rm -f   $VERBOSE   murmur/murmur.log
+./clean.sh $VERBOSE
 
 cd ..

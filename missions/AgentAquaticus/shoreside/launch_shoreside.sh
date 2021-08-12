@@ -12,6 +12,9 @@ SHORE_LISTEN="9300"
 BLUE_FLAG="x=-52,y=-70"
 RED_FLAG="x=50,y=-24"
 
+# moos-ivp-agent specific
+GUI="yes"
+
 for ARGI; do
     if [ "${ARGI}" = "--help" -o "${ARGI}" = "-h" ] ; then
         echo "$0 [SWITCHES]"
@@ -26,8 +29,8 @@ for ARGI; do
         TIME_WARP=$ARGI
     elif [ "${ARGI}" = "--just_build" -o "${ARGI}" = "-j" ] ; then
         JUST_MAKE="yes"
-    elif [ "${ARGI}" = "--voip" -o "${ARGI}" = "-v" ]; then
-        VOIP="true"
+    elif [ "${ARGI}" = "--no_gui" ] ; then
+        GUI="no"
     elif [ "${ARGI:0:11}" = "--shore-ip=" ] ; then
         SHORE_IP="${ARGI#--shore-ip=*}"
     elif [ "${ARGI:0:13}" = "--shore-port=" ] ; then
@@ -43,7 +46,7 @@ done
 #-------------------------------------------------------
 nsplug meta_shoreside.moos targ_shoreside.moos -f WARP=$TIME_WARP    \
        SNAME="shoreside"  SHARE_LISTEN=$SHORE_LISTEN  SPORT="9000"   \
-       SHORE_IP=$SHORE_IP                                       \
+       SHORE_IP=$SHORE_IP GUI=$GUI                                   \
        RED_FLAG=${RED_FLAG} BLUE_FLAG=${BLUE_FLAG}
 
 if [ ! -e targ_shoreside.moos ]; then echo "no targ_shoreside.moos"; exit 1; fi
