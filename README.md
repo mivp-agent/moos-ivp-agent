@@ -42,7 +42,9 @@ See [this](https://docs.docker.com/get-docker/) page for instructions for each m
 git clone https://github.com/CarterFendley/moos-ivp-agent.git
 ```
 
-### If on OSX
+See the docker section below for usage of the docker container.
+
+### XQuartz and OSX
 
 Install [XQuartz](https://content.byui.edu/file/cddfb9c0-a825-4cfe-9858-28d5b4c218fe/1/Course/Setup-XQuartz.html) for the GUI components to render properly.
 
@@ -61,10 +63,21 @@ defaults write org.xquartz.X11 enable_iglx -bool true
 Run the following command to start XQuartz (again, on a host terminal).
 
 ```
-xhost +x
+xhost +
 ```
 
-After the command completes go to the task bar and `XQuarts > Preferences > Security` and check the box labeled `Allow connections from network clients`
+After the command completes go to the task bar and `XQuarts > Preferences > Security` and check the box labeled `Allow connections from network clients`. After doing this you will need to restart xhost. The following method will work among others.
+
+```
+killall Xquartz
+xhost +
+```
+
+### FAQ
+
+**My pMarine viewer will not show up** 
+
+If on mac, read the "XQuartz on OSX section" carefully and follow the steps. After done, restart the docker container & XQuartz.
 
 ## Using the docker script
 
