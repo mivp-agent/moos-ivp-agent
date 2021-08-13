@@ -42,6 +42,8 @@ class FlagManager : public AppCastingMOOSApp
   bool handleConfigDenyPost(std::string);
   bool handleConfigGoalPost(std::string);
   bool handleConfigHomePost(std::string);
+  // moos-ivp-agent edit
+  bool handleConfigInfiniteFlags(std::string);
   
   bool handleMailNodeReport(std::string str);
   bool handleMailFlagGrab(std::string, std::string);
@@ -101,6 +103,9 @@ class FlagManager : public AppCastingMOOSApp
   std::string  m_poly_vertex_color;
   std::string  m_poly_edge_color;
   std::string  m_poly_fill_color;
+
+  // moos-ivp-agent edit
+  bool m_infinite_flags;
 
  private: // State variables
   

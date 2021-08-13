@@ -50,6 +50,9 @@ FlagManager::FlagManager()
   m_heartbeat_counter = 0;
   m_heartbeat_last    = 0;
   m_post_heartbeat    = true;
+
+  // moos-ivp-agent edit
+  m_infinite_flags = false;
 }
 
 //---------------------------------------------------------
@@ -241,6 +244,9 @@ bool FlagManager::OnStartUp()
       handled = handleConfigGoalPost(value);
     else if(param == "home_post")
       handled = handleConfigHomePost(value);
+    // moos-ivp-agent edit
+    else if(param == "infinite_flags")
+      handled = handleConfigInfiniteFlags(value);
     else
       handled = false;
     
@@ -411,6 +417,24 @@ bool FlagManager::handleConfigHomePost(string str)
   return(true);
 }
 
+//---------------------------------------------------------
+// Procedure: handleConfigInfiniteFlags
+
+bool FlagManager::handleConfigInfiniteFlags(string value)
+{
+  value = tolower(stripBlankEnds(value));
+
+  if (value == "true"){
+    m_infinite_flags = true;
+  }else if (value == "false"){
+    m_infinite_flags = false;
+  }else {
+    return false;
+  }
+
+  return true;
+}
+
 //------------------------------------------------------------
 // Procedure: handleMailTaggedVehicles()
 //   Example: TAGGED_VEHICLES = henry,gus,hal
@@ -525,7 +549,7 @@ bool FlagManager::handleMailFlagGrab(string str, string community)
   // If grabbing vehicle already has a flag, return false
   if(hasFlag(grabbing_vname)) {
     string reason = grabbing_vname + "_already_has_a_flag";
-    reportRunWarning("FLAG_GRAB_REQUEST: " + reason);
+    //reportRunWarning("FLAG_GRAB_REQUEST: " + reason);
     invokePosts("deny", grabbing_vname, "", "", reason);
     Notify("FLAG_GRAB_REPORT", "Nothing grabbed - " + reason);
     return(false);
@@ -537,7 +561,7 @@ bool FlagManager::handleMailFlagGrab(string str, string community)
 
   if(m_tagged_vnames.count(grabbing_vname) ||  m_tagged_vnames.count(up_vname)) {
     string reason = grabbing_vname + "_is_tagged";
-    reportRunWarning("FLAG_GRAB_REQUEST: " + reason);
+    //reportRunWarning("FLAG_GRAB_REQUEST: " + reason);
     invokePosts("deny", grabbing_vname, "", "", reason);
     Notify("FLAG_GRAB_REPORT", "Nothing grabbed - " + reason);
     return(false);
@@ -561,6 +585,7 @@ bool FlagManager::handleMailFlagGrab(string str, string community)
   
   // Part 5: For each flag with the grab_dist of the vehicle, GRAB
   string result;
+  std::vector<XYMarker> new_flags;
   for(unsigned int i=0; i<m_flags.size(); i++) {
     if((m_flags[i].get_owner() == "") && (m_flags[i].get_label() != group)) {
       string flag_name = m_flags[i].get_label();
@@ -572,18 +597,36 @@ bool FlagManager::handleMailFlagGrab(string str, string community)
         if(result != "")
           result += ",";
         result += "grabbed=" + m_flags[i].get_label();
-        m_flags[i].set_owner(grabbing_vname);
-        m_flags_changed[i] = true;
+        // moos-ivp-agent edit
+        // Make new flag to set owner on, leave orig for others
+        if(!m_infinite_flags){
+          m_flags[i].set_owner(grabbing_vname);
+          m_flags_changed[i] = true;
+        }else{
+          XYMarker new_flag = string2Marker(m_flags[i].get_spec());
+          new_flag.set_owner(grabbing_vname);
+          new_flags.push_back(new_flag);
+        }
         m_map_flag_count[up_vname]++;
 
-	m_map_team_grabs[group]++;
-	
-	Notify("HAS_FLAG_"+toupper(grabbing_vname), "true");
+        m_map_team_grabs[group]++;
+        
+        Notify("HAS_FLAG_"+toupper(grabbing_vname), "true");
 
-	invokePosts("grab", grabbing_vname, group, flag_name);
+        invokePosts("grab", grabbing_vname, group, flag_name);
       }
     }
   }
+
+  // moos-ivp-agent edit
+  // Add any new flags to list
+  for(unsigned int i=0; i<new_flags.size(); i++){
+    // Change label to a unique 
+    //new_flags[i].set_label(new_flags[i].get_label()+intToString(m_flags.size()));
+    m_flags.push_back(new_flags[i]);
+    m_flags_changed.push_back(true);
+  }
+
   if(result == "") {
     invokePosts("deny", grabbing_vname, group, "", "no_one_in_range");
     Notify("FLAG_GRAB_REPORT", "Nothing grabbed - no one in range");
@@ -782,19 +825,36 @@ bool FlagManager::resetFlagsByLabel(string label)
 {
   bool some_flags_were_reset = false;
   
+  std::vector<unsigned int> infinite_indexes;
   for(unsigned int i=0; i<m_flags.size(); i++) {
     if(m_flags[i].get_label() == label) {
       if(m_flags[i].get_owner() != "") {
-	string flag_owner = m_flags[i].get_owner();
-        m_flags[i].set_owner("");
-        m_flags_changed[i] = true;
+	      string flag_owner = m_flags[i].get_owner();
+        
+        // moos-ivp-agent edit
+        // Since we are creating new flags, remove them here
+        if(!m_infinite_flags){
+          m_flags[i].set_owner("");
+          m_flags_changed[i] = true;
+        }else{
+          infinite_indexes.push_back(i);
+        }
         some_flags_were_reset = true;
-	Notify("HAS_FLAG_"+toupper(flag_owner), "false");
 
-	invokePosts("lose", "system", "", label);
+	      Notify("HAS_FLAG_"+toupper(flag_owner), "false");
+	      invokePosts("lose", "system", "", label);
       }
     }
   }
+
+  // moos-ivp-agent edit
+  for(unsigned int i=0; i<infinite_indexes.size(); i++){
+    // Remove the flags from the vector
+    m_flags.erase(m_flags.begin()+infinite_indexes[i]);
+    m_flags_changed.erase(m_flags_changed.begin()+infinite_indexes[i]);
+  }
+
+
   return(some_flags_were_reset);
 }
 
@@ -808,18 +868,34 @@ bool FlagManager::resetFlagsAll()
 {
   bool some_flags_were_reset = false;
 
+  std::vector<unsigned int> infinite_indexes;
   for(unsigned int i=0; i<m_flags.size(); i++) {
     if(m_flags[i].get_owner() != "") {
       string flag_name = m_flags[i].get_label();
-      m_flags[i].set_owner("");
-      m_flags[i].set_owner("");
-      m_flags_changed[i] = true;
+
+      // moos-ivp-agent edit
+      // Since we are creating new flags, remove them here
+      if(!m_infinite_flags){
+        m_flags[i].set_owner("");
+        m_flags_changed[i] = true;
+      }else{
+        infinite_indexes.push_back(i);
+      }
       some_flags_were_reset = true;
+
       Notify("HAS_FLAG_ALL", "false");
 
       invokePosts("lose", "system", "", flag_name);
     }
   }
+
+  // moos-ivp-agent edit
+  for(unsigned int i=0; i<infinite_indexes.size(); i++){
+    // Remove the flags from the vector
+    m_flags.erase(m_flags.begin()+infinite_indexes[i]);
+    m_flags_changed.erase(m_flags_changed.begin()+infinite_indexes[i]);
+  }
+
   return(some_flags_were_reset);
 }
 
@@ -833,19 +909,34 @@ bool FlagManager::resetFlagsByVName(string vname)
 {
   bool some_flags_were_reset = false;
   
+  std::vector<unsigned int> infinite_indexes;
   for(unsigned int i=0; i<m_flags.size(); i++) {
     string flag_owner = tolower(m_flags[i].get_owner());
     if(flag_owner == tolower(vname)) {
       string flag_name = m_flags[i].get_label();
 
-      m_flags[i].set_owner("");
-      m_flags_changed[i] = true;
+      // moos-ivp-agent edit
+      // Since we are creating new flags, remove them here
+      if(!m_infinite_flags){
+        m_flags[i].set_owner("");
+        m_flags_changed[i] = true;
+      }else{
+        infinite_indexes.push_back(i);
+      }
       some_flags_were_reset = true;
 
       Notify("HAS_FLAG_"+toupper(vname), "false");
       invokePosts("lose", "system", "", flag_name);
     }
   }
+
+  // moos-ivp-agent edit
+  for(unsigned int i=0; i<infinite_indexes.size(); i++){
+    // Remove the flags from the vector
+    m_flags.erase(m_flags.begin()+infinite_indexes[i]);
+    m_flags_changed.erase(m_flags_changed.begin()+infinite_indexes[i]);
+  }
+
   return(some_flags_were_reset);
 }
 

@@ -25,14 +25,14 @@ Processconfig = ANTLER
   Run = uFldShoreBroker @ NewConsole = false
   Run = uFldNodeComms   @ NewConsole = false
 
-  Run = uFldFlagManager      @ NewConsole = false
+  Run = uFldFlagManagerAgent      @ NewConsole = false
   Run = uFldTagManagerAgent  @ NewConsole = false
 }
 
 //--------------------------------------------------
 // uFldFlagMgr Configuration Block
 
-ProcessConfig = uFldFlagManager
+ProcessConfig = uFldFlagManagerAgent
 {
   AppTick       = 2
   CommsTick     = 2
@@ -51,6 +51,8 @@ ProcessConfig = uFldFlagManager
 
   home_post = var=UNTAG_REQUEST, sval={vname=$VNAME}
   home_post = var=FLAG_RESET, sval={vname=$VNAME}
+
+  infinite_flags = true
 }
 
 //--------------------------------------------------
