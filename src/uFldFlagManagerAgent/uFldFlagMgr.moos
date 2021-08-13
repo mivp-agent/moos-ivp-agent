@@ -1,0 +1,9 @@
+//------------------------------------------------
+// uFldFlagMgr config block
+
+ProcessConfig = uFldFlagMgr
+{
+   AppTick   = 4
+   CommsTick = 4
+}
+
