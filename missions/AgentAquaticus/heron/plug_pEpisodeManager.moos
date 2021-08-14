@@ -6,6 +6,7 @@ ProcessConfig = pEpisodeManager
   AppTick   = 4
   CommsTick = 4
 
+  paused = true
   max_duration = 100
 
   start_post = var=DEPLOY,val=true

@@ -552,7 +552,7 @@ bool FlagManager::handleMailFlagGrab(string str, string community)
     //reportRunWarning("FLAG_GRAB_REQUEST: " + reason);
     invokePosts("deny", grabbing_vname, "", "", reason);
     Notify("FLAG_GRAB_REPORT", "Nothing grabbed - " + reason);
-    return(false);
+    return(true);
   }
 
 
@@ -564,7 +564,7 @@ bool FlagManager::handleMailFlagGrab(string str, string community)
     //reportRunWarning("FLAG_GRAB_REQUEST: " + reason);
     invokePosts("deny", grabbing_vname, "", "", reason);
     Notify("FLAG_GRAB_REPORT", "Nothing grabbed - " + reason);
-    return(false);
+    return(true);
   }
 
   if(m_flags.size() == 0) {
