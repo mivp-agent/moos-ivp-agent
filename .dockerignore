@@ -4,3 +4,6 @@
 **/*.blog
 **/*.slog
 **/*.ylog
+
+**/trained/*
+assets/*
