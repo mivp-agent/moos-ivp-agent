@@ -22,18 +22,14 @@ done
 #-------------------------------------------------------
 #  Part 2: Do the cleaning!
 #-------------------------------------------------------
-cd m200
+cd heron
 
-rm -rf  $VERBOSE   MOOSLog_*  LOG_*
-rm -f   $VERBOSE   *~  targ_* *.moos++
-rm -f   $VERBOSE   .LastOpenedMOOSLogDirectory
+./clean.sh $VERBOSE
 
 cd ..
 
 cd shoreside
 
-rm -rf  $VERBOSE   MOOSLog_*  LOG_*
-rm -f   $VERBOSE   *~  targ_* *.moos++
-rm -f   $VERBOSE   .LastOpenedMOOSLogDirectory
+./clean.sh $VERBOSE
 
 cd ..

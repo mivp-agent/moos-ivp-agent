@@ -5,14 +5,13 @@ ProcessConfig = pLogger
   CommsTick   = 10
 
   File    = LOG_%(VNAME)
-  PATH    = ../Logs/
+  PATH    = ./
   SyncLog   = true @ 0.2
   AsyncLog   = true
   FileTimeStamp = true
 
   Log = IVPHELM_LIFE_EVENT @ 0 nosync
-  Log = VISIT_POINT	   @ 0
-  Log = BHV_WARNING	   @ 0
+
   // Log it all!!!!!
   LogAuxSrc = true
   WildCardLogging = true

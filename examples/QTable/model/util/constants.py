@@ -6,7 +6,7 @@ DIRNAME = os.path.abspath(os.path.dirname(__file__))
 
 LEARNING_RATE = 0.1
 DISCOUNT = 0.95
-EPISODES = 10000
+EPISODES = 15000
 
 EPSILON_START = 0.5
 EPSILON_DECAY_START = 1
