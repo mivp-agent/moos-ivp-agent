@@ -24,6 +24,7 @@ BEHAVIOR="DEFEND"
 ROLE=""
 ID=""
 COLOR="green"
+LOGGING="no"
 
 function help(){
     echo ""
@@ -126,6 +127,8 @@ for arg in "${@:4}"; do
     elif [ "${arg}" = "--just_build" -o "${arg}" = "-J" ] ; then
         JUST_BUILD="yes"
         echo "Just building files; no vehicle launch."
+    elif [ "${arg}" = "--log" ] ; then
+        LOGGING="yes"
     elif [ "${arg:0:8}" = "--color=" ]; then
         COLOR="${arg#--color=*}"
     elif [ "${arg:0:11}" = "--behavior=" ]; then
@@ -151,7 +154,8 @@ nsplug meta_heron.moos targ_${VNAME}.moos -f \
     VTYPE="kayak"                \
     VTEAM=$VTEAM                 \
     START_POS=$START_POS         \
-    COLOR=$COLOR
+    COLOR=$COLOR                 \
+    LOGGING=$LOGGING             \
 
 echo "Assembling BHV file targ_${VNAME}.bhv"
 nsplug meta_heron.bhv targ_${VNAME}.bhv -f  \

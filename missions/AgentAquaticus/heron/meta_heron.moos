@@ -12,7 +12,9 @@ ProcessConfig = ANTLER
   Run = MOOSDB             @ NewConsole = false
   Run = uProcessWatch      @ NewConsole = false
   Run = pShare             @ NewConsole = false
+#ifdef LOGGING yes
   Run = pLogger            @ NewConsole = false
+#endif
   Run = pNodeReporter      @ NewConsole = false
   Run = pMarinePID         @ NewConsole = false
   Run = pHelmIvP           @ NewConsole = false

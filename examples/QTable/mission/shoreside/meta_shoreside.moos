@@ -13,7 +13,9 @@ Processconfig = ANTLER
   MSBetweenLaunches = 100
 
   Run = MOOSDB          @ NewConsole = false
+#ifdef LOGGING yes
   Run = pLogger         @ NewConsole = false
+#endif LOGGING
   Run = uProcessWatch   @ NewConsole = false
 
 #ifdef GUI yes
@@ -26,7 +28,7 @@ Processconfig = ANTLER
   Run = uFldNodeComms   @ NewConsole = false
 
   Run = uFldFlagManagerAgent      @ NewConsole = false
-  Run = uFldTagManagerAgent       @ NewConsole = false
+  Run = uFldTagManagerAgent  @ NewConsole = false
 }
 
 //--------------------------------------------------
@@ -98,11 +100,6 @@ ProcessConfig = uFldTagManagerAgent
   zone_two_color = dodger_blue
 
   restrict_tagging = true
-  can_tag = drone_21=agent_11
-  can_tag = drone_22=agent_12
-  can_tag = drone_23=agent_13
-  can_tag = drone_24=agent_14
-  can_tag = drone_25=agent_15
 }
 
 //---------------------------------------------------------

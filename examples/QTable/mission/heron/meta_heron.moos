@@ -12,7 +12,9 @@ ProcessConfig = ANTLER
   Run = MOOSDB             @ NewConsole = false
   Run = uProcessWatch      @ NewConsole = false
   Run = pShare             @ NewConsole = false
+#ifdef LOGGING yes
   Run = pLogger            @ NewConsole = false
+#endif
   Run = pNodeReporter      @ NewConsole = false
   Run = pMarinePID         @ NewConsole = false
   Run = pHelmIvP           @ NewConsole = false
@@ -24,9 +26,6 @@ ProcessConfig = ANTLER
   Run = pNodeReportParse   @ NewConsole	= false
   Run = pRangeEvent        @ NewConsole = false
   Run = pEpisodeManager    @ NewConsole = false
-#ifdef ROLE drone
-  RUN = uTimerScript       @ NewConsole = false
-#endif
 }
 
 #include ../plug_pShare.moos
@@ -60,15 +59,3 @@ ProcessConfig = pNodeReportParse
   AppTick   = 4
   CommsTick = 4
 }
-
-#ifdef ROLE drone
-ProcessConfig = uTimerScript
-{
-  AppTick   = 4
-  CommsTick = 4
-
-  reset_time = end
-  event = var=LOITER_UPDATES, val="clockwise=false", time=100:120
-  event = var=LOITER_UPDATES, val="clockwise=true", time=220:240
-}
-#endif
