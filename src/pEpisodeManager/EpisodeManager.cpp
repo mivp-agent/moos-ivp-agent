@@ -64,7 +64,7 @@ bool EpisodeManager::OnNewMail(MOOSMSG_LIST &NewMail)
     bool   mstr  = msg.IsString();
 #endif
 
-    if(key == "EPISODE_MNGR_CTRL"){
+    if(key == "EPISODE_MGR_CTRL"){
       string sval = msg.GetString();
       string type = tokStringParse(sval, "type", ',', '=');
       if(type == "pause"){
@@ -142,13 +142,13 @@ bool EpisodeManager::Iterate()
   AppCastingMOOSApp::Iterate();
   
   if(m_current_state == PAUSED){
-    Notify("EPISODE_MNGR_STATE", "PAUSED");
+    Notify("EPISODE_MGR_STATE", "PAUSED");
     if(m_run_request){
       m_run_request = false;
       startEpisode(); // Transition to RUNNING and other init stuff
     }
   }else if(m_current_state == RUNNING){
-    Notify("EPISODE_MNGR_STATE", "RUNNING");
+    Notify("EPISODE_MGR_STATE", "RUNNING");
     bool end, success;
     end = success = checkConditions(m_end_success_conditions);
     if(!end)
@@ -159,12 +159,12 @@ bool EpisodeManager::Iterate()
     if(end)
       endEpisode(success);
   }else if(m_current_state == STOPPING_HELM){
-    Notify("EPISODE_MNGR_STATE", "STOPPING_HELM");
+    Notify("EPISODE_MGR_STATE", "STOPPING_HELM");
     if(m_helm_state == "PARK"){
       resetVehicle();
     }
   }else if(m_current_state == RESETING){
-    Notify("EPISODE_MNGR_STATE", "RESETING");
+    Notify("EPISODE_MGR_STATE", "RESETING");
     if(std::abs(m_nav_x-m_reset_x) < 1 && std::abs(m_nav_y-m_reset_y) < 1){
       postPosts(m_reset_posts);
       Notify("MOOS_MANUAL_OVERRIDE", "false");
@@ -317,7 +317,7 @@ void EpisodeManager::registerVariables()
   Register("NAV_Y", 0);
 
   // Register for control var
-  Register("EPISODE_MNGR_CTRL", 0);
+  Register("EPISODE_MGR_CTRL", 0);
 
 
   // Again following TS_MOOSApp example
@@ -413,11 +413,11 @@ void EpisodeManager::endEpisode(bool success){
   else
     m_failure_cnt += 1;
 
-  std::string report = "EPISODE="+intToString(m_episode_cnt);
+  std::string report = "NUM="+intToString(m_episode_cnt);
   report += ",SUCCESS="+boolToString(success);
   report += ",DURATION="+doubleToString(MOOSTime()-m_episode_start);
   report += ",WILL_PAUSE="+boolToString(m_pause_request);
-  Notify("EPISODE_MNGR_REPORT", report);
+  Notify("EPISODE_MGR_REPORT", report);
   reportEvent("Episode over: "+report);
 
   // Stop helm and transition state
