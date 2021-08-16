@@ -156,6 +156,7 @@ nsplug meta_heron.moos targ_${VNAME}.moos -f \
     START_POS=$START_POS         \
     COLOR=$COLOR                 \
     LOGGING=$LOGGING             \
+    ROLE=$ROLE                   \
 
 echo "Assembling BHV file targ_${VNAME}.bhv"
 nsplug meta_heron.bhv targ_${VNAME}.bhv -f  \

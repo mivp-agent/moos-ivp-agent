@@ -13,8 +13,8 @@ from mivp_agent.aquaticus.const import FIELD_BLUE_FLAG
 from model.util.constants import LEARNING_RATE, DISCOUNT, EPISODES
 from model.util.constants import FIELD_RESOLUTION
 from model.util.constants import EPSILON_START, EPSILON_DECAY_START, EPSILON_DECAY_AMT, EPSILON_DECAY_END
-from model.util.constants import ACTIONS, ACTION_SPACE_SIZE
-from model.util.constants import REWARD_SUCCESS, REWARD_FAILURE, REWARD_STEP
+from model.util.constants import ATTACK_ACTIONS, RETREAT_ACTIONS, ACTION_SPACE_SIZE
+from model.util.constants import REWARD_GRAB, REWARD_CAPTURE, REWARD_FAILURE, REWARD_STEP
 from model.util.constants import SAVE_DIR, SAVE_EVERY
 from model.model import QLearn
 
@@ -41,6 +41,7 @@ class AgentData:
     self.agent_episode_count = 0
     self.last_episode_num = None # Episode transitions
     self.last_state = None       # State transitions
+    self.last_has_flag = False   # Capturing grab transitions for rewarding
     self.current_action = None 
 
     # For debugging / output
@@ -54,13 +55,13 @@ class AgentData:
     self.agent_episode_count += 1
 
     self.last_state = None
+    self.last_has_flag = False
     self.current_action = None
 
     self.min_dist = None
     self.episode_reward = 0
     self.last_MOOS_time = None
     self.MOOS_deltas.clear() 
-
 
 
 def train(args, config):
@@ -131,11 +132,13 @@ def train(args, config):
       '''
       Part 1: Translate MOOS state to model's state representation
       '''
+      #print(msg.state['HAS_FLAG'])
       model_state = q.get_state(
         msg.state['NAV_X'],
         msg.state['NAV_Y'],
         msg.state['NODE_REPORTS'][agent_data.enemy]['NAV_X'],
-        msg.state['NODE_REPORTS'][agent_data.enemy]['NAV_Y']
+        msg.state['NODE_REPORTS'][agent_data.enemy]['NAV_Y'],
+        msg.state['HAS_FLAG']
       )
 
       # Detect discrete state transitions
@@ -153,7 +156,7 @@ def train(args, config):
           # Calculate reward based on pEpisodeManager's report
           reward = config['reward_failure']
           if msg.episode_report['SUCCESS']:
-            reward = config['reward_success']
+            reward = config['reward_capture']
 
           # Apply this reward to the QTable
           q.set_qvalue(
@@ -169,6 +172,7 @@ def train(args, config):
             'duration': round(msg.episode_report['DURATION'],2),
             'success': msg.episode_report['SUCCESS'],
             'min_dist': round(agent_data.min_dist, 2),
+            'had_flag': msg.state['HAS_FLAG']
           }
 
           if len(agent_data.MOOS_deltas) != 0:
@@ -194,31 +198,43 @@ def train(args, config):
 
           # Save model if applicable
           if episode_count % SAVE_EVERY == 0:
-            q.save(config['actions'], name=f'episode_{episode_count}')
+            q.save(
+              config['attack_actions'],
+              config['retreat_actions'],
+              name=f'episode_{episode_count}'
+            )
 
         '''
         Part 3: Handle updating actions / qtable in new states
         '''
 
         # Update previous state action pair
+        reward = config['reward_step']
+        if msg.state['HAS_FLAG'] and not agent_data.last_has_flag:
+          reward = config['reward_grab']
+
         if agent_data.last_state is not None:
           q.update_table(
             agent_data.last_state,
             agent_data.current_action,
-            config['reward_step'],
+            reward,
             model_state
           )
           agent_data.episode_reward += config['reward_step']
         
+        # Update tracking data
         agent_data.current_action = q.get_action(model_state, e=epsilon)
         agent_data.last_state = model_state
+        agent_data.last_has_flag = msg.state['HAS_FLAG']
       
       '''
       Part 4: Even when agent is not in new state, keep preforming
       the action that was calcualted on the when the state transitioned
       '''
-
-      action = config['actions'][agent_data.current_action].copy()
+      actions = config['attack_actions']
+      if msg.state['HAS_FLAG']: # Use retreat actions if already grabbed and... retreating
+        actions = config['retreat_actions']
+      action = actions[agent_data.current_action].copy() # Copy out of reference paranoia
       
       flag_dist = abs(dist((msg.state['NAV_X'], msg.state['NAV_Y']), FIELD_BLUE_FLAG))
       # If this agent can grab the flag, do so
@@ -227,6 +243,7 @@ def train(args, config):
           'FLAG_GRAB_REQUEST': f'vname={msg.vname}'
         }
 
+      # Send action
       msg.act(action)
 
       # Debugging stuff
@@ -254,9 +271,11 @@ if __name__ == '__main__':
     'epsilon_decay_amt': EPSILON_DECAY_AMT,
     'epsilon_decay_end': EPSILON_DECAY_END,
     'field_res': FIELD_RESOLUTION,
-    'actions': ACTIONS,
+    'attack_actions': ATTACK_ACTIONS,
+    'retreat_actions': RETREAT_ACTIONS,
     'action_space_size': ACTION_SPACE_SIZE,
-    'reward_success': REWARD_SUCCESS,
+    'reward_grab': REWARD_GRAB,
+    'reward_capture': REWARD_CAPTURE,
     'reward_failure': REWARD_FAILURE,
     'reward_step': REWARD_STEP,
   }

@@ -49,7 +49,9 @@ ProcessConfig = uFldFlagManagerAgent
   near_post = var=LED_IN_FLAG_ZONE_$VNAME, sval={true}  
   away_post = var=LED_IN_FLAG_ZONE_$VNAME, sval={false} 
   home_post = var=LED_HAVE_FLAG_$UP_VNAME, sval={false} 
-  goal_post = var=LED_HAVE_FLAG_$UP_VNAME, sval={false}  
+  goal_post = var=LED_HAVE_FLAG_$UP_VNAME, sval={false}
+  
+  goal_post = var=EPISODE_MGR_CTRL_$UP_VNAME, sval={type=reset,success=true}
 
   home_post = var=UNTAG_REQUEST, sval={vname=$VNAME}
   home_post = var=FLAG_RESET, sval={vname=$VNAME}
@@ -150,6 +152,7 @@ ProcessConfig = uFldShoreBroker
   qbridge  = ACTION, AGGRESSIVE, SHIELD_REQUEST
   qbridge  = SAY_MOOS
   qbridge  = ONFIELD, CANTAG
+  qbridge  = EPISODE_MGR_CTRL
 
   bridge   = src=IN_OWN_TERRITORY
   bridge   = src=IN_ENEMY_TERRITORY

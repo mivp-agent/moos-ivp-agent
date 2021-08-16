@@ -12,7 +12,7 @@ from model.model import load_model
 
 
 def run(args):
-  q, actions = load_model(args.model)
+  #q, actions = load_model(args.model)
 
   with MissionManager() as mgr:
     print('Waiting for sim vehicle connections...')
@@ -28,9 +28,9 @@ def run(args):
     while True:
       # Listen for state
       msg = mgr.get_message()
-      while False:
+      while True:
         print('-------------------------------------------')
-        print(f"({msg.vname}) {msg.state['NODE_REPORTS']}")  
+        print(f"({msg.vname}) {msg.state['HAS_FLAG']}")  
         print('-------------------------------------------')
         msg.request_new()
         msg = mgr.get_message()
