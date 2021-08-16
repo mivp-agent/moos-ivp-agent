@@ -66,6 +66,7 @@ bool EpisodeManager::OnNewMail(MOOSMSG_LIST &NewMail)
 
     if(key == "EPISODE_MGR_CTRL"){
       string sval = msg.GetString();
+      reportEvent("Got control message: "+sval);
       string type = tokStringParse(sval, "type", ',', '=');
       if(type == "pause"){
         if(m_current_state == PAUSED)
@@ -86,6 +87,21 @@ bool EpisodeManager::OnNewMail(MOOSMSG_LIST &NewMail)
           if(m_current_state == RUNNING)
             endEpisode(false);
           m_pause_request = true;
+        }
+      }else if(type == "reset"){
+        if(m_current_state == PAUSED){
+          reportRunWarning("Got reset singal in state PAUSED state. Ignoring");
+        }else if (m_current_state != RUNNING){
+          reportRunWarning("Got reset singal while reseting. Ignoring");
+        }else{
+          string success = tolower(tokStringParse(sval, "success", ',', '='));
+          if(success == "true"){
+            endEpisode(true);
+          }else{
+            if(success != "false")
+              reportRunWarning("Got reset signal with non-boolean success value: '"+success+"'. Assuming false");
+            endEpisode(false);
+          }
         }
       }else{
         reportRunWarning("Unimplemented control message: "+type);
@@ -355,6 +371,11 @@ bool EpisodeManager::resetPosValid(){
 
 bool EpisodeManager::checkConditions(std::vector<LogicCondition> conditions)
 {
+  // If no conditions exist, assume false
+  if(conditions.size() == 0)
+    return false;
+
+  // Reject if info buffer is NULL
   if(!m_info_buffer) 
     return(false);
 
