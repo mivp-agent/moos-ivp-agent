@@ -102,6 +102,11 @@ ProcessConfig = uFldTagManagerAgent
   zone_two_color = dodger_blue
 
   restrict_tagging = true
+  can_tag = drone_21=agent_11
+  can_tag = drone_22=agent_12
+  can_tag = drone_23=agent_13
+  can_tag = drone_24=agent_14
+  can_tag = drone_25=agent_15
 }
 
 //---------------------------------------------------------
