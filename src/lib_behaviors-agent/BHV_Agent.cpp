@@ -141,7 +141,7 @@ IvPFunction* BHV_Agent::onRunState()
   tickBridge();
  
   // If we are not paused construct IvPFunction from speed, course
-  if(m_current_course != 0 && m_current_speed != 0){
+  if(m_current_speed != 0){
     ZAIC_PEAK spd_zaic(m_domain, "speed");
     spd_zaic.setSummit(m_current_speed);
     spd_zaic.setBaseWidth(0.3);
