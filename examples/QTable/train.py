@@ -296,4 +296,5 @@ if __name__ == '__main__':
     wandb.login(key=args.wandb_key)
     with wandb.init(project='mivp_agent_qtable', config=config):
       config = wandb.config
+      args.save_dir = os.path.join(SAVE_DIR, wandb.run.name)
       train(args, config)
