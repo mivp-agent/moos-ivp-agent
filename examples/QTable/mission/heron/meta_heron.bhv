@@ -8,7 +8,7 @@ set MODE     = ACTIVE {
 
 set MODE     = RETURN_BASE {
   MODE       = ACTIVE
-  (HAS_FLAG = true) or (TAGGED = true)
+  (ACTION != AGENT) and ((HAS_FLAG = true) or (TAGGED = true))
 } PLAY
 
 set MODE     = ATTACKING {
@@ -48,130 +48,129 @@ set MODE     = STATIONNING {
 
     sub_var = TAGGED
     sub_var = HAS_FLAG
-    
+
     sub_vehicle = drone_21
     sub_vehicle = drone_22
     sub_vehicle = drone_23
     sub_vehicle = drone_24
     sub_vehicle = drone_25
   }
-#elseifdef ROLE drone
-  //#############################################################################
-  Behavior = BHV_Waypoint
-  {
-    name                    = waypt_base
-    pwt                     = 50
-    perpetual               = true
-
-    condition               = MODE == RETURN_BASE
-    runflag                 = BOT_DIALOG_STATUS=Returning to home flag
-    endflag                 = TAGGED=false
-
-    speed                   = 5 // meters per second
-    capture_line            = false
-    capture_radius          = 5.0
-    slip_radius             = 5.0
-
-    points                  = $(MY_FLAG)
-  }
-
-  //#############################################################################
-  Behavior = BHV_Loiter
-  {
-    name                    = loiter_passive
-    pwt                     = 100
-    condition               = MODE == DEFENDING
-    runflag                 = BOT_DIALOG_STATUS=Defending
-    updates                 = LOITER_UPDATES
-
-    speed                   = 5
-
-    polygon                 = radial:: x=0,y=0,radius=10,pts=8 // example
-    center_assign           = $(MY_FLAG)
-  }
-
-  //#############################################################################
-  Behavior = BHV_StationKeep
-  {
-    name                    = station_keep
-    pwt                     = 100
-    condition               = MODE == STATIONNING
-    runflag                 = BOT_DIALOG_STATUS=Stationing
-
-    center_activate         = true
-    hibernation_radius      = 5
-    inner_radius            = 4
-    outer_radius            = 15
-    outer_speed             = 5
-    transit_speed           = 5
-    swing_time              = 3
-
-    visual_hints            = vertex_size = 1 // default
-    visual_hints            = edge_color = light_blue // default
-    visual_hints            = edge_size = 1 // default
-    visual_hints            = label_color = white // default
-    visual_hints            = vertex_color = red // default
-  }
-
-  //#############################################################################
-  Behavior = BHV_Waypoint
-  {
-    name                    = waypt_grab
-    pwt                     = 50
-    perpetual               = true
-
-    condition               = MODE == ATTACKING
-    runflag                 = BOT_DIALOG_STATUS=Attacking
-    endflag                 = FLAG_GRAB_REQUEST=vname=$(VNAME)
-
-    speed                   = 5 // meters per second
-    capture_line            = false
-    capture_radius          = 7.0
-    slip_radius             = 5.0
-
-    points                  = $(ENEMY_FLAG)
-  }
-
-  //#############################################################################
-  Behavior = BHV_Waypoint
-  {
-    name                    = left_waypt_grab
-    pwt                     = 50
-    perpetual               = true
-    condition               = MODE == ATTACKING_LEFT
-    runflag                 = BOT_DIALOG_STATUS=Attacking_Left
-    endflag                 = FLAG_GRAB_REQUEST=vname=$(VNAME)
-
-    speed                   = 5 // meters per second
-    capture_line            = false
-    capture_radius          = 7.0
-    slip_radius             = 5.0
-
-    points                  = $(GRABL_POS):$(ENEMY_FLAG)
-    visual_hints = vertex_size=0, edge_size=0
-    visual_hints = vertex_color=invisible, edge_color=invisible
-    visual_hints = nextpt_color=invisible, nextpt_lcolor=invisible
-  }
-
-  //#############################################################################
-  Behavior = BHV_Waypoint
-  {
-    name                    = right_waypt_grab
-    pwt                     = 50
-    perpetual               = true
-    updates		              = UPDATE_WPT
-    condition               = MODE == ATTACKING_RIGHT
-    runflag                 = BOT_DIALOG_STATUS=Attacking_Right
-    endflag                 = FLAG_GRAB_REQUEST=vname=$(VNAME)
-
-    speed                   = 5 // meters per second
-    capture_line            = false
-    capture_radius          = 7.0
-    slip_radius             = 5.0
-
-    points                  = $(GRABR_POS):$(ENEMY_FLAG)
-    visual_hints = vertex_size=0, edge_size=0
-    visual_hints = vertex_color=invisible, edge_color=invisible
-    visual_hints = nextpt_color=invisible, nextpt_lcolor=invisible
-  }
 #endif
+//#############################################################################
+Behavior = BHV_Waypoint
+{
+  name                    = waypt_base
+  pwt                     = 50
+  perpetual               = true
+
+  condition               = MODE == RETURN_BASE
+  runflag                 = BOT_DIALOG_STATUS=Returning to home flag
+  endflag                 = TAGGED=false
+
+  speed                   = 5 // meters per second
+  capture_line            = false
+  capture_radius          = 5.0
+  slip_radius             = 5.0
+
+  points                  = $(MY_FLAG)
+}
+
+//#############################################################################
+Behavior = BHV_Loiter
+{
+  name                    = loiter_passive
+  pwt                     = 100
+  condition               = MODE == DEFENDING
+  runflag                 = BOT_DIALOG_STATUS=Defending
+  updates                 = LOITER_UPDATES
+
+  speed                   = 5
+
+  polygon                 = radial:: x=0,y=0,radius=10,pts=8 // example
+  center_assign           = $(MY_FLAG)
+}
+
+//#############################################################################
+Behavior = BHV_StationKeep
+{
+  name                    = station_keep
+  pwt                     = 100
+  condition               = MODE == STATIONNING
+  runflag                 = BOT_DIALOG_STATUS=Stationing
+
+  center_activate         = true
+  hibernation_radius      = 5
+  inner_radius            = 4
+  outer_radius            = 15
+  outer_speed             = 5
+  transit_speed           = 5
+  swing_time              = 3
+
+  visual_hints            = vertex_size = 1 // default
+  visual_hints            = edge_color = light_blue // default
+  visual_hints            = edge_size = 1 // default
+  visual_hints            = label_color = white // default
+  visual_hints            = vertex_color = red // default
+}
+
+//#############################################################################
+Behavior = BHV_Waypoint
+{
+  name                    = waypt_grab
+  pwt                     = 50
+  perpetual               = true
+
+  condition               = MODE == ATTACKING
+  runflag                 = BOT_DIALOG_STATUS=Attacking
+  endflag                 = FLAG_GRAB_REQUEST=vname=$(VNAME)
+
+  speed                   = 5 // meters per second
+  capture_line            = false
+  capture_radius          = 7.0
+  slip_radius             = 5.0
+
+  points                  = $(ENEMY_FLAG)
+}
+
+//#############################################################################
+Behavior = BHV_Waypoint
+{
+  name                    = left_waypt_grab
+  pwt                     = 50
+  perpetual               = true
+  condition               = MODE == ATTACKING_LEFT
+  runflag                 = BOT_DIALOG_STATUS=Attacking_Left
+  endflag                 = FLAG_GRAB_REQUEST=vname=$(VNAME)
+
+  speed                   = 5 // meters per second
+  capture_line            = false
+  capture_radius          = 7.0
+  slip_radius             = 5.0
+
+  points                  = $(GRABL_POS):$(ENEMY_FLAG)
+  visual_hints = vertex_size=0, edge_size=0
+  visual_hints = vertex_color=invisible, edge_color=invisible
+  visual_hints = nextpt_color=invisible, nextpt_lcolor=invisible
+}
+
+//#############################################################################
+Behavior = BHV_Waypoint
+{
+  name                    = right_waypt_grab
+  pwt                     = 50
+  perpetual               = true
+  updates		              = UPDATE_WPT
+  condition               = MODE == ATTACKING_RIGHT
+  runflag                 = BOT_DIALOG_STATUS=Attacking_Right
+  endflag                 = FLAG_GRAB_REQUEST=vname=$(VNAME)
+
+  speed                   = 5 // meters per second
+  capture_line            = false
+  capture_radius          = 7.0
+  slip_radius             = 5.0
+
+  points                  = $(GRABR_POS):$(ENEMY_FLAG)
+  visual_hints = vertex_size=0, edge_size=0
+  visual_hints = vertex_color=invisible, edge_color=invisible
+  visual_hints = nextpt_color=invisible, nextpt_lcolor=invisible
+}

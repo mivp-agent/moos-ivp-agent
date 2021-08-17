@@ -41,7 +41,7 @@ class AgentData:
     self.agent_episode_count = 0
     self.last_episode_num = None # Episode transitions
     self.last_state = None       # State transitions
-    self.last_has_flag = False   # Capturing grab transitions for rewarding
+    self.had_flag = False   # Capturing grab transitions for rewarding
     self.current_action = None 
 
     # For debugging / output
@@ -49,19 +49,21 @@ class AgentData:
     self.episode_reward = 0
     self.last_MOOS_time = None
     self.MOOS_deltas = []
+    self.grab_time = None
   
   def new_episode(self, last_num):
     self.last_episode_num = last_num
     self.agent_episode_count += 1
 
     self.last_state = None
-    self.last_has_flag = False
+    self.had_flag = False
     self.current_action = None
 
     self.min_dist = None
     self.episode_reward = 0
     self.last_MOOS_time = None
-    self.MOOS_deltas.clear() 
+    self.MOOS_deltas.clear()
+    self.grab_time = None
 
 
 def train(args, config):
@@ -165,6 +167,7 @@ def train(args, config):
             reward
           )
 
+          # Construct report
           report = {
             'episode_count': episode_count,
             'reward': agent_data.episode_reward+reward,
@@ -172,13 +175,18 @@ def train(args, config):
             'duration': round(msg.episode_report['DURATION'],2),
             'success': msg.episode_report['SUCCESS'],
             'min_dist': round(agent_data.min_dist, 2),
-            'had_flag': msg.state['HAS_FLAG']
+            'had_flag': agent_data.had_flag
           }
 
           if len(agent_data.MOOS_deltas) != 0:
             report['avg_delta'] = round(sum(agent_data.MOOS_deltas)/len(agent_data.MOOS_deltas),2)
           else:
-            report['avg_delta'] = 0
+            report['avg_delta'] = 0.0
+
+          if agent_data.grab_time is not None:
+            report['post_grab_duration'] = round(msg.state['MOOS_TIME'] - agent_data.grab_time, 2)
+          else:
+            report['post_grab_duration'] = 0.0
 
           # Log the report
           if args.wandb_key is not None:
@@ -210,8 +218,11 @@ def train(args, config):
 
         # Update previous state action pair
         reward = config['reward_step']
-        if msg.state['HAS_FLAG'] and not agent_data.last_has_flag:
+        if msg.state['HAS_FLAG'] and not agent_data.had_flag:
           reward = config['reward_grab']
+          agent_data.had_flag = True
+          # Capture time for debugging (time after grab)
+          agent_data.grab_time = msg.state['MOOS_TIME']
 
         if agent_data.last_state is not None:
           q.update_table(
@@ -225,7 +236,6 @@ def train(args, config):
         # Update tracking data
         agent_data.current_action = q.get_action(model_state, e=epsilon)
         agent_data.last_state = model_state
-        agent_data.last_has_flag = msg.state['HAS_FLAG']
       
       '''
       Part 4: Even when agent is not in new state, keep preforming

@@ -22,7 +22,6 @@ cd ../mission/heron
   ./launch_heron.sh blue drone 23 --behavior=DEFEND --color=purple $LOGGING $TIME_WARP > /dev/null &
   ./launch_heron.sh blue drone 24 --behavior=DEFEND --color=gray $LOGGING $TIME_WARP > /dev/null &
   ./launch_heron.sh blue drone 25 --behavior=DEFEND --color=yellow $LOGGING $TIME_WARP > /dev/null &
-
 cd ..
 
 cd shoreside

@@ -93,6 +93,7 @@ fi
 case "$2" in
     agent|a)
         ROLE="agent"
+        BEHAVIOR="AGENT"
         echo "Vehicle set as an agent."
         ;;
     drone|d)
