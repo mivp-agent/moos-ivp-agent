@@ -12,7 +12,7 @@ from model.model import load_model
 
 
 def run(args):
-  #q, actions = load_model(args.model)
+  q, attack_actions, retreat_actions = load_model(args.model)
 
   with MissionManager() as mgr:
     print('Waiting for sim vehicle connections...')
@@ -23,12 +23,13 @@ def run(args):
 
     last_state = None
     current_action = None
+    current_action_set = None
     console = ModelConsole()
 
     while True:
       # Listen for state
       msg = mgr.get_message()
-      while True:
+      while False:
         print('-------------------------------------------')
         print(f"({msg.vname}) {msg.state['HAS_FLAG']}")  
         print('-------------------------------------------')
@@ -42,7 +43,8 @@ def run(args):
         msg.state['NAV_X'],
         msg.state['NAV_Y'],
         msg.state['NODE_REPORTS'][args.enemy]['NAV_X'],
-        msg.state['NODE_REPORTS'][args.enemy]['NAV_Y']
+        msg.state['NODE_REPORTS'][args.enemy]['NAV_Y'],
+        msg.state['HAS_FLAG']
       )
 
       # Detect state transition
@@ -50,11 +52,19 @@ def run(args):
         current_action = q.get_action(model_state)
         last_state = model_state
       
+      # Determine action set
+      if msg.state['HAS_FLAG']:
+        current_action_set = retreat_actions
+      else:
+        current_action_set = attack_actions
+
       # Construct instruction for BHV_Agent
       action = {
-        'speed': actions[current_action]['speed'],
-        'course': actions[current_action]['course']
+        'speed': current_action_set[current_action]['speed'],
+        'course': current_action_set[current_action]['course']
       }
+
+      print(current_action, action)
 
       flag_dist = abs(dist((msg.state['NAV_X'], msg.state['NAV_Y']), FIELD_BLUE_FLAG))
       if flag_dist < 10:
