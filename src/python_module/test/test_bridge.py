@@ -4,13 +4,12 @@ import socket
 import time
 
 import os, sys
-
 currentdir = os.path.dirname(os.path.realpath(__file__))
 bridgedir = os.path.join(os.path.dirname(currentdir), 'mivp_agent')
 sys.path.append(bridgedir)
 
 from bridge import ModelBridgeServer, ModelBridgeClient
-from const import KEY_EPISODE_MGR, KEY_ID
+from const import KEY_EPISODE_MGR_REPORT, KEY_EPISODE_MGR_STATE, KEY_ID
 
 DUMMY_INSTR = {
   'speed': 2.0,
@@ -25,7 +24,7 @@ DUMMY_STATE = {
   'NAV_X': 98.0,
   'NAV_Y': 40.0,
   'NAV_HEADING': 180,
-  KEY_EPISODE_MGR: None
+  KEY_EPISODE_MGR_REPORT: None
 }
 
 def dummy_connect_client(client):
@@ -65,6 +64,8 @@ class TestBridge(unittest.TestCase):
 
         # Assert all keys are tested for
         for key in DUMMY_STATE:
+          if key == KEY_EPISODE_MGR_REPORT or key == KEY_EPISODE_MGR_STATE:
+            continue
           state = DUMMY_STATE.copy()
           state.pop(key) # Removes key
 

@@ -68,14 +68,56 @@ class TestManager(unittest.TestCase):
         self.assertTrue(isinstance(msg, MissionMessage))
         self.assertEqual(msg.state, DUMMY_STATE)
         self.assertEqual(msg.episode_report, DUMMY_REPORT)
-        self.assertEqual(msg.episode_mgr_state, 'PAUSED')
+        self.assertEqual(msg.episode_state, 'PAUSED')
         # Make sure there are no messages for the client yet
         self.assertFalse(client.listen())
         # Respond to message
         msg.act(DUMMY_ACTION)
         time.sleep(0.1) # Allow propogate time
         self.assertEqual(client.listen(), DUMMY_INSTR)
+  
+  @timeout_decorator.timeout(5)
+  def test_wait_for(self):
+    with MissionManager() as mgr:
+      # Make sure manager doesn't know about evan or felix
+      self.assertFalse(mgr.are_present(['evan', 'felix']))
 
+      # Connect evan
+      with ModelBridgeClient() as client:
+        # Wait for client to connect
+        while not client.connect():
+          time.sleep(0.1)
+        
+        # Send evan's connection message
+        state = DUMMY_STATE.copy()
+        state[KEY_ID] = 'evan'
+        self.assertTrue(client.send_state(state))
+
+        # Allow propogation time
+        time.sleep(0.1)
+        
+        # Test for presence of evan with manager
+        self.assertTrue(mgr.are_present(['evan', ]))
+        mgr.wait_for(['evan', ]) # Timeout decorator will handle this test
+
+        # Test for absence of felix
+        self.assertFalse(mgr.are_present(['evan', 'felix']))
+
+        # Connect felix
+        with ModelBridgeClient() as client2:
+          # Wait for client to connect
+          while not client2.connect():
+            time.sleep(0.1)
+          
+          # Send felix's connection message
+          state = DUMMY_STATE.copy()
+          state[KEY_ID] = 'felix'
+          self.assertTrue(client2.send_state(state))
+        
+        time.sleep(0.1)
+        self.assertTrue(mgr.are_present(['evan', 'felix']))
+
+      
 
 if __name__ == '__main__':
   unittest.main()

@@ -1,3 +1,4 @@
+import time
 from queue import Queue
 from threading import Thread, Lock
 
@@ -42,6 +43,9 @@ INSTR_STOP = {
 class MissionManager:
   def __init__(self):
     self._msg_queue = Queue()
+
+    self._vnames = []
+    self._vname_lock = Lock()
     self._vehicle_count = 0
     self._episode_manager_states = {}
     self._ems_lock = Lock()
@@ -66,8 +70,6 @@ class MissionManager:
 
   def _server_thread(self):
     live_msg_list = []
-    # TODO: Hash table? 
-    vnames = []
     with ModelBridgeServer() as server:
       while not self._stop_signal:
         # Accept new clients & send new message
@@ -80,10 +82,11 @@ class MissionManager:
           msg = server.listen(addr)
 
           if msg is not None:
-            if msg[KEY_ID] not in vnames:
-              vname = msg[KEY_ID]
-              vnames.append(vname)
-              self._vehicle_count += 1
+            with self._vname_lock:
+              if msg[KEY_ID] not in self._vnames:
+                vname = msg[KEY_ID]
+                self._vnames.append(vname)
+                self._vehicle_count += 1
 
             m = MissionMessage(addr, msg)
 
@@ -106,6 +109,16 @@ class MissionManager:
             # If we got there is response send and remove from list
             live_msg_list.remove(m)
             server.send_instr(m._addr, m._response)
+  def are_present(self, vnames):
+    for vname in vnames:
+      with self._vname_lock:
+        if vname not in self._vnames:
+          return False
+    return True
+  
+  def wait_for(self, vnames, sleep=0.1):
+    while not self.are_present(vnames):
+      time.sleep(sleep)
 
   def get_message(self, block=True):
     return self._msg_queue.get(block=block)
