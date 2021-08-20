@@ -10,3 +10,9 @@ To launch the model **and** the simulation use the run script
 ```
 ./run.sh
 ```
+
+To start `BHV_Agent` connection you must press the "DEPLOY" button in pMarineVewier.
+
+After running, you should see the following behavior 
+
+![ManagerExample](../../assets/ManagerExample.png)
