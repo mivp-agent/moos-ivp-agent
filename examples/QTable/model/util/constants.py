@@ -39,4 +39,4 @@ QTABLE_INIT_HIGH = 0
 SAVE_DIR = os.path.abspath(os.path.join(DIRNAME, '../../trained'))
 SAVE_EVERY = 200
 
-DEFAULT_RUN_MODEL = 'trained/1628500096/1628522198.npy'
+DEFAULT_RUN_MODEL = 'trained/1629323236_colorful-hill-38/episode_35000.npy'
