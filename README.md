@@ -1,34 +1,39 @@
 # moos-ivp-agent
 
-Model agnostic ML framework for MOOS-IvP. See very simple implementation below
+Model agnostic ML framework for MOOS-IvP. See very simple implementation below based the [ManagerExample](./examples/ManagerExample)
 
 ```
-instr = {
-  'speed': 0.0,
-  'course': 0.0,
-  'ctrl_msg': 'SEND_STATE'
-}
+VEHICLES = ['alder', ]
 
-with ModelBridgeServer() as server:
-  server.accept()
-  server.send_instr(instr)
+from mivp_agent.manager import MissionManager
+with MissionManager() as mgr:
+  print('Waiting for vehicle connection...')
+  mgr.wait_for(VEHICLES)
+
   while True:
-    MOOS_STATE = server.listen_state()
+    # Get state message from server
+    msg = mgr.get_message()
 
-    if MOOS_STATE['NAV_X'] < -10:
-      instr['speed'] = 2.0
-      instr['course'] = 90.0
-    if MOOS_STATE['NAV_X'] > 10:
-      instr['speed'] = 2.0
-      instr['course'] = 270.0
-    
-    server.send_instr(instr)
+    # Decide on action
+    action = None
+    if msg.state['NAV_X'] < 100:
+      action = {
+        'speed': 2.0,
+        'course': 90.0
+      }
+    if msg.state['NAV_X'] > 50:
+      action = {
+        'speed': 2.0,
+        'course': 270.0
+      }
+
+    # Respond to BHV_Agent's message with an action
+    msg.act(action)
 ```
-
 
 This project builds upon the ground work done by [moos-ivp-pLearn](https://github.com/mnovitzky/moos-ivp-pLearn). It implements a "model bridge" from [moos-ivp](https://oceanai.mit.edu/moos-ivp/pmwiki/pmwiki.php?n=Main.HomePage) to python 3.x land.
 
-Currently, see [here](examples/pLearn) for an implementation of pLearn using moos-ivp-agent's `ModelBridgeServer`.
+The above example shows how to use `MissionManager` (python) with `BHV_Agent` (MOOS-IvP). This repository also contains useful tools for training MOOS-IvP agents like `pEpisodeManager`
 
 ## Installation instructions
 
