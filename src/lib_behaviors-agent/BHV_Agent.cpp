@@ -31,8 +31,10 @@ BHV_Agent::BHV_Agent(IvPDomain domain) :
   // Add any variables this behavior needs to subscribe for
   addInfoVars("NAV_X, NAV_Y", "NAV_HEADING");
   addInfoVars("NODE_REPORT_LOCAL");
-  addInfoVars("EPISODE_MNGR_REPORT");
-  addInfoVars("EPISODE_MNGR_STATE");
+  addInfoVars("NODE_REPORT");
+
+  m_sub_vars.push_back("EPISODE_MGR_REPORT");
+  m_sub_vars.push_back("EPISODE_MGR_STATE");
 
   m_current_course = 0;
   m_current_speed = 0;
@@ -49,11 +51,10 @@ bool BHV_Agent::setParam(string param, string val)
   // Get the numerical value of the param argument for convenience once
   double double_val = atof(val.c_str());
 
-  if(param == "sub_vehicle") {
+  if(param == "sub_vehicle"){
     m_sub_vehicles.push_back(toupper(stripBlankEnds(val)));
     return(true);
-  }
-  else if(param == "sub_var"){
+  }else if(param == "sub_var"){
     m_sub_vars.push_back(stripBlankEnds(val));
     return(true);
   }
@@ -215,7 +216,7 @@ void BHV_Agent::tickBridge(){
     m_current_course = 0;
     m_current_speed = 0;
   }else if(ctrl_msg == "SEND_STATE"){
-    // Send state if requested
+    // Parse default state
     bool x_ok, y_ok, h_ok;
     double NAV_X = getBufferDoubleVal("NAV_X", x_ok);
     if(!x_ok){
@@ -251,7 +252,7 @@ void BHV_Agent::tickBridge(){
       }
     }
 
-    // Look for vars that are subscribed to
+    // Look for vars that are subscribed to'
     std::vector<VarDataPair> vd_pairs;
     vsize = m_sub_vars.size();
     for(int i=0; i<vsize; i++){
@@ -268,25 +269,11 @@ void BHV_Agent::tickBridge(){
         VarDataPair pair(m_sub_vars[i], s_result);
         vd_pairs.push_back(pair);
       }else{
-        postWMessage("Subscription var '"+m_sub_vars[i]+"' not found in info buffer");
+        //postWMessage("Subscription var '"+m_sub_vars[i]+"' not found in info buffer (Sending None)");
+        VarDataPair pair(m_sub_vars[i], "null");
+        vd_pairs.push_back(pair);
       }
     }
-
-    // Add pEpisodeManager report or null if not present
-    bool report_ok;
-    string report = m_info_buffer->sQuery("EPISODE_MNGR_REPORT", report_ok);
-    if(!report_ok)
-      report = "null";
-    VarDataPair pair("EPISODE_MNGR_REPORT", report);
-    vd_pairs.push_back(pair);
-
-    // Add pEpisodeManager state or null if not present
-    bool state_ok;
-    string state = m_info_buffer->sQuery("EPISODE_MNGR_STATE", state_ok);
-    if(!state_ok)
-      state = "null";
-    VarDataPair pair2("EPISODE_MNGR_STATE", state);
-    vd_pairs.push_back(pair2);
 
     // Send update through bridge
     bool ok = bridge.sendState(getBufferCurrTime(), NAV_X, NAV_Y, NAV_HEADING, VNAME, node_reports, vd_pairs);

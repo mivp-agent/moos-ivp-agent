@@ -13,58 +13,56 @@ Processconfig = ANTLER
   MSBetweenLaunches = 100
 
   Run = MOOSDB          @ NewConsole = false
+#ifdef LOGGING yes
   Run = pLogger         @ NewConsole = false
+#endif LOGGING
   Run = uProcessWatch   @ NewConsole = false
-#ifdef NO_GUI false
+
+#ifdef GUI yes
   Run = pMarineViewer   @ NewConsole = false
 #endif
+
   Run = pHostInfo       @ NewConsole = false
   Run = pShare          @ NewConsole = false
   Run = uFldShoreBroker @ NewConsole = false
   Run = uFldNodeComms   @ NewConsole = false
 
-  Run = uFldFlagManager @ NewConsole = false
-  Run = uFldTagManager  @ NewConsole = false
-
-  Run = uTimerScript	@ NewConsole = false
+  Run = uFldFlagManagerAgent      @ NewConsole = false
+  Run = uFldTagManagerAgent  @ NewConsole = false
 }
 
 //--------------------------------------------------
 // uFldFlagMgr Configuration Block
 
-ProcessConfig = uFldFlagManager
+ProcessConfig = uFldFlagManagerAgent
 {
   AppTick       = 2
   CommsTick     = 2
 
+  near_flag_range_buffer = 0
+
   flag = $(RED_FLAG), color=red, label=red
   flag = $(BLUE_FLAG), color=blue, label=blue
 
-  grab_post = var=SAY_MOOS, sval={say={$VNAME has the $FLAG flag}}
-  grab_post = var=SAY_MOOS_ALL, sval={say={$VNAME has the $FLAG flag}}
-
-  lose_post = var=SAY_MOOS, sval={say={the $FLAG flag has been returned}}
-  lose_post = var=SAY_MOOS_ALL, sval={say={the $FLAG flag has been returned}}
-
-  near_post = var=SAY_MOOS, sval={file=sounds/shipbell.wav}
-  near_post = var=SAY_MOOS_$UP_VNAME, sval={file=sounds/shipbell.wav}
-
-  away_post = var=SAY_MOOS, sval={file=sounds/buzzer.wav}
-  away_post = var=SAY_MOOS_$UP_VNAME, sval={file=sounds/buzzer.wav}
-
-  deny_post = var=SAY_MOOS, sval={say={Grab denied $REASON}}
-  deny_post = var=SAY_MOOS_$UP_VNAME, sval={say={Grab denied $REASON}}
+  grab_post = var=LED_HAVE_FLAG_$UP_VNAME, sval={true}  
+  lose_post = var=LED_HAVE_FLAG_$UP_VNAME, sval={false}  
+  near_post = var=LED_IN_FLAG_ZONE_$VNAME, sval={true}  
+  away_post = var=LED_IN_FLAG_ZONE_$VNAME, sval={false} 
+  home_post = var=LED_HAVE_FLAG_$UP_VNAME, sval={false} 
+  goal_post = var=LED_HAVE_FLAG_$UP_VNAME, sval={false}
+  
+  goal_post = var=EPISODE_MGR_CTRL_$UP_VNAME, sval={type=reset,success=true}
 
   home_post = var=UNTAG_REQUEST, sval={vname=$VNAME}
   home_post = var=FLAG_RESET, sval={vname=$VNAME}
 
-	goal_post = var=SAY_MOOS, sval={say={$VTEAM has scored}}
-	goal_post = var=SAY_MOOS_ALL, sval={say={$VTEAM has scored}}
+  infinite_flags = true
 }
 
 //--------------------------------------------------
 // uFldTagManager Configuration Block
-ProcessConfig = uFldTagManager
+
+ProcessConfig = uFldTagManagerAgent
 {
   AppTick   = 4
   CommsTick = 4
@@ -80,46 +78,20 @@ ProcessConfig = uFldTagManager
 
   tag_duration = 10000
 
-  //robot_tag_post   = MOOS_MANUAL_OVERRIDE_$UP_TARGET=true
-//  human_tag_post   = SAY_MOOS_ALL=say={$TARGET_has_been_tagged},rate=200
-//  human_tag_post   = SAY_MOOS=say={$TARGET_has_been_tagged},rate=200
-
-  human_tag_post   = SAY_MOOS_ALL=file=tag_post_$TARGET.wav
-  human_tag_post   = SAY_MOOS=file=tag_post_$TARGET.wav
-
-  // human_tag_post   = SAY_MOOS_$UP_TARGET=say={you_have_been_tagged},rate=200
-//  robot_tag_post   = SAY_MOOS_ALL=say={$TARGET_has_been_tagged},rate=200
-//  robot_tag_post   = SAY_MOOS=say={$TARGET_has_been_tagged},rate=200
-
-  robot_tag_post   = SAY_MOOS_ALL=file=tag_post_$TARGET.wav
-  robot_tag_post   = SAY_MOOS=file=tag_post_$TARGET.wav
-
-  // robot_tag_post   = SAY_MOOS_$UP_TARGET=say={you_have_been_tagged},rate=200
-
   // Return Flag
   human_tag_post   = FLAG_RESET=vname=$TARGET
   robot_tag_post   = FLAG_RESET=vname=$TARGET
   human_tag_post   = TAGGED_$UP_TARGET=true
   robot_tag_post   = TAGGED_$UP_TARGET=true
 
-  //robot_untag_post = MOOS_MANUAL_OVERRIDE_$UP_TARGET=false
-  // human_untag_post   = SAY_MOOS=say={$TARGET_has_been_untagged},rate=200
-  // human_untag_post   = SAY_MOOS_$UP_TARGET=say={you_have_been_untagged},rate=200
-  // robot_untag_post   = SAY_MOOS=say={$TARGET_has_been_untagged},rate=200
-  // robot_untag_post   = SAY_MOOS_$UP_TARGET=say={you_have_been_untagged},rate=200
-
-//  human_untag_post = SAY_MOOS_ALL=say={$TARGET_has_been_untagged},rate=200
-//  human_untag_post = SAY_MOOS=say={$TARGET_has_been_untagged},rate=200
-  human_untag_post = SAY_MOOS_ALL=file=sounds/untag_post_$TARGET.wav
-  human_untag_post = SAY_MOOS=file=sounds/untag_post_$TARGET.wav
   human_untag_post = TAGGED_$UP_TARGET=false
-  
-//  robot_untag_post = SAY_MOOS_ALL=say={$TARGET_has_been_untagged},rate=200
-//  robot_untag_post = SAY_MOOS=say={$TARGET_has_been_untagged},rate=200
-  robot_untag_post = SAY_MOOS_ALL=file=sounds/untag_post_$TARGET.wav
-  robot_untag_post = SAY_MOOS=file=sounds/untag_post_$TARGET.wav
   robot_untag_post = TAGGED_$UP_TARGET=false
 
+  robot_tag_post   = LED_TAGGED_$UP_TARGET=true
+  human_tag_post   = LED_TAGGED_$UP_TARGET=true
+  human_untag_post = LED_TAGGED_$UP_TARGET=false
+  robot_untag_post = LED_TAGGED_$UP_TARGET=false
+  
   team_one=red
   team_two=blue
 
@@ -128,7 +100,15 @@ ProcessConfig = uFldTagManager
 
   zone_one_color = pink
   zone_two_color = dodger_blue
+
+  restrict_tagging = true
+  can_tag = drone_21=agent_11
+  can_tag = drone_22=agent_12
+  can_tag = drone_23=agent_13
+  can_tag = drone_24=agent_14
+  can_tag = drone_25=agent_15
 }
+
 //---------------------------------------------------------
 // pShare Configuration Block
 
@@ -138,7 +118,6 @@ ProcessConfig = pShare
   CommsTick  = 2
 
   input = route =  localhost:$(SHARE_LISTEN)
-//  input = route =  multicast_7
 }
 
 //--------------------------------------------------
@@ -171,23 +150,29 @@ ProcessConfig = uFldShoreBroker
   //       [BRIDGE = src=FOO_$V,  alias=FOO] and
   //       [BRIDGE = src=FOO_ALL, alias=FOO]
 
-  qbridge  = DEPLOY, RETURN, STATION, NODE_REPORT, NODE_MESSAGE, VISIT_POINT
+  qbridge  = DEPLOY, RETURN, STATION, NODE_REPORT, NODE_MESSAGE
   qbridge  = MOOS_MANUAL_OVERRIDE, APPCAST_REQ, AVOID, CHASE
   qbridge  = TAGGED
   qbridge  = HAS_FLAG
-  qbridge  = ACTION
+  qbridge  = ACTION, AGGRESSIVE, SHIELD_REQUEST
   qbridge  = SAY_MOOS
-  qbridge  = USM_RESET
+  qbridge  = ONFIELD, CANTAG
+  qbridge  = EPISODE_MGR_CTRL
 
   bridge   = src=IN_OWN_TERRITORY
   bridge   = src=IN_ENEMY_TERRITORY
   bridge   = src=TAGGED_VEHICLES
-  bridge   = src=RED_FLAG_GRABBED
-  bridge   = src=BLUE_FLAG_GRABBED
   bridge   = src=UP_LOITER_$N, alias=UP_LOITER
   bridge   = src=HELM_MAP_CLEAR, alias=HELM_MAP_CLEAR
   bridge   = src=FLAG_SUMMARY
+  bridge   = src=MULTI_NOTIFY
 
+  qbridge = LED_TAGGED
+  qbridge = LED_HAVE_FLAG
+  qbridge = LED_IN_FLAG_ZONE
+
+  qbridge = AQUATICUS_GAME
+  qbridge = UFMG_HEARTBEAT
 }
 
 
@@ -215,10 +200,7 @@ ProcessConfig = pLogger
   FileTimeStamp = true
 
   LogAuxSrc     = true
-  Log		= POINT_STAT @ 0
-  Log		= VISIT_POINT_MOKAI_RED @ 0
-  Log		= VISIT_POINT_MOKAI_BLUE @ 0
-  
+
   // Log it all!!!!!
   WildCardLogging = true
   WildCardOmitPattern = *_STATUS
@@ -246,51 +228,26 @@ ProcessConfig = pMarineViewer
   appcast_color_scheme = indigo
 
   scope = FLAG_GRAB_REPORT
-  scope = FLAG_GRAB_REQUEST
   scope = NODE_BROKER_PING
   scope = DEPLOY_ALL
+  scope = TAG_REQUEST
 
-  action = STATION_KEEP_ALL = false
-  action = STATION_KEEP_ALL = true
-  action = CHASE_ALL = false
+  action = AQUATICUS_GAME_ALL = play
+  action = AQUATICUS_GAME_ALL = pause
+  action = AQUATICUS_GAME_ALL = stop
 
   button_one   = DEPLOY  # DEPLOY_ALL=true
   button_one   = MOOS_MANUAL_OVERRIDE_ALL=false
   button_one   = RETURN_ALL=false # STATION_KEEP_ALL=false
 
-  button_two   = RETURN  # RETURN_ALL=true
-  button_two   = RETURN  # STATION_KEEP_ALL=false
-
-  button_three = UNDEPLOY_EVAN # DEPLOY_EVAN=false
-
-  button_four = RESET_FELIX # USM_RESET_FELIX=x=50,y=-24,speed=0,heading=240,depth=0
+  button_two = PAUSE # DEPLOY_ALL=false
+  button_two = MOOS_MANUAL_OVERRIDE_ALL=true
+  button_two = AQUATICUS_GAME_STATE=pause
 
   op_vertex = x=56,   y=16,  lwidth=1,lcolor=yellow,looped=true,group=moa
   op_vertex = x=-83, y=-49,  lwidth=1,lcolor=yellow,looped=true,group=moa
   op_vertex = x=-53, y=-114, lwidth=1,lcolor=yellow,looped=true,group=moa
   op_vertex = x=82,   y=-56, lwidth=1,lcolor=yellow,looped=true,group=moa
-
-
-  cmd = label=DEPLOY, var=DEPLOY,  sval=true,  receivers=all:evan:felix:gus:mokai_red:mokai_blue
-  cmd = label=DEPLOY, var=MOOS_MANUAL_OVERRIDE, sval=false, receivers=all:evan:felix:gus:mokai_red:mokai_blue
-  cmd = label=DEPLOY, var=RETURN,  sval=false,  receivers=all:evan:felix:gus:mokai_red:mokai_blue
-
-  cmd = label=RETURN, var=RETURN, sval=true, receivers=all:evan:felix:gus:mokai_red:mokai_blue
-
-  cmd = label=ATTACK, var=ACTION, sval=ATTACK, receivers=evan:felix:gus
-
-
-  cmd = label=ATTACK_RIGHT, var=ACTION, sval=ATTACK_RIGHT, receivers=evan:felix:gus
-
-  cmd = label=ATTACK_LEFT, var=ACTION, sval=ATTACK_LEFT, receivers=evan:felix:gus
-
-  cmd = label=DEFEND, var=ACTION, sval=DEFEND, receivers=evan:felix:gus
-
-  cmd = label=COVER, var=ACTION, sval=COVER, receivers=evan:felix:gus
-
-  cmd = label=TRAIL, var=ACTION, sval=TRAIL, receivers=evan:felix:gus
-
-  cmd = label=STATION, var=ACTION,  sval=STATION,  receivers=all:evan:felix:gus
 }
 
 //--------------------------------------------------------
@@ -324,19 +281,15 @@ ProcessConfig = iSay
   audio_dir=sounds
 }
 
-ProcessConfig= uTimerScript
+//----------------------------------------
+ProcessConfig = pTimeWatch
 {
-  paused=true
-  rand_var    = varname=RND_X, min=-83, max=82, key=at_post
-  rand_var    = varname=RND_Y, min=-114, max=16, key=at_post
-  event = var = VISIT_POINT, val = "firstpoint", time=0
-  event = var = VISIT_POINT, val = "x=$[RND_X], y=$[RND_Y], id= $[TCOUNT]", time=0, amt=100
-  event = var = VISIT_POINT, val = "lastpoint", time =0
+  AppTick   = 4
+  CommsTick = 4
+  
+  watch_var = NODE_REPORT
 
+  threshhold = 30
+  //local_offset = 30
 }
 
-ProcessConfig = pPointAssign
-{
- AppTick = 8
- CommsTick = 8
-}

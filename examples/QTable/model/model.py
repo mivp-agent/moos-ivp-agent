@@ -37,7 +37,7 @@ def load_model(path):
   qtable = np.load(path)
   q._qtable = qtable
 
-  return q, config['actions']
+  return q, config['attack_actions'], config['retreat_actions']
 
 class QLearn:
   def __init__(
@@ -51,7 +51,7 @@ class QLearn:
   ):
     self._lr = lr
     self._gamma = gamma
-    self._action_space_size = action_space_size
+    self._action_space_size = ACTION_SPACE_SIZE
     self._field_res = field_res
     self.save_dir = save_dir
     self.verbose = verbose
@@ -63,15 +63,17 @@ class QLearn:
     self._qtable_shape = (
       self._discrete_field.space_size, # For own position
       self._discrete_field.space_size, # For enemy position
-      self._action_space_size # Google "QTable"
+      2, # For has flag boolean
+      self._action_space_size # Google 'Q learning' / QTable
     )
     self._qtable = construct_qtable(self._qtable_shape, print_shape=self.verbose)
   
-  def get_state(self, own_x, own_y, enemy_x, enemy_y):
+  def get_state(self, own_x, own_y, enemy_x, enemy_y, has_flag):
     own_idx = self._discrete_field.to_discrete_idx(own_x, own_y)
     enemy_idx = self._discrete_field.to_discrete_idx(enemy_x, enemy_y)
+    has_flag_idx = int(has_flag)
 
-    return (own_idx, enemy_idx)
+    return (own_idx, enemy_idx, has_flag_idx)
 
   def get_action(self, state, e=None):
     # If called with epsilon value, run e-greedy
@@ -96,7 +98,7 @@ class QLearn:
   def set_qvalue(self, state, action, q):
     self._qtable[state + (action,)] = q
   
-  def save(self, actions, save_dir=None, name=None):
+  def save(self, attack_actions, retreat_actions, save_dir=None, name=None):
     if save_dir is None:
       if self.save_dir is None:
         raise RuntimeError('Model cannot save without save_dir')
@@ -115,7 +117,8 @@ class QLearn:
         'lr': self._lr,
         'gamma': self._gamma,
         'action_space_size': self._action_space_size,
-        'actions': actions,
+        'attack_actions': attack_actions,
+        'retreat_actions': retreat_actions,
         'field_res': self._field_res,
         'qtable_shape': self._qtable_shape
       }

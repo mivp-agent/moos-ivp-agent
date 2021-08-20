@@ -1,50 +1,50 @@
 #!/usr/bin/env python3
 import argparse
+import time
 
-from mivp_agent.bridge import ModelBridgeServer
-from mivp_agent.util.parse import parse_report
+from mivp_agent.manager import MissionManager
 from mivp_agent.util.math import dist
+from mivp_agent.util.display import ModelConsole
 from mivp_agent.aquaticus.const import FIELD_BLUE_FLAG
 
 from model.util.constants import DEFAULT_RUN_MODEL
 from model.model import load_model
 
-MNGR_STATE = 'EPISODE_MNGR_STATE'
-MNGR_REPORT = 'EPISODE_MNGR_REPORT'
 
 def run(args):
-  q, actions = load_model(args.model)
+  q, attack_actions, retreat_actions = load_model(args.model)
 
-  with ModelBridgeServer() as server:
-    print('Waiting for sim connection...')
-    server.accept()
-
+  with MissionManager() as mgr:
+    print('Waiting for sim vehicle connections...')
+    while mgr.get_vehicle_count() < 1:
+      time.sleep(0.1)
     # ---------------------------------------
     # Part 1: Asserting simulation state
 
-    # Create instruction object
-    instr = {
-      'speed': 0.0,
-      'course': 0.0,
-      'posts': {},
-      'ctrl_msg': 'SEND_STATE'
-    }
-    
     last_state = None
     current_action = None
+    current_action_set = None
+    console = ModelConsole()
 
-    server.send_instr(instr)
     while True:
       # Listen for state
-      MOOS_STATE = server.listen_state()
-      MOOS_STATE[MNGR_REPORT] = parse_report(MOOS_STATE[MNGR_REPORT])
+      msg = mgr.get_message()
+      while False:
+        print('-------------------------------------------')
+        print(f"({msg.vname}) {msg.state['HAS_FLAG']}")  
+        print('-------------------------------------------')
+        msg.request_new()
+        msg = mgr.get_message()
+
+      console.tick(msg)
 
       # Detect state transitions
       model_state = q.get_state(
-        MOOS_STATE['NAV_X'],
-        MOOS_STATE['NAV_Y'],
-        MOOS_STATE['NODE_REPORTS']['evan']['NAV_X'],
-        MOOS_STATE['NODE_REPORTS']['evan']['NAV_Y']
+        msg.state['NAV_X'],
+        msg.state['NAV_Y'],
+        msg.state['NODE_REPORTS'][args.enemy]['NAV_X'],
+        msg.state['NODE_REPORTS'][args.enemy]['NAV_Y'],
+        msg.state['HAS_FLAG']
       )
 
       # Detect state transition
@@ -52,19 +52,31 @@ def run(args):
         current_action = q.get_action(model_state)
         last_state = model_state
       
-      # Construct instruction for BHV_Agent
-      instr['speed'] = actions[current_action]['speed']
-      instr['course'] = actions[current_action]['course']
-      instr['posts'] = {}
+      # Determine action set
+      if msg.state['HAS_FLAG']:
+        current_action_set = retreat_actions
+      else:
+        current_action_set = attack_actions
 
-      flag_dist = abs(dist((MOOS_STATE['NAV_X'], MOOS_STATE['NAV_Y']), FIELD_BLUE_FLAG))
+      # Construct instruction for BHV_Agent
+      action = {
+        'speed': current_action_set[current_action]['speed'],
+        'course': current_action_set[current_action]['course']
+      }
+
+      print(current_action, action)
+
+      flag_dist = abs(dist((msg.state['NAV_X'], msg.state['NAV_Y']), FIELD_BLUE_FLAG))
       if flag_dist < 10:
-        instr['posts']['FLAG_GRAB_REQUEST'] = f'vname={MOOS_STATE["VNAME"]}'
+        action['posts']= {
+          'FLAG_GRAB_REQUEST': f'vname={msg.vname}'
+        }
       
-      server.send_instr(instr)
+      msg.act(action)
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument('--model', default=DEFAULT_RUN_MODEL)
+  parser.add_argument('--enemy', default='drone_21')
   args = parser.parse_args()
   run(args)

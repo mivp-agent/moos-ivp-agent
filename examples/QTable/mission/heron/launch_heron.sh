@@ -93,6 +93,7 @@ fi
 case "$2" in
     agent|a)
         ROLE="agent"
+        BEHAVIOR="AGENT"
         echo "Vehicle set as an agent."
         ;;
     drone|d)
@@ -156,6 +157,7 @@ nsplug meta_heron.moos targ_${VNAME}.moos -f \
     START_POS=$START_POS         \
     COLOR=$COLOR                 \
     LOGGING=$LOGGING             \
+    ROLE=$ROLE                   \
 
 echo "Assembling BHV file targ_${VNAME}.bhv"
 nsplug meta_heron.bhv targ_${VNAME}.bhv -f  \

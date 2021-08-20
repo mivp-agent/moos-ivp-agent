@@ -9,191 +9,132 @@ bridgedir = os.path.join(os.path.dirname(currentdir), 'mivp_agent')
 sys.path.append(bridgedir)
 
 from bridge import ModelBridgeServer, ModelBridgeClient
+from const import KEY_EPISODE_MGR_REPORT, KEY_EPISODE_MGR_STATE, KEY_ID
 
-DUMMY_ACTION = {
+DUMMY_INSTR = {
   'speed': 2.0,
-  'course': 90,
-  'MOOS_VARS': {}
-}
-
-DUMMY_ACTION_2 = {
-  'speed': 2.0,
-  'course': 180,
-  'MOOS_VARS': {}
-}
-
-DUMMY_ACTION_NO_SPEED = {
-  'course': 90,
-  'MOOS_VARS': {}
-}
-
-DUMMY_ACTION_NO_COURSE = {
-  'speed': 2.0,
-  'MOOS_VARS': {}
-}
-
-DUMMY_ACTION_NO_MOOS_VARS = {
-  'speed': 2.0,
-  'course': 90
+  'course': 120.0,
+  'posts': {},
+  'ctrl_msg': 'SEND_STATE'
 }
 
 DUMMY_STATE = {
-  'NAV_X': 58.1,
-  'NAV_Y': 76.0,
-  'MOOS_VARS': {}
+  KEY_ID: 'felix',
+  'MOOS_TIME': 16923.012,
+  'NAV_X': 98.0,
+  'NAV_Y': 40.0,
+  'NAV_HEADING': 180,
+  KEY_EPISODE_MGR_REPORT: None
 }
 
-DUMMY_MUST_POST = {
-  'EPISODE_MNGR_CTRL': 'type=start'
-}
+def dummy_connect_client(client):
+  while not client.connect():
+    time.sleep(0.2)
 
-DUMMY_MUST_POST_2 = {
-  'I_HATE': 'programming'
-}
+class TestBridge(unittest.TestCase):
 
-
-class TestSocket(unittest.TestCase):
-
-  def test_server_offline_state(self):
-    with ModelBridgeServer() as server:
-      self.assertFalse(server.send_action(DUMMY_ACTION))
-      self.assertFalse(server.listen_state())
+  def test_offline_state(self):
     with ModelBridgeClient() as client:
       self.assertFalse(client.send_state(DUMMY_STATE))
       self.assertFalse(client.listen())
-  
-  def test_socket_send_action(self):
+      self.assertFalse(client.connect())
     with ModelBridgeServer() as server:
-      # Part 1: Check type checking / connection check
-      self.assertRaises(AssertionError, server.send_action, "Wrong Type")
-      self.assertRaises(AssertionError, server.send_action, DUMMY_ACTION_NO_SPEED)
-      self.assertRaises(AssertionError, server.send_action, DUMMY_ACTION_NO_COURSE)
-      self.assertRaises(AssertionError, server.send_action, DUMMY_ACTION_NO_MOOS_VARS)
-      self.assertFalse(server.send_action(DUMMY_ACTION))
-    
-      # Part 2: Check simple action sending
+      self.assertRaises(RuntimeError, server.send_instr, 'addr', DUMMY_INSTR)
+      self.assertRaises(RuntimeError, server.listen, 'addr')
+      self.assertIsNone(server.accept())
+  
+  def test_validation(self):
+    with ModelBridgeServer() as server:
       with ModelBridgeClient() as client:
-        def dummy_connect_client(client):
-          time.sleep(1)
-
-          client.connect()
-          rsp = client.listen()
-
-          self.assertEqual(rsp['action'], DUMMY_ACTION)
-
-        # Use another thread to connect client
-        t =  Thread(target=dummy_connect_client, args=(client,))
+        # Connect
+        t = Thread(target=dummy_connect_client, args=(client,))
         t.start()
 
-        # Start server
-        server.accept()
+        addr = None
+        while addr is None:
+          time.sleep(0.2)
+          addr = server.accept()
         
-        self.assertTrue(server.send_action(DUMMY_ACTION))
-
+        # Clean up our thread
         t.join()
-      
-  def test_socket_listen_action(self):
-    # Part 2: Check that client gets most recent action
-      with ModelBridgeClient() as client:
-        with ModelBridgeServer() as server: 
-          def dummy_connect_server(server):
-            server.accept()
-          
-          # Use another thread to connect client
-          t =  Thread(target=dummy_connect_server, args=(server,))
-          t.start()
-          client.connect()
-          t.join()
+        
+        # Client
+        # Sorta check for type check
+        self.assertRaises(AssertionError, client.send_state, 'Wrong type')
 
-          # Test action order
-          self.assertTrue(server.send_action(DUMMY_ACTION))
-          self.assertTrue(server.send_action(DUMMY_ACTION))
-          self.assertTrue(server.send_action(DUMMY_ACTION))
-          self.assertTrue(server.send_action(DUMMY_ACTION))
-          self.assertTrue(server.send_action(DUMMY_ACTION_2))
+        # Assert all keys are tested for
+        for key in DUMMY_STATE:
+          if key == KEY_EPISODE_MGR_REPORT or key == KEY_EPISODE_MGR_STATE:
+            continue
+          state = DUMMY_STATE.copy()
+          state.pop(key) # Removes key
 
-          rsp = client.listen(timeout=None)
+          self.assertRaises(AssertionError, client.send_state, state)
 
-          self.assertEqual(rsp['action'], DUMMY_ACTION_2)
+        # Server
+        # Sorta check for type check 
+        self.assertRaises(AssertionError, server.send_instr, addr, 'Wrong type')
 
-          # And test must posts
-          self.assertTrue(server.send_action(DUMMY_ACTION_2))
-          self.assertTrue(server.send_action(DUMMY_ACTION))
-          self.assertTrue(server.send_must_post(DUMMY_MUST_POST))
-          self.assertTrue(server.send_must_post(DUMMY_MUST_POST_2))
+        # Assert all keys are tested for
+        for key in DUMMY_INSTR:
+          instr = DUMMY_INSTR.copy()
+          instr.pop(key) # Removes key
 
-          rsp = client.listen(timeout=None)
-
-          # TODO: Test for dummy posts
-          self.assertEqual(rsp['action'], DUMMY_ACTION)
-
-  def test_socket_send_state(self):
-    with ModelBridgeServer() as server:
-      with ModelBridgeClient() as client:
-        def dummy_connect_server(server):
-          server.accept()
-          state = server.listen_state()
-
-          self.assertEqual(state, DUMMY_STATE)
-
-        # Use another thread to connect client
-        t =  Thread(target=dummy_connect_server, args=(server,))
-        t.start()
-
-        # Start server
-        client.connect()
-
-        self.assertRaises(AssertionError, client.send_state, "Wrong Type")
-        self.assertTrue(client.send_state(DUMMY_STATE))
-
-        t.join()
+          self.assertRaises(AssertionError, server.send_instr, addr, instr)
   
-  def test_socket_timeout(self):
+  def test_connect(self):
     with ModelBridgeServer() as server:
       with ModelBridgeClient() as client:
-
-        # Assert that the client will timeout 
-        self.assertFalse(client.connect())
-        # TODO: Time it
-
-        # Start the server
-        def dummy_connect_server(server):
-          server.accept()
-        t = Thread(target=dummy_connect_server, args=(server,))
+        t = Thread(target=dummy_connect_client, args=(client,))
         t.start()
 
-        client.connect()
+        addr = None
+        while addr is None:
+          time.sleep(1)
+          addr = server.accept()
+        
+        # Clean up our thread
+        t.join()
 
-        t.join() # Don't need the server for the rest of the tests
-
-        # Assert that timout happens 
         self.assertFalse(client.listen())
+        self.assertIsNone(server.listen(addr))
+        self.assertIsNone(server.listen(addr))
 
-  def test_spam_state(self):
-    # Part 2: Check that client gets most recent action
+  def test_instr(self):
+    with ModelBridgeServer() as server:
       with ModelBridgeClient() as client:
-        with ModelBridgeServer() as server: 
-          def dummy_connect_client(client):
-            client.connect()
-          
-          # Use another thread to connect client
-          t =  Thread(target=dummy_connect_client, args=(client,))
-          t.start()
-          server.accept()
-          t.join()
+        t = Thread(target=dummy_connect_client, args=(client,))
+        t.start()
 
-          self.assertTrue(client.send_state(DUMMY_STATE))
-          rsp, _ = server.listen_state()
-          self.assertEqual(rsp, DUMMY_STATE)
+        addr = None
+        while addr is None:
+          time.sleep(0.2)
+          addr = server.accept()
+        
+        # Clean up our thread
+        t.join()
 
+        self.assertTrue(server.send_instr(addr, DUMMY_INSTR))
+        time.sleep(0.1)
+        self.assertEqual(client.listen(), DUMMY_INSTR)
 
-          for x in range(1, 40):
-            for i in range(x):
-              self.assertTrue(client.send_state(DUMMY_STATE))
-            rsp, _ = server.listen_state()
-            self.assertEqual(rsp, DUMMY_STATE)
+  def test_state(self):
+    with ModelBridgeServer() as server:
+      with ModelBridgeClient() as client:
+        t = Thread(target=dummy_connect_client, args=(client,))
+        t.start()
 
+        addr = None
+        while addr is None:
+          time.sleep(0.2)
+          addr = server.accept()
+        
+        # Clean up our thread
+        t.join()
 
+        self.assertTrue(client.send_state(DUMMY_STATE))
+        time.sleep(0.1)
+        self.assertEqual(server.listen(addr), DUMMY_STATE)       
 
 if __name__ == '__main__':
   unittest.main()

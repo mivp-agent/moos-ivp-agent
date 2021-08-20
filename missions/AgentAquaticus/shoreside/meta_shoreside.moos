@@ -13,7 +13,9 @@ Processconfig = ANTLER
   MSBetweenLaunches = 100
 
   Run = MOOSDB          @ NewConsole = false
+#ifdef LOGGING yes
   Run = pLogger         @ NewConsole = false
+#endif LOGGING
   Run = uProcessWatch   @ NewConsole = false
 
 #ifdef GUI yes

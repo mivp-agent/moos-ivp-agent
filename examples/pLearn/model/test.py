@@ -10,9 +10,8 @@ from tqdm.std import tqdm
 warnings.filterwarnings("ignore", message=r"Passing", category=FutureWarning)
 import keras
 
-from mivp_agent.bridge import ModelBridgeServer
+from mivp_agent.manager import MissionManager
 from mivp_agent.util.display import ModelConsole
-from mivp_agent.util.parse import parse_report
 from state import make_state
 
 from util.validate import check_test_dir
@@ -21,16 +20,6 @@ from util.state import state2vec, dist
 from util.model_loader import load_pLearn_model
 from util.graphing import TestGrapher
 
-PAUSE_INSTR= {
-    'speed': 0.0,
-    'course': 0.0,
-    'posts': { # This will only be sent the first time, after that it is turrned off
-        'EPISODE_MNGR_CTRL': 'type=hardstop'
-    },
-    'ctrl_msg': 'PAUSE'
-}
-
-REPORT = 'EPISODE_MNGR_REPORT'
 EPISODES_PER_TEST = 5
 
 def test_dir(args):
@@ -44,9 +33,9 @@ def test_dir(args):
     iterations.sort()
 
     # Do testing
-    with ModelBridgeServer() as server:
-        print('Waiting for sim connection...')
-        server.accept()
+    with MissionManager() as mgr:
+        print('Waiting for vehicle connection...')
+        mgr.wait_for(('felix',))
 
         # Keep track of the last report, to detect new once
         last_episode_num = None
@@ -74,64 +63,46 @@ def test_dir(args):
             last_helm_time = None
             durations = []
             p = tqdm(total=EPISODES_PER_TEST, desc=f"Model #{i}")
+            
+            # Instruct pEpisodeManager to stop and enter PAUSED state
+            msg = mgr.get_message()
+            msg.stop()
 
-            # request state from BHV_agent to validate pEpisodeManager state
-            instr_action = {
-                'speed': 0.0,
-                'course': 0.0,
-                'posts': {},
-                'ctrl_msg': 'SEND_STATE'
-            }
-            server.send_instr(instr_action)
-            MOOS_STATE = server.listen_state()
-            if MOOS_STATE['EPISODE_MNGR_STATE'] != 'PAUSED':
-                tqdm.write('Waiting for pEpisodeManager...')
-            while MOOS_STATE['EPISODE_MNGR_STATE'] != 'PAUSED':
-                # Request state and read until pEpisode manager is online
-                server.send_instr(instr_action)
-                MOOS_STATE = server.listen_state()
-
-            # Start pEpisode manager
-            instr_action['posts'] = {
-                'EPISODE_MNGR_CTRL': 'type=start'
-            }
-            server.send_instr(instr_action)
+            # Start pEpisodeManager again
+            msg = mgr.get_message()
+            msg.start()
             while episode_count <= EPISODES_PER_TEST:
-                #print(f'iteration {iteration}')
-                #print(f'episode_count {episode_count}')
-
-                MOOS_STATE = server.listen_state()
-                MOOS_STATE[REPORT] = parse_report(MOOS_STATE[REPORT])
+                # Get state from manager
+                msg = mgr.get_message()
 
                 # Detect new episode
-                if MOOS_STATE[REPORT] is None:
+                if msg.episode_report is None:
                     # Sanity checks
                     assert i == 0
                     assert episode_count == 0
-                elif last_episode_num != MOOS_STATE[REPORT]['EPISODE']:
-                    #tqdm.write(f'Report: {MOOS_STATE[REPORT]}')
-                    last_episode_num = MOOS_STATE[REPORT]['EPISODE']
+                elif last_episode_num != msg.episode_report['NUM']:
+                    last_episode_num = msg.episode_report['NUM']
 
-                    if MOOS_STATE[REPORT]['DURATION'] < 1:
+                    if msg.episode_report['DURATION'] < 1:
                         tqdm.write("WARNING: discarding episode due to small duration", file=sys.stderr)
-                        last_episode_num = MOOS_STATE[REPORT]['EPISODE']
+                        last_episode_num = msg.episode_report['NUM']
                     else:
                         tqdm.write(f'Finished episode #{episode_count}')
                         p.update(1)
                         
-                        durations.append(MOOS_STATE[REPORT]['DURATION'])
+                        durations.append(msg.episode_report['DURATION'])
 
                         episode_count += 1
-                        if MOOS_STATE[REPORT]['SUCCESS']:
+                        if msg.episode_report['SUCCESS']:
                             success_count += 1
                         
                         # If we are done with this trail set, send pause instr
                         if episode_count == EPISODES_PER_TEST:
-                            server.send_instr(PAUSE_INSTR)
-                            break # Break so we don't send an action 
+                            msg.request_new() # Just pass
+                            break
 
                 # Construct pLearn state
-                pLearn_state = make_state(const.state, const.num_states, MOOS_STATE)
+                pLearn_state = make_state(const.state, const.num_states, msg.state)
                 pLearn_state = state2vec(pLearn_state, const)
 
                 # Find optimal action
@@ -142,24 +113,27 @@ def test_dir(args):
                     if optimal[1] is None or optimal[0] < value:
                         optimal = (value, PLEARN_ACTIONS[a])
                 # Send optimal action to BHV_Agent client
-                instr_action['course'] = optimal[1]['course']
-                instr_action['speed'] = optimal[1]['speed']
-                instr_action['posts'] = {}
-                
-                flag_dist = abs(dist((MOOS_STATE['NAV_X'], MOOS_STATE['NAV_Y']), ENEMY_FLAG))
+                action = {
+                    'course': optimal[1]['course'],
+                    'speed': optimal[1]['speed'],
+                }
+
+                flag_dist = abs(dist((msg.state['NAV_X'], msg.state['NAV_Y']), ENEMY_FLAG))
                 if flag_dist < 10:
-                    instr_action['posts']['FLAG_GRAB_REQUEST'] = f'vname={MOOS_STATE["VNAME"]}'
-                
-                server.send_instr(instr_action)
+                    action['posts'] = {
+                        'FLAG_GRAB_REQUEST': f'vname={msg.vname}'
+                    }
+
+                msg.act(action)
 
                 # Store min flag dist for scoring
                 if min_flag_dist is None or flag_dist < min_flag_dist:
                     min_flag_dist = flag_dist
                 # Calculate the dtime from last_helm_time for debugging
                 if last_helm_time is not None:
-                    time_deltas.append(MOOS_STATE['HELM_TIME'] - last_helm_time)
-                last_helm_time = MOOS_STATE['HELM_TIME']
-            
+                    time_deltas.append(msg.state['MOOS_TIME'] - last_helm_time)
+                last_helm_time = msg.state['MOOS_TIME']
+
             # Calculate scoring
             success_precent = round(success_count / episode_count * 100, 2)
             avg_duration = round(sum(durations) / len(durations), 2)

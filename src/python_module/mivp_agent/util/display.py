@@ -3,36 +3,37 @@ import time
 class ModelConsole:
   def __init__(self):
     self.iteration = 0
+    self._last_loop_time = None
+
+    self.vehicles = {}
+
     self.last_MOOS_delta = 0
 
     self._last_loop_time = None
     self._last_MOOS_time = None
   
-  def tick(self, MOOS_STATE):
-    loop_delta = None
-    MOOS_delta = None
-
-    # Update loop time
-    current_perf_time = time.perf_counter()
-    if self._last_loop_time is None:
-      loop_delta = 'n/a'
+  def tick(self, msg):
+    if msg.vname not in self.vehicles:
+      self.vehicles[msg.vname] = {}
+      self.vehicles[msg.vname]['last_MOOS_delta'] = 'n/a'
+      self.vehicles[msg.vname]['last_loop_delta'] = 'n/a'
+      self.vehicles[msg.vname]['last_MOOS_time'] = msg.state['MOOS_TIME']
+      self.vehicles[msg.vname]['last_loop_time'] = time.perf_counter()
     else:
-      loop_delta = current_perf_time - self._last_loop_time
-    self._last_loop_time = current_perf_time
-
-    # Update MOOS time
-    if self._last_MOOS_time is None:
-      MOOS_delta = 'n/a'
-    else:
-      MOOS_delta = MOOS_STATE['HELM_TIME'] - self._last_MOOS_time
-      self.last_MOOS_delta = MOOS_delta
-    self._last_MOOS_time = MOOS_STATE['HELM_TIME']
+      self.vehicles[msg.vname]['last_MOOS_delta'] = msg.state['MOOS_TIME']-self.vehicles[msg.vname]['last_MOOS_time']
+      self.vehicles[msg.vname]['last_MOOS_time'] = msg.state['MOOS_TIME']
+      loop_time = time.perf_counter()
+      self.vehicles[msg.vname]['last_loop_delta'] = loop_time - self.vehicles[msg.vname]['last_loop_time']
+      self.vehicles[msg.vname]['last_loop_time'] = loop_time
+    
 
     print('\n===========================================')
     print(f' Iteration: {self.iteration}')
-    print(f' HELM_TIME: {MOOS_STATE["HELM_TIME"]}\n')
-    print(f' MOOS delta: {MOOS_delta}')
-    print(f' Loop delta: {loop_delta}')
+    print(f' MOOS_TIME: {msg.state["MOOS_TIME"]}\n')
+    for v in self.vehicles:
+      print(f' Vehicle: {v}')
+      print(f'   MOOS delta: {self.vehicles[v]["last_MOOS_delta"]}')
+      print(f'   Loop delta: {self.vehicles[v]["last_loop_delta"]}')
     print('===========================================')
 
     # Updated needed vars 

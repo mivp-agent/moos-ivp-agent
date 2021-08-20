@@ -1,16 +1,9 @@
 #!/usr/bin/env python3
 
-from mivp_agent.bridge import ModelBridgeServer
+from mivp_agent.manager import MissionManager
 from mivp_agent.aquaticus.field import FieldDiscretizer, DiscreteFieldGrapher
 
 from mivp_agent.util.display import ModelConsole
-
-INSTR = {
-  'speed': 0.0,
-  'course': 0.0,
-  'posts': {},
-  'ctrl_msg': 'SEND_STATE'
-}
 
 def run():
   # Create field discretizer and grapher
@@ -20,27 +13,26 @@ def run():
   g.init_vehicle('felix', 'red')
   g.init_vehicle('evan', 'blue')
 
-  with ModelBridgeServer() as server:
+  with MissionManager() as mgr:
     print('Waiting for simulation start...')
-    server.accept()
+    mgr.wait_for(('felix',))
 
-    MOOS_STATE = None
     last_felix_idx = None
     last_evan_idx = None
     console = ModelConsole()
 
-    server.send_instr(INSTR)
     while True:
-      MOOS_STATE = server.listen_state()
+      # Get state from server
+      msg = mgr.get_message()
 
       # Get descretized state of evan and felix
       felix_idx = d.to_discrete_idx(
-        MOOS_STATE['NAV_X'],
-        MOOS_STATE['NAV_Y']
+        msg.state['NAV_X'],
+        msg.state['NAV_Y']
       )
       evan_idx = d.to_discrete_idx(
-        MOOS_STATE['NODE_REPORTS']['evan']['NAV_X'],
-        MOOS_STATE['NODE_REPORTS']['evan']['NAV_Y']
+        msg.state['NODE_REPORTS']['evan']['NAV_X'],
+        msg.state['NODE_REPORTS']['evan']['NAV_Y']
       )
 
       # Update grapher if we have a state transition
@@ -54,10 +46,10 @@ def run():
         last_evan_idx = evan_idx
 
       # Tell BHV_Agent to give us another state
-      server.send_instr(INSTR)
+      msg.request_new()
 
       # Update terminal output
-      console.tick(MOOS_STATE)
+      console.tick(msg)
 
 
 if __name__ == '__main__':

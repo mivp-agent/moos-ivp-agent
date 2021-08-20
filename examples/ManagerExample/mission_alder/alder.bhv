@@ -1,0 +1,14 @@
+//--------    FILE: alder.bhv   -------------
+
+initialize   DEPLOY = false
+initialize   RETURN = false
+
+Behavior = BHV_Agent
+{
+  name = agent
+  pwt  = 100
+  perpetual = true
+
+  condition = DEPLOY == true
+  condition = RETURN == false
+}

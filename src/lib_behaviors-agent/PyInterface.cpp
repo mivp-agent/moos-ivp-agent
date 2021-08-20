@@ -264,12 +264,12 @@ PyObject* PyInterface::constructState(double helm_time, double NAV_X, double NAV
     Py_DECREF(report_dict);
   }
 
-  PyObject *state_dict = Py_BuildValue("{s:d,s:d,s:d,s:d,s:s,s:O}", // This constructs a python dict
-    "HELM_TIME", helm_time,
+  PyObject *state_dict = Py_BuildValue("{s:s,s:d,s:d,s:d,s:d,s:O}", // This constructs a python dict
+    "_ID_", VNAME.c_str(),
+    "MOOS_TIME", helm_time,
     "NAV_X", NAV_X,
     "NAV_Y", NAV_Y,
     "NAV_HEADING", NAV_H,
-    "VNAME", VNAME.c_str(),
     "NODE_REPORTS", node_reports_dict // Using O cause it incref's (for sure)
   );
   

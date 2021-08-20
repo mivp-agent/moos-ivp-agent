@@ -13,7 +13,7 @@ def parse_boolstr(boolstr):
   elif boolstr.lower() == 'false':
     return False
   else:
-    raise RuntimeError('Unexpected non boolean value')
+    raise RuntimeError(f'Unexpected non boolean value: {boolstr}')
 
 # For parsing pEpisodeManager reports
 def parse_report(report):
@@ -21,7 +21,7 @@ def parse_report(report):
     return None
   report = csp_to_dict(report)
 
-  report['EPISODE'] = int(report['EPISODE'])
+  report['NUM'] = int(report['NUM'])
   report['DURATION'] = float(report['DURATION'])
   report['SUCCESS'] = parse_boolstr(report['SUCCESS'])
   report['WILL_PAUSE'] = parse_boolstr(report['WILL_PAUSE'])
