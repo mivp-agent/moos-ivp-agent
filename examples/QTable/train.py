@@ -19,13 +19,14 @@ from model.util.constants import SAVE_DIR, SAVE_EVERY
 from model.model import QLearn
 
 # The expected agents and their enemies
-EXPECTED_AGENTS = {
+VEHICLE_PAIRING = {
   'agent_11': 'drone_21',
   'agent_12': 'drone_22',
   'agent_13': 'drone_23',
   'agent_14': 'drone_24',
   'agent_15': 'drone_25'
 }
+EXPECTED_VEHICLES = [key for key in VEHICLE_PAIRING]
 
 class AgentData:
   '''
@@ -80,15 +81,12 @@ def train(args, config):
   agents = {}
   with MissionManager() as mgr:
     print('Waiting for sim vehicle connection...')
-    while not all(a in agents for a in EXPECTED_AGENTS):
-      msg = mgr.get_message()
+    mgr.wait_for(EXPECTED_VEHICLES)
 
-      if msg.vname not in agents:
-        print(f'Vehicle "{msg.vname}" has connected!')
-        agents[msg.vname] = AgentData(msg.vname, EXPECTED_AGENTS[msg.vname])
-
-      # Keep getting new state
-      msg.request_new()
+    # Construct agent data object with enemy specified
+    agents = {}
+    for a in VEHICLE_PAIRING:
+      agents[a] = AgentData(a, VEHICLE_PAIRING[a])
 
     # While all vehicle's pEpisodeManager are not PAUSED
     print('Waiting for pEpisodeManager to enter PAUSED state...')

@@ -84,6 +84,7 @@ class MissionManager:
           if msg is not None:
             with self._vname_lock:
               if msg[KEY_ID] not in self._vnames:
+                print(f'Got new vehicle: {msg[KEY_ID]}')
                 vname = msg[KEY_ID]
                 self._vnames.append(vname)
                 self._vehicle_count += 1
