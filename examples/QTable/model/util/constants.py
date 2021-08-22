@@ -6,7 +6,7 @@ DIRNAME = os.path.abspath(os.path.dirname(__file__))
 
 LEARNING_RATE = 0.1
 DISCOUNT = 0.95
-EPISODES = 25000
+EPISODES = 45000
 
 EPSILON_START = 0.5
 EPSILON_DECAY_START = 1
@@ -39,4 +39,4 @@ QTABLE_INIT_HIGH = 0
 SAVE_DIR = os.path.abspath(os.path.join(DIRNAME, '../../trained'))
 SAVE_EVERY = 200
 
-DEFAULT_RUN_MODEL = 'trained/1629323236_colorful-hill-38/episode_35000.npy'
+DEFAULT_RUN_MODEL = 'trained/1629507545_fine-dragon-39/episode_45000.npy'
