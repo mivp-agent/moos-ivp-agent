@@ -179,8 +179,8 @@ def train(args, config):
             'success': msg.episode_report['SUCCESS'],
             'min_dist': round(agent_data.min_dist, 2),
             'had_flag': agent_data.had_flag,
-            'sim_time': total_sim_time,
-            'sim_days': total_sim_time / 86400
+            'sim_time': round(total_sim_time, 2),
+            'sim_days': round(total_sim_time / 86400, 2)
           }
 
           if len(agent_data.MOOS_deltas) != 0:
