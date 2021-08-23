@@ -1,9 +1,14 @@
+# Ignore MOOS Logs
 **/*.LastOpenedMOOSLogDirectory
-
 **/*.alog
 **/*.blog
 **/*.slog
 **/*.ylog
 
+# Ignore moos-ivp-agent things
 **/trained/*
 assets/*
+
+# Ignore binaries from host machine
+build/*
+lib/*
