@@ -104,6 +104,8 @@ def train(args, config):
     episode_count = 0
     epsilon = config['epsilon_start']
     progress_bar = tqdm(total=config['episodes'], desc='Training')
+    # Debugging
+    total_sim_time = 0
 
     # Initalize the epidode numbers from pEpisodeManager
     e_nums = mgr.episode_nums()
@@ -165,6 +167,9 @@ def train(args, config):
             reward
           )
 
+          # Update the total sim time
+          total_sim_time += msg.episode_report['DURATION']
+
           # Construct report
           report = {
             'episode_count': episode_count,
@@ -173,7 +178,9 @@ def train(args, config):
             'duration': round(msg.episode_report['DURATION'],2),
             'success': msg.episode_report['SUCCESS'],
             'min_dist': round(agent_data.min_dist, 2),
-            'had_flag': agent_data.had_flag
+            'had_flag': agent_data.had_flag,
+            'sim_time': total_sim_time,
+            'sim_days': total_sim_time / 86400
           }
 
           if len(agent_data.MOOS_deltas) != 0:
