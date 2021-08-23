@@ -10,7 +10,7 @@ USER root
 RUN usermod -aG sudo moos
 RUN echo "moos:moos" | chpasswd
 # Add dependencies
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y sudo python3-dev python3-pip && apt-get clean
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y sudo python3.6-dev python3-pip && apt-get clean
 # Add utilities
 RUN apt-get install -y vim emacs-nox tmux git
 # Add debuging utilities
