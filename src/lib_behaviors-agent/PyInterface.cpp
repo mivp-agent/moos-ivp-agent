@@ -94,9 +94,12 @@ bool PyInterface::loadModule()
 
 bool PyInterface::unloadModule()
 {
-  if (m_bridge_client)
+  if (m_bridge_client){
     Py_DECREF(m_bridge_client);
     m_bridge_client = NULL;
+    return true;
+  }
+  return false;
 }
 
 bool PyInterface::connect(){
