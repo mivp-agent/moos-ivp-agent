@@ -1,6 +1,6 @@
 # moos-ivp-agent
 
-Model agnostic ML framework for MOOS-IvP. See very simple implementation below based on the [ManagerExample](./examples/ManagerExample)
+Model agnostic ML tooling for MOOS-IvP. See very simple implementation below based on the [ManagerExample](./examples/ManagerExample)
 
 ```
 VEHICLES = ['alder', ]
