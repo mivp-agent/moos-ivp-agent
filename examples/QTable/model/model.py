@@ -4,9 +4,9 @@ import json
 import numpy as np
 
 from mivp_agent.aquaticus.field import FieldDiscretizer
-from model.constants import LEARNING_RATE, DISCOUNT
-from model.constants import ACTION_SPACE_SIZE, FIELD_RESOLUTION
-from model.constants import QTABLE_INIT_HIGH, QTABLE_INIT_LOW
+from constants import LEARNING_RATE, DISCOUNT
+from constants import ACTION_SPACE_SIZE, FIELD_RESOLUTION
+from constants import QTABLE_INIT_HIGH, QTABLE_INIT_LOW
 
 def construct_qtable(shape, print_shape=False):
   table = np.random.uniform(
