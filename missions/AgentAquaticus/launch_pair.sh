@@ -41,12 +41,10 @@ fi
 if [[ -z $NO_HERON ]]; then
   cd ./heron
   # Launch a red agent
-  ./launch_heron.sh red agent 11 --behavior=ATTACK_LEFT --color=orange $TIME_WARP > /dev/null &
-  ./launch_heron.sh red agent 13 --behavior=ATTACK --color=purple $TIME_WARP > /dev/null &
-
+  ./launch_heron.sh red agent 11 --behavior=ATTACK --color=orange $TIME_WARP > /dev/null &
   sleep 1
   # Launch a blue drone
-  #./launch_heron.sh blue drone 12 --behavior=ATTACK_LEFT --color=orange $TIME_WARP > /dev/null &
+  ./launch_heron.sh blue drone 21 --behavior=DEFEND --color=orange $TIME_WARP > /dev/null &
   sleep 1
   cd ..
 fi

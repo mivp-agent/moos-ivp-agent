@@ -8,7 +8,7 @@ set MODE     = ACTIVE {
 
 set MODE     = RETURN_BASE {
   MODE       = ACTIVE
-  (HAS_FLAG = true) or (TAGGED = true)
+  (ACTION != AGENT) and ((HAS_FLAG = true) or (TAGGED = true))
 } PLAY
 
 set MODE     = ATTACKING {
@@ -36,17 +36,26 @@ set MODE     = STATIONNING {
   ACTION     = STATION
 }
 
-//#############################################################################
-Behavior = BHV_Agent
-{
-  name = agent
-  pwt  = 75
-  perpetual = true
+#ifdef ROLE agent
+  //#############################################################################
+  Behavior = BHV_Agent
+  {
+    name = agent
+    pwt  = 100
+    perpetual = true
 
-  condition = MODE == ACTIVE
+    condition = MODE == ACTIVE
 
-  sub_var = TAGGED
-}
+    sub_var = TAGGED
+    sub_var = HAS_FLAG
+
+    sub_vehicle = drone_21
+    sub_vehicle = drone_22
+    sub_vehicle = drone_23
+    sub_vehicle = drone_24
+    sub_vehicle = drone_25
+  }
+#endif
 //#############################################################################
 Behavior = BHV_Waypoint
 {
@@ -70,7 +79,7 @@ Behavior = BHV_Waypoint
 Behavior = BHV_Loiter
 {
   name                    = loiter_passive
-  pwt                     = 50
+  pwt                     = 100
   condition               = MODE == DEFENDING
   runflag                 = BOT_DIALOG_STATUS=Defending
   updates                 = LOITER_UPDATES

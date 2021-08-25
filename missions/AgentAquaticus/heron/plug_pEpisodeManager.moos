@@ -6,12 +6,13 @@ ProcessConfig = pEpisodeManager
   AppTick   = 4
   CommsTick = 4
 
-  paused = true
-  max_duration = 100
+#ifdef ROLE agent
+  max_duration = 200
+#endif
 
   start_post = var=DEPLOY,val=true
 
-  end_success_condition = (HAS_FLAG = true)
+  //end_success_condition = (HAS_FLAG = true)
   end_failure_condition = (TAGGED = true)
 
   reset_post = var=HAS_FLAG,val=false
