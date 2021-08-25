@@ -10,12 +10,12 @@ from mivp_agent.util.display import ModelConsole
 from mivp_agent.util.math import dist
 from mivp_agent.aquaticus.const import FIELD_BLUE_FLAG
 
-from model.util.constants import LEARNING_RATE, DISCOUNT, EPISODES
-from model.util.constants import FIELD_RESOLUTION
-from model.util.constants import EPSILON_START, EPSILON_DECAY_START, EPSILON_DECAY_AMT, EPSILON_DECAY_END
-from model.util.constants import ATTACK_ACTIONS, RETREAT_ACTIONS, ACTION_SPACE_SIZE
-from model.util.constants import REWARD_GRAB, REWARD_CAPTURE, REWARD_FAILURE, REWARD_STEP
-from model.util.constants import SAVE_DIR, SAVE_EVERY
+from model.constants import LEARNING_RATE, DISCOUNT, EPISODES
+from model.constants import FIELD_RESOLUTION
+from model.constants import EPSILON_START, EPSILON_DECAY_START, EPSILON_DECAY_AMT, EPSILON_DECAY_END
+from model.constants import ATTACK_ACTIONS, RETREAT_ACTIONS, ACTION_SPACE_SIZE
+from model.constants import REWARD_GRAB, REWARD_CAPTURE, REWARD_FAILURE, REWARD_STEP
+from model.constants import SAVE_DIR, SAVE_EVERY
 from model.model import QLearn
 
 # The expected agents and their enemies

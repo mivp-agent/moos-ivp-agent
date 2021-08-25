@@ -7,7 +7,7 @@ from mivp_agent.util.math import dist
 from mivp_agent.util.display import ModelConsole
 from mivp_agent.aquaticus.const import FIELD_BLUE_FLAG
 
-from model.util.constants import DEFAULT_RUN_MODEL
+from model.constants import DEFAULT_RUN_MODEL
 from model.model import load_model
 
 
