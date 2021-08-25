@@ -88,6 +88,8 @@ If on mac, read the "XQuartz on OSX section" carefully and follow the steps. Aft
 
 This repo comes with the `docker.sh` script for OSX and Linux to make managing it's docker container easier.
 
+Note the **password** for the `moos` user is `moos`
+
 ### Building the container
 
 We can build the `mivp-agent` image with the following usage. The first time you run this it will take a while.
