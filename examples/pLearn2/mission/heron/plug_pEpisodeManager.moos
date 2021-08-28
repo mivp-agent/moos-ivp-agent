@@ -1,0 +1,27 @@
+//------------------------------------------------
+// pEpisodeManager config block
+
+ProcessConfig = pEpisodeManager
+{
+  AppTick   = 4
+  CommsTick = 4
+
+#ifdef ROLE agent
+  max_duration = 200
+#endif
+
+  start_post = var=DEPLOY,val=true
+
+  end_success_condition = (HAS_FLAG = true)
+  end_failure_condition = (TAGGED = true)
+
+  reset_post = var=HAS_FLAG,val=false
+  reset_post = var=UNTAG_REQUEST,val=vname=$(VNAME)
+  reset_post = var=TAGGED,val=false
+
+  pause_post = var=DEPLOY,val=false
+
+
+  RESET_POS = $(START_POS)
+  VNAME     = $(VNAME)
+}
