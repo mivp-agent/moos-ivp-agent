@@ -19,6 +19,8 @@ ENEMY_FLAG=""
 GRABR_POS=""
 GRABL_POS=""
 BEHAVIOR="DEFEND"
+RED_FLAG="50,-24"
+BLUE_FLAG="-52,-70"
 
 # MOOS-IvP-Agent specific
 ROLE=""
@@ -74,16 +76,16 @@ case "$1" in
 esac
 
 if [ "${VTEAM}" = "red" ]; then
-    MY_FLAG="50,-24"
-    START_POS="50,-24,240"
-    ENEMY_FLAG="-52,-70"
+    MY_FLAG=$RED_FLAG
+    START_POS="$RED_FLAG,240"
+    ENEMY_FLAG=$BLUE_FLAG
 
     GRABR_POS="-46,-42"
     GRABL_POS="-29,-83"
 elif [ "${VTEAM}" = "blue" ]; then
-    MY_FLAG="-52,-70"
-    START_POS="-52,-70,60"
-    ENEMY_FLAG="50,-24"
+    MY_FLAG=$BLUE_FLAG
+    START_POS="$BLUE_FLAG,60"
+    ENEMY_FLAG=$RED_FLAG
 
     GRABR_POS="42,-55"
     GRABL_POS="19,-11"
