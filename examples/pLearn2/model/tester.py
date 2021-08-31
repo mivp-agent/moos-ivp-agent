@@ -179,6 +179,7 @@ def test(args):
 
 
         print('\n--------------------------------------------')
+        print(f'Model: {args.model}\n')
         print(f'Episodes:        {episode_count+1}')
         print(f'Precent Success: {success_precent}')
         print(f'Avg Duration:    {avg_duration}')
