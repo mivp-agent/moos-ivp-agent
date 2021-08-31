@@ -19,14 +19,15 @@ from model.util.constants import PLEARN_ACTIONS, ENEMY_FLAG, PLEARN_TOPMODEL
 from model.util.state import state2vec, dist
 from model.util.model_loader import load_pLearn_model
 
-EPISODES = 20
+EPISODES = 100
+
 # The expected agents and their enemies
 VEHICLE_PAIRING = {
   'agent_11': 'drone_21',
   'agent_12': 'drone_22',
   'agent_13': 'drone_23',
-  'agent_14': 'drone_24',
-  'agent_15': 'drone_25'
+  #'agent_14': 'drone_24',
+  #'agent_15': 'drone_25'
 }
 EXPECTED_VEHICLES = [key for key in VEHICLE_PAIRING]
 
@@ -47,6 +48,8 @@ class AgentData:
     # For debugging / output
     self.min_dist = None
     self.episode_reward = 0
+    self.last_MOOS_time = None
+    self.MOOS_deltas = []
   
   def new_episode(self, last_num):
     self.last_episode_num = last_num
@@ -55,6 +58,8 @@ class AgentData:
 
     self.min_dist = None
     self.episode_reward = 0
+    self.last_MOOS_time = None
+    self.MOOS_deltas.clear()
 
 def test(args):
     model, const = load_pLearn_model(args.model)
@@ -101,6 +106,11 @@ def test(args):
             # Get current agent's data
             agent = agents[msg.vname]
 
+            # Update debugging MOOS time
+            if agent.last_MOOS_time is not None:
+                agent.MOOS_deltas.append(msg.state['MOOS_TIME']-agent.last_MOOS_time)
+            agent.last_MOOS_time = msg.state['MOOS_TIME']
+
             # Check for ending of episodes
             if msg.episode_report is None:
                 assert episode_count == 0
@@ -116,7 +126,19 @@ def test(args):
                     if msg.episode_report['SUCCESS']:
                         success_count += 1
 
-                    tqdm.write(f'[{msg.vname}] episode: {episode_count} duration: {msg.episode_report["DURATION"]}, success: {msg.episode_report["SUCCESS"]}, min_dist: {agent.min_dist}')
+                    report = {
+                        'episode': episode_count,
+                        'duration': round(msg.episode_report["DURATION"], 2),
+                        'success': msg.episode_report["SUCCESS"],
+                        'min_dist': round(agent.min_dist, 2),
+                    }
+                    if len(agent.MOOS_deltas) != 0:
+                        report['avg_delta'] = round(sum(agent.MOOS_deltas)/len(agent.MOOS_deltas),2)
+                    else:
+                        report['avg_delta'] = 0.0
+                    
+                    tqdm.write(f'[{msg.vname}] ', end='')
+                    tqdm.write(', '.join([f'{k}: {report[k]}' for k in report]))
 
                 # Update / reset the agents data
                 agent.new_episode(msg.episode_report['NUM'])
