@@ -31,7 +31,7 @@ echo "Launching simulation..."
 sleep 5
 
 # Start trainer with any arguments passed to this script
-echo "Launching runner..."
+echo "Launching tester..."
 ./model/tester.py "$@"
 
 cd $PREVIOUS_WD

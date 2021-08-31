@@ -16,7 +16,7 @@ from state import make_state
 
 from model.util.validate import check_model_dir
 from model.util.constants import PLEARN_ACTIONS, ENEMY_FLAG, PLEARN_TOPMODEL
-from model.state import state2vec, dist
+from model.util.state import state2vec, dist
 from model.util.model_loader import load_pLearn_model
 
 EPISODES = 20
@@ -85,12 +85,12 @@ def test(args):
         durations = []
 
         # Initalize the episodes numbers from pEpisodeManager
-        for a, num in mgr.episode_nums():
+        for a, num in mgr.episode_nums().items():
             agents[a].last_episode_num = num
 
         print('Testing')
         progress_bar = tqdm(total=args.episodes, desc="Testing")
-        while episode_count < args.episodes:
+        while episode_count < args.episodes - 1:
             msg = mgr.get_message()
 
             # Start any pEpisodeManager that is not started:
@@ -122,7 +122,7 @@ def test(args):
                 agent.new_episode(msg.episode_report['NUM'])
 
             # Calculate action
-            pLearn_state = make_state(const.state, const.num_states, msg.state)
+            pLearn_state = make_state(const.state, const.num_states, msg.state, agent.enemy)
             pLearn_state = state2vec(pLearn_state, const)
 
             optimal = (0, None)
@@ -170,6 +170,8 @@ if __name__ == '__main__':
     parser.add_argument('--model', default=PLEARN_TOPMODEL)
     parser.add_argument('--episodes', default=EPISODES)
     args = parser.parse_args()
+
+    print(args.model)
 
     check_model_dir(args.model)
 
