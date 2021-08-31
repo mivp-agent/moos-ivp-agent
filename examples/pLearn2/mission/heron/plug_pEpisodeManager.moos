@@ -12,7 +12,7 @@ ProcessConfig = pEpisodeManager
 
   start_post = var=DEPLOY,val=true
 
-  //end_success_condition = (HAS_FLAG = true)
+  end_success_condition = (HAS_FLAG = true)
   end_failure_condition = (TAGGED = true)
 
   reset_post = var=HAS_FLAG,val=false

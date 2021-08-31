@@ -7,8 +7,8 @@ from mivp_agent.util.math import dist
 from mivp_agent.util.display import ModelConsole
 from mivp_agent.aquaticus.const import FIELD_BLUE_FLAG
 
-from model.util.constants import DEFAULT_RUN_MODEL
-from model.model import load_model
+from constants import DEFAULT_RUN_MODEL
+from model import load_model
 
 
 def run(args):
@@ -63,8 +63,6 @@ def run(args):
         'speed': current_action_set[current_action]['speed'],
         'course': current_action_set[current_action]['course']
       }
-
-      print(current_action, action)
 
       flag_dist = abs(dist((msg.state['NAV_X'], msg.state['NAV_Y']), FIELD_BLUE_FLAG))
       if flag_dist < 10:

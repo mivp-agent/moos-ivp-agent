@@ -1,6 +1,6 @@
 # moos-ivp-agent
 
-Model agnostic ML framework for MOOS-IvP. See very simple implementation below based on the [ManagerExample](./examples/ManagerExample)
+Model agnostic ML tooling for MOOS-IvP. See very simple implementation below based on the [ManagerExample](./examples/ManagerExample)
 
 ```
 VEHICLES = ['alder', ]
@@ -87,6 +87,8 @@ If on mac, read the "XQuartz on OSX section" carefully and follow the steps. Aft
 ## Using the docker script
 
 This repo comes with the `docker.sh` script for OSX and Linux to make managing it's docker container easier.
+
+Note the **password** for the `moos` user is `moos`
 
 ### Building the container
 

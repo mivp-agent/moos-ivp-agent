@@ -10,13 +10,14 @@ from mivp_agent.util.display import ModelConsole
 from mivp_agent.util.math import dist
 from mivp_agent.aquaticus.const import FIELD_BLUE_FLAG
 
-from model.util.constants import LEARNING_RATE, DISCOUNT, EPISODES
-from model.util.constants import FIELD_RESOLUTION
-from model.util.constants import EPSILON_START, EPSILON_DECAY_START, EPSILON_DECAY_AMT, EPSILON_DECAY_END
-from model.util.constants import ATTACK_ACTIONS, RETREAT_ACTIONS, ACTION_SPACE_SIZE
-from model.util.constants import REWARD_GRAB, REWARD_CAPTURE, REWARD_FAILURE, REWARD_STEP
-from model.util.constants import SAVE_DIR, SAVE_EVERY
-from model.model import QLearn
+from wandb_key import WANDB_KEY
+from constants import LEARNING_RATE, DISCOUNT, EPISODES
+from constants import FIELD_RESOLUTION
+from constants import EPSILON_START, EPSILON_DECAY_START, EPSILON_DECAY_AMT, EPSILON_DECAY_END
+from constants import ATTACK_ACTIONS, RETREAT_ACTIONS, ACTION_SPACE_SIZE
+from constants import REWARD_GRAB, REWARD_CAPTURE, REWARD_FAILURE, REWARD_STEP
+from constants import SAVE_DIR, SAVE_EVERY
+from model import QLearn
 
 # The expected agents and their enemies
 VEHICLE_PAIRING = {
@@ -194,7 +195,7 @@ def train(args, config):
             report['post_grab_duration'] = 0.0
 
           # Log the report
-          if args.wandb_key is not None:
+          if not args.no_wandb:
             wandb.log(report)
           tqdm.write(f'[{msg.vname}] ', end='')
           tqdm.write(', '.join([f'{k}: {report[k]}' for k in report]))
@@ -272,9 +273,13 @@ if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument('--debug', action='store_true')
   parser.add_argument('--save_dir', default=save_dir)
-  parser.add_argument('--wandb_key', default=None)
+  parser.add_argument('--no_wandb', action='store_true')
   
   args = parser.parse_args()
+
+  # Error if wandb not set --no_wandb is not
+  if not args.no_wandb and WANDB_KEY == "Your API key here":
+    raise RuntimeError('WandB key not set and no --no_wandb flag. See documentation')
 
   # Construct config
   config = {
@@ -295,10 +300,10 @@ if __name__ == '__main__':
     'reward_step': REWARD_STEP,
   }
 
-  if args.wandb_key is None:
+  if args.no_wandb:
     train(args, config)
   else:
-    wandb.login(key=args.wandb_key)
+    wandb.login(key=WANDB_KEY)
     with wandb.init(project='mivp_agent_qtable', config=config):
       config = wandb.config
       args.save_dir = os.path.join(SAVE_DIR, f'{str(round(time.time()))}_{wandb.run.name}')
