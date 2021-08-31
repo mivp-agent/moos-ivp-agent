@@ -1,23 +1,18 @@
 #!/usr/bin/env python3
 import os
-import sys
-import warnings
+import time
+import wandb
 import argparse
-import numpy as np
-from tqdm.auto import trange
-from tqdm.std import tqdm
-
-warnings.filterwarnings("ignore", message=r"Passing", category=FutureWarning)
-import keras
+from tqdm import tqdm
 
 from mivp_agent.manager import MissionManager
+from mivp_agent.util.math import dist
 from mivp_agent.util.display import ModelConsole
-from state import make_state
+from mivp_agent.aquaticus.const import FIELD_BLUE_FLAG
 
-from model.util.validate import check_model_dir
-from model.util.constants import PLEARN_ACTIONS, ENEMY_FLAG, PLEARN_TOPMODEL
-from model.util.state import state2vec, dist
-from model.util.model_loader import load_pLearn_model
+from constants import DEFAULT_RUN_MODEL
+from model import load_model
+
 
 EPISODES = 100
 
@@ -26,8 +21,8 @@ VEHICLE_PAIRING = {
   'agent_11': 'drone_21',
   'agent_12': 'drone_22',
   'agent_13': 'drone_23',
-  #'agent_14': 'drone_24',
-  #'agent_15': 'drone_25'
+  'agent_14': 'drone_24',
+  'agent_15': 'drone_25'
 }
 EXPECTED_VEHICLES = [key for key in VEHICLE_PAIRING]
 
@@ -42,30 +37,39 @@ class AgentData:
     self.enemy = enemy
     
     # For running of simulation
+    self.agent_episode_count = 0
     self.last_episode_num = None # Episode transitions
+    self.last_state = None       # State transitions
     self.had_flag = False   # Capturing grab transitions for rewarding
+    self.current_action = None 
 
     # For debugging / output
     self.min_dist = None
     self.episode_reward = 0
     self.last_MOOS_time = None
     self.MOOS_deltas = []
+    self.grab_time = None
   
   def new_episode(self, last_num):
     self.last_episode_num = last_num
+    self.agent_episode_count += 1
 
+    self.last_state = None
     self.had_flag = False
+    self.current_action = None
 
     self.min_dist = None
     self.episode_reward = 0
     self.last_MOOS_time = None
     self.MOOS_deltas.clear()
+    self.grab_time = None
 
 def test(args):
-    model, const = load_pLearn_model(args.model)
+    q, attack_actions, retreat_actions = load_model(args.model)
+
     # Do testing
     with MissionManager() as mgr:
-        print('Waiting for vehicle connection...')
+        print('Waiting for sim vehicle connection...')
         mgr.wait_for(EXPECTED_VEHICLES)
 
         agents = {}
@@ -93,7 +97,7 @@ def test(args):
         for a, num in mgr.episode_nums().items():
             agents[a].last_episode_num = num
 
-        print('Testing')
+        print('Testing...')
         progress_bar = tqdm(total=args.episodes, desc="Testing")
         while episode_count < args.episodes - 1:
             msg = mgr.get_message()
@@ -111,64 +115,102 @@ def test(args):
                 agent.MOOS_deltas.append(msg.state['MOOS_TIME']-agent.last_MOOS_time)
             agent.last_MOOS_time = msg.state['MOOS_TIME']
 
-            # Check for ending of episodes
-            if msg.episode_report is None:
-                assert episode_count == 0
-            elif agent.last_episode_num != msg.episode_report['NUM']:
-                # Test for episode manager bug
-                if msg.episode_report['DURATION'] > 2:
+            '''
+            Part 1: Translate MOOS state to model's state representation
+            '''
+            # Translate to model readable state
+            model_state = q.get_state(
+                msg.state['NAV_X'],
+                msg.state['NAV_Y'],
+                msg.state['NODE_REPORTS'][agent.enemy]['NAV_X'],
+                msg.state['NODE_REPORTS'][agent.enemy]['NAV_Y'],
+                msg.state['HAS_FLAG']
+            )
+
+            # Detect discrete state transitions
+            if model_state != agent.last_state:
+                '''
+                Part 2: Handle the ending of episodes
+                '''
+                if msg.episode_report is None:
+                    assert agent.agent_episode_count == 0
+                elif msg.episode_report['DURATION'] < 2:
+                    # Bad episode, don't use data
+                    # Reset episode data and including 'last_episode_num'
+                    agent.new_episode(msg.episode_report['NUM'])
+                elif msg.episode_report['NUM'] != agent.last_episode_num:
+                    # Only stats we care about, for now, are those about grabing not returning
+                    # b/c trying to compare to pLearn
                     episode_count += 1
                     progress_bar.update(1)
 
-                    durations.append(msg.episode_report['DURATION'])
+                    if agent.grab_time is not None:
+                        # Only car about this time
+                        durations.append(msg.state['MOOS_TIME']-agent.grab_time)
+                    else:
+                        # Agent didn't grab flag, so add total episode duration
+                        durations.append(msg.episode_report['DURATION'])
+
                     min_dists.append(agent.min_dist)
 
-                    if msg.episode_report['SUCCESS']:
+                    if agent.had_flag:
                         success_count += 1
 
+                    # Construct report
                     report = {
                         'episode': episode_count,
-                        'duration': round(msg.episode_report["DURATION"], 2),
-                        'success': msg.episode_report["SUCCESS"],
+                        'duration': round(durations[-1],2),
+                        'success': agent.had_flag,
                         'min_dist': round(agent.min_dist, 2),
                     }
+
                     if len(agent.MOOS_deltas) != 0:
                         report['avg_delta'] = round(sum(agent.MOOS_deltas)/len(agent.MOOS_deltas),2)
                     else:
                         report['avg_delta'] = 0.0
-                    
+
                     tqdm.write(f'[{msg.vname}] ', end='')
                     tqdm.write(', '.join([f'{k}: {report[k]}' for k in report]))
 
-                # Update / reset the agents data
-                agent.new_episode(msg.episode_report['NUM'])
+                    # Reset episode data and including 'last_episode_num'
+                    agent.new_episode(msg.episode_report['NUM'])
+                '''
+                Part 3: Handle updating actions
+                '''
 
-            # Calculate action
-            pLearn_state = make_state(const.state, const.num_states, msg.state, agent.enemy)
-            pLearn_state = state2vec(pLearn_state, const)
+                # Get new action
+                agent.current_action = q.get_action(model_state)
+                agent.last_state = model_state
 
-            optimal = (0, None)
-            for a in PLEARN_ACTIONS:
-                value = model[a].predict(pLearn_state)
+                # Store vars needed for time to grab duration calculation
+                if msg.state['HAS_FLAG'] and not agent.had_flag:
+                    agent.had_flag = True
+                    agent.grab_time = msg.state['MOOS_TIME']
 
-                if optimal[1] is None or optimal[0] < value:
-                    optimal = (value, PLEARN_ACTIONS[a])
 
-            # Send optimal action to BHV_Agent client
-            action = {
-                'course': optimal[1]['course'],
-                'speed': optimal[1]['speed'],
-            }
-
-            flag_dist = abs(dist((msg.state['NAV_X'], msg.state['NAV_Y']), ENEMY_FLAG))
+            '''
+            Part 4: Even when agent is not in new state, keep preforming
+            the action that was calcualted on the when the state transitioned
+            '''
+            actions = attack_actions
+            if msg.state['HAS_FLAG']: # Use retreat actions if already grabbed and... retreating
+                actions = retreat_actions
+            action = actions[agent.current_action].copy() # Copy out of reference paranoia
+            
+            flag_dist = abs(dist((msg.state['NAV_X'], msg.state['NAV_Y']), FIELD_BLUE_FLAG))
+            # If this agent can grab the flag, do so
             if flag_dist < 10:
                 action['posts'] = {
-                    'FLAG_GRAB_REQUEST': f'vname={msg.vname}'
+                'FLAG_GRAB_REQUEST': f'vname={msg.vname}'
                 }
+
+            # Send action
+            msg.act(action)
+
+            # Debugging stuff
             if agent.min_dist is None or agent.min_dist > flag_dist:
                 agent.min_dist = flag_dist
-            
-            msg.act(action)
+
 
         progress_bar.close()
 
@@ -190,12 +232,8 @@ def test(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', default=PLEARN_TOPMODEL)
+    parser.add_argument('--model', default=DEFAULT_RUN_MODEL)
     parser.add_argument('--episodes', default=EPISODES)
     args = parser.parse_args()
-
-    print(args.model)
-
-    check_model_dir(args.model)
 
     test(args)
