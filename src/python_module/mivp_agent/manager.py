@@ -38,7 +38,22 @@ INSTR_STOP = {
   },
   'ctrl_msg': 'SEND_STATE'
 }
-  
+INSTR_RESET_SUCCESS = {
+  'speed': 0.0,
+  'course': 0.0,
+  'posts': {
+    'EPISODE_MGR_CTRL': 'type=reset,success=true'
+  },
+  'ctrl_msg': 'SEND_STATE'
+}
+INSTR_RESET_FAILURE = {
+  'speed': 0.0,
+  'course': 0.0,
+  'posts': {
+    'EPISODE_MGR_CTRL': 'type=reset,success=false'
+  },
+  'ctrl_msg': 'SEND_STATE'
+}
 
 class MissionManager:
   def __init__(self):
@@ -51,6 +66,9 @@ class MissionManager:
     self._ems_lock = Lock()
     self._episode_manager_nums = {}
     self._emn_lock = Lock()
+
+    # Dict to hold queues of vnames to reset
+    self._vresets = Queue()
   
     self._thread = None
     self._stop_signal = False
@@ -70,14 +88,16 @@ class MissionManager:
 
   def _server_thread(self):
     live_msg_list = []
+    address_map = {}
     with ModelBridgeServer() as server:
       while not self._stop_signal:
-        # Accept new clients & send new message
+        # Accept new clients
         addr = server.accept()
         if addr is not None:
           print(f'Got new connection: {addr}')
           server.send_instr(addr, INSTR_SEND_STATE)
 
+        # Listen for messages from vehicles
         for addr in server._clients:
           msg = server.listen(addr)
 
@@ -86,6 +106,7 @@ class MissionManager:
               if msg[KEY_ID] not in self._vnames:
                 print(f'Got new vehicle: {msg[KEY_ID]}')
                 vname = msg[KEY_ID]
+                address_map[vname] = addr
                 self._vnames.append(vname)
                 self._vehicle_count += 1
 
@@ -102,6 +123,7 @@ class MissionManager:
             live_msg_list.append(m)
             self._msg_queue.put(m)
 
+        # Send responses to vehicle message if there are any
         for i, m in enumerate(live_msg_list):
           with m._rsp_lock:
             if m._response is None:
@@ -110,6 +132,20 @@ class MissionManager:
             # If we got there is response send and remove from list
             live_msg_list.remove(m)
             server.send_instr(m._addr, m._response)
+
+        # Handle reseting of vehicles
+        while not self._vresets.empty():
+          vname, success = self._vresets.get()
+
+          if vname not in address_map:
+            raise RuntimeError(f'Receeived reset for unknown vehicle: {vname}')
+
+          instr = INSTR_RESET_FAILURE
+          if success:
+            instr = INSTR_RESET_SUCCESS
+
+          server.send_instr(address_map[vname], instr)
+
   def are_present(self, vnames):
     for vname in vnames:
       with self._vname_lock:
@@ -135,6 +171,9 @@ class MissionManager:
   def episode_nums(self):
     with self._emn_lock:
       return self._episode_manager_nums.copy()
+  
+  def reset_vehicle(self, vname, success=False):
+    self._vresets.appedn((vname, success))
 
   def close(self):
     if self._thread is not None:
