@@ -36,7 +36,7 @@ REWARD_STEP = -1
 QTABLE_INIT_LOW = -2
 QTABLE_INIT_HIGH = 0
 
-SAVE_DIR = os.path.abspath(os.path.join(DIRNAME, '../../trained'))
+SAVE_DIR = os.path.abspath(os.path.join(DIRNAME, '../trained'))
 SAVE_EVERY = 200
 
 DEFAULT_RUN_MODEL = 'trained/1629507545_fine-dragon-39/episode_45000.npy'
