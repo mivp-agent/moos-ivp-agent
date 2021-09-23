@@ -49,7 +49,11 @@ git clone https://github.com/CarterFendley/moos-ivp-agent.git
 
 See the docker section below for usage of the docker container.
 
-### XQuartz and OSX
+### Linux
+ 
+Follow the post install instructions for docker [here](https://docs.docker.com/engine/install/linux-postinstall/)
+
+### OSX & XQuartz
 
 Install [XQuartz](https://content.byui.edu/file/cddfb9c0-a825-4cfe-9858-28d5b4c218fe/1/Course/Setup-XQuartz.html) for the GUI components to render properly.
 
