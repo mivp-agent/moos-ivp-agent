@@ -34,9 +34,15 @@ if [[ -z "$1" ]] || [[ "$1" = "help" ]] || [[ "$1" = "--help" ]] || [[ "$1" = "-
     exit 0;
 elif [[ "$1" == "build" ]]; then
     printf "Building mivp_agent container...\n"
-    docker build -t "$NAME:1.0" \
-	    --build-arg USER_ID=$(id -u) \
-	    --build-arg GROUP_ID=$(id -g) .
+    if [[ "$OS_TYPE" == "osx" ]]; then
+        docker build -t "$NAME:1.0" \
+            --build-arg USER_ID=1001 \
+            --build-arg GROUP_ID=1001 .
+    elif [[ "$OS_TYPE" == "linux" ]]; then
+        docker build -t "$NAME:1.0" \
+            --build-arg USER_ID=$(id -u) \
+            --build-arg GROUP_ID=$(id -g) .
+    fi
 elif [[ "$1" == "run" ]]; then
     printf "Enabling xhost server...\n"
     xhost +
