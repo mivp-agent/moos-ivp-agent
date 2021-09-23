@@ -7,6 +7,13 @@ ENV IVP_BEHAVIOR_DIRS="${IVP_BEHAVIOR_DIRS}:/home/moos/${MOOS}/lib"
 
 # System Setup
 USER root
+
+ARG USER_ID
+ARG GROUP_ID
+
+RUN groupadd -g $GROUP_ID host_group
+RUN usermod -g $GROUP_ID moos 
+RUN usermod -u $USER_ID moos 
 RUN usermod -aG sudo moos
 RUN echo "moos:moos" | chpasswd
 # Add dependencies
