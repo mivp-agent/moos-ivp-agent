@@ -59,7 +59,8 @@ elif [[ "$1" == "run" ]]; then
             --mount type=bind,source="$(pwd)"/src,target=/home/moos/moos-ivp-agent/src \
             --mount type=bind,source="$(pwd)"/examples,target=/home/moos/moos-ivp-agent/examples \
             --workdir="/home/moos/moos-ivp-agent" \
-            --name "$NAME" -it "$NAME:1.0" bash
+	    --user "$(id -u):$(id -g)" \
+            --name "$NAME" -it "$NAME:1.0" bash 
     fi
     printf "WARNING: Docker container will run in background unless stopped\n"
 elif [[ "$1" == "connect" ]]; then
