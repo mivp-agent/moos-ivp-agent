@@ -21,11 +21,11 @@ jobs:
       run: sudo apt-get update && sudo apt-get install -y subversion g++ cmake xterm libfltk1.3-dev freeglut3-dev libpng-dev libjpeg-dev libxft-dev libxinerama-dev libtiff5-dev
     - name: Clone latest MOOS-IvP trunk
       run: svn co https://oceanai.mit.edu/svn/moos-ivp-aro/trunk/ moos-ivp
-    - name: Add MOOS-IvP revision number to path
+    - name: Add MOOS-IvP revision number to env
     # For caching purposes
       run: |
-        echo "Using revision number $(svn info --show-item revision)"
-        echo "MOOS_IVP_REV=$(svn info --show-item revision)" >> $GITHUB_ENV
+        export MOOS_IVP_REV=$(svn info --show-item revision)
+        echo "::set-env name=MOOS_IVP_REV::$MOOS_IVP_REV"
     - name: Cache MOOS-IvP build
       id: cache-moos-ivp
       uses: actions/cache@v2
