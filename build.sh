@@ -1,5 +1,4 @@
 #!/bin/bash
-
 INVOCATION_ABS_DIR=`pwd`
 BUILD_TYPE="None"
 CMD_LINE_ARGS=""
@@ -27,9 +26,12 @@ for ARGI; do
     elif [ "${ARGI}" = "--release" -o "${ARGI}" = "-r" ] ; then
         BUILD_TYPE="Release"
     else
-	CMD_LINE_ARGS=$CMD_LINE_ARGS" "$ARGI
+				CMD_LINE_ARGS=$CMD_LINE_ARGS" "$ARGI
     fi
 done
+
+set -e # Exit script if sub command fails
+trap 'cd ${INVOCATION_ABS_DIR}' EXIT # Clean up
 
 #-------------------------------------------------------------------
 #  Part 2: Invoke the call to make in the build directory
@@ -41,6 +43,3 @@ cd build
 cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ../
 
 make ${CMD_LINE_ARGS}
-cd ${INVOCATION_ABS_DIR}
-
-
