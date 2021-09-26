@@ -1,0 +1,35 @@
+# Created by referencing https://oceanai.mit.edu/ivpman/pmwiki/pmwiki.php?n=Lab.ClassSetup#sec_course_software
+name: BuildMOOSIvPAgent
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install MOOS-IvP Dependencies
+      run: sudo apt-get update && sudo apt-get install -y subversion g++ cmake xterm libfltk1.3-dev freeglut3-dev libpng-dev libjpeg-dev libxft-dev libxinerama-dev libtiff5-dev
+    - name: Clone latest MOOS-IvP trunk
+      run: svn co https://oceanai.mit.edu/svn/moos-ivp-aro/trunk/ moos-ivp && cd moos-ivp
+    - name: Build MOOS-IvP
+      run: cd moos-ivp && ./build-moos.sh
+      run: cd moos-ivp && ./build-ivp.sh
+    - name: Add MOOS-IvP to path
+      run: echo "${{github.workspace}}/moos-ivp/bin" >> $GITHUB_PATH
+      run: echo "${{github.workspace}}/moos-ivp/scripts" >> $GITHUB_PATH
+
+
+    - name: Build
+      run: ./build.sh
+      
+      
