@@ -33,7 +33,7 @@ jobs:
         path: |
           moos-ivp/bin
           moos-ivp/scripts
-      key: ${{ runner.os }}-${{ env.MOOS_IVP_REV }}
+        key: ${{ runner.os }}-${{ env.MOOS_IVP_REV }}
     - name: Build MOOS
       if: steps.cache-moos-ivp.outputs.cache-hit != 'true'
       run: cd moos-ivp && ./build-moos.sh
