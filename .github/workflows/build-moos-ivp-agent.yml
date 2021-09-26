@@ -3,9 +3,9 @@ name: BuildMOOSIvPAgent
 
 on:
   push:
-    branches: [ main ]
+    branches: [ actions ]
   pull_request:
-    branches: [ main ]
+    branches: [ actions ]
 
 env:
   BUILD_TYPE: Release
