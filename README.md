@@ -88,6 +88,10 @@ xhost +
 
 If on mac, read the "XQuartz on OSX section" carefully and follow the steps. After done, restart the docker container & XQuartz.
 
+**I can't install or get something work**
+
+Open an [issue](https://github.com/CarterFendley/moos-ivp-agent/issues) this repository is still **very** young and I need to know about any issues with the install process.
+
 ## Using the docker script
 
 This repo comes with the `docker.sh` script for OSX and Linux to make managing it's docker container easier.
