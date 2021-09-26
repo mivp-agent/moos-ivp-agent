@@ -28,7 +28,7 @@ jobs:
         echo "MOOS_IVP_REV=$(svn info --show-item revision)" >> $GITHUB_ENV
     - name: Cache MOOS-IvP build
       id: cache-moos-ivp
-      uses: action/cache@v2
+      uses: actions/cache@v2
       with:
         path: |
           moos-ivp/bin
