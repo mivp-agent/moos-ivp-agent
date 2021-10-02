@@ -1,6 +1,6 @@
 # moos-ivp-agent
 
-Model agnostic ML tooling for MOOS-IvP. See very simple implementation below based on the [ManagerExample](./examples/ManagerExample)
+Model agnostic ML tooling for MOOS-IvP. See very simple implementation below based on the [ManagerExample](./examples/ManagerExample). See the [mivp-agent.github.io](https://mivp-agent.github.io/) website for more information about getting started.
 
 ```
 VEHICLES = ['alder', ]
@@ -135,3 +135,5 @@ The following sequence of commands will both stop the `mivp-agent` container (re
 ./docker.sh rm
 ```
 
+## Where do I start?
+See the [mivp-agent.github.io](https://mivp-agent.github.io/) website for more information about getting started.
