@@ -9,7 +9,7 @@ on:
 
 env:
   BUILD_TYPE: Release
-  USE_CACHE: false
+  USE_CACHE: true
 
 jobs:
   build:
