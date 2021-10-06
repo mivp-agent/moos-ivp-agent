@@ -26,14 +26,14 @@ jobs:
         cd ../moos-ivp
         export MOOS_IVP_REV=$(svn info --show-item revision)
         echo "::set-output name=checkout-revision::$MOOS_IVP_REV"
-        echo "::debug::MOOS-IvP Revision: $MOOS_IVP_REV"
+        echo "MOOS-IvP Revision: $MOOS_IVP_REV"
     - name: Cache MOOS-IvP build
       id: cache-moos-ivp
       uses: actions/cache@v2
       with:
         path: |
-          ../moos-ivp/bin
-          ../moos-ivp/scripts
+          ${{ github.workspace }}/moos-ivp/bin
+          ${{ github.workspace }}/moos-ivp/scripts
         key: ${{ runner.os }}-${{ steps.key-info.outputs.checkout-revision }}
     - name: Build MOOS
       if: steps.cache-moos-ivp.outputs.cache-hit != 'true'
@@ -42,7 +42,7 @@ jobs:
       if: steps.cache-moos-ivp.outputs.cache-hit != 'true'
       run: cd ../moos-ivp && ./build-ivp.sh
     - name: Add MOOS-IvP bin to path
-      run: echo "${{github.workspace}}/moos-ivp/bin" >> $GITHUB_PATH
+      run: echo "${{github.workspace}}/mosos-ivp/bin" >> $GITHUB_PATH
     - name: Add MOOS-IvP scripts to path
       run: echo "${{github.workspace}}/moos-ivp/scripts" >> $GITHUB_PATH
 
