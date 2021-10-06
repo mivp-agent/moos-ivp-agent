@@ -41,10 +41,10 @@ jobs:
     - name: Build IvP
       if: steps.cache-moos-ivp.outputs.cache-hit != 'true'
       run: cd ../moos-ivp && ./build-ivp.sh
-    - name: Add MOOS-IvP bin to path
-      run: echo "${{github.workspace}}/mosos-ivp/bin" >> $GITHUB_PATH
-    - name: Add MOOS-IvP scripts to path
-      run: echo "${{github.workspace}}/moos-ivp/scripts" >> $GITHUB_PATH
+    #- name: Add MOOS-IvP bin to path
+    #  run: echo "${{github.workspace}}/moos-ivp/bin" >> $GITHUB_PATH
+    #- name: Add MOOS-IvP scripts to path
+    #  run: echo "${{github.workspace}}/moos-ivp/scripts" >> $GITHUB_PATH
 
 
     - name: Build
