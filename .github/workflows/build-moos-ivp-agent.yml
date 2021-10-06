@@ -27,8 +27,6 @@ jobs:
         export MOOS_IVP_REV=$(svn info --show-item revision)
         echo "::set-output name=checkout-revision::$MOOS_IVP_REV"
         echo "MOOS-IvP Revision: $MOOS_IVP_REV"
-    - name: Gather system info for cache key
-      uses: 
     - name: Cache MOOS-IvP build
       id: cache-moos-ivp
       uses: actions/cache@v2
