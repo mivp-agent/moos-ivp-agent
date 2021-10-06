@@ -50,6 +50,7 @@ jobs:
       run: | 
         echo "Path $PATH Github Path $GITHUB_PATH"
         echo "$(env)"
+        echo "$(ls ../moos-ivp)"
       
     #- name: Add MOOS-IvP bin to path
     #  run: echo "${{github.workspace}}/moos-ivp/bin" >> $GITHUB_PATH
