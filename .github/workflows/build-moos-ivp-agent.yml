@@ -25,6 +25,7 @@ jobs:
     # For caching purposes
       run: |
         export MOOS_IVP_REV=$(svn info --show-item revision)
+        echo "$(svn info --show-item revision)"
         echo "::set-env name=MOOS_IVP_REV::$MOOS_IVP_REV"
     - name: Cache MOOS-IvP build
       id: cache-moos-ivp
