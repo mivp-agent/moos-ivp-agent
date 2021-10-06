@@ -16,14 +16,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-
     - name: Install MOOS-IvP Dependencies
       run: sudo apt-get update && sudo apt-get install -y subversion g++ cmake xterm libfltk1.3-dev freeglut3-dev libpng-dev libjpeg-dev libxft-dev libxinerama-dev libtiff5-dev
     - name: Clone latest MOOS-IvP trunk
-      run: svn co https://oceanai.mit.edu/svn/moos-ivp-aro/trunk/ moos-ivp
+      run: svn co https://oceanai.mit.edu/svn/moos-ivp-aro/trunk/ ../moos-ivp
     - name: Add MOOS-IvP revision number to env
     # For caching purposes
       run: |
+        cd ../moos-ivp
         export MOOS_IVP_REV=$(svn info --show-item revision)
         echo "$(svn info --show-item revision)"
         echo "::set-env name=MOOS_IVP_REV::$MOOS_IVP_REV"
@@ -32,15 +32,15 @@ jobs:
       uses: actions/cache@v2
       with:
         path: |
-          moos-ivp/bin
-          moos-ivp/scripts
+          ../moos-ivp/bin
+          ../moos-ivp/scripts
         key: ${{ runner.os }}-${{ env.MOOS_IVP_REV }}
     - name: Build MOOS
       if: steps.cache-moos-ivp.outputs.cache-hit != 'true'
-      run: cd moos-ivp && ./build-moos.sh
+      run: cd ../moos-ivp && ./build-moos.sh
     - name: Build IvP
       if: steps.cache-moos-ivp.outputs.cache-hit != 'true'
-      run: cd moos-ivp && ./build-ivp.sh
+      run: cd ../moos-ivp && ./build-ivp.sh
     - name: Add MOOS-IvP bin to path
       run: echo "${{github.workspace}}/moos-ivp/bin" >> $GITHUB_PATH
     - name: Add MOOS-IvP scripts to path
