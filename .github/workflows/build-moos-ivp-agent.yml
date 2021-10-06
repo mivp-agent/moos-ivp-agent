@@ -9,6 +9,7 @@ on:
 
 env:
   BUILD_TYPE: Release
+  USE_CACHE: false
 
 jobs:
   build:
@@ -31,6 +32,7 @@ jobs:
         echo "::set-output name=checkout-revision::$MOOS_IVP_REV"
         echo "MOOS-IvP Revision: $MOOS_IVP_REV"
     - name: Cache MOOS-IvP build
+      if: env.USE_CACHE != 'false'
       id: cache-moos-ivp
       uses: actions/cache@v2
       with:
