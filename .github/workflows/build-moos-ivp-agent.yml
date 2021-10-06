@@ -20,13 +20,15 @@ jobs:
       run: sudo apt-get update && sudo apt-get install -y subversion g++ cmake xterm libfltk1.3-dev freeglut3-dev libpng-dev libjpeg-dev libxft-dev libxinerama-dev libtiff5-dev
     - name: Clone latest MOOS-IvP trunk
       run: svn co https://oceanai.mit.edu/svn/moos-ivp-aro/trunk/ ../moos-ivp
-    - name: Store info for cache key
+    - name: Store moos-ivp revision for cache key
       id: key-info
       run: |
         cd ../moos-ivp
         export MOOS_IVP_REV=$(svn info --show-item revision)
         echo "::set-output name=checkout-revision::$MOOS_IVP_REV"
         echo "MOOS-IvP Revision: $MOOS_IVP_REV"
+    - name: Gather system info for cache key
+      uses: 
     - name: Cache MOOS-IvP build
       id: cache-moos-ivp
       uses: actions/cache@v2
@@ -34,7 +36,7 @@ jobs:
         path: |
           ${{ github.workspace }}/moos-ivp/bin
           ${{ github.workspace }}/moos-ivp/scripts
-        key: ${{ runner.os }}-${{ steps.key-info.outputs.checkout-revision }}
+        key: ${{ runner.os }}-${{ env.OS_VERSION }}-${{ steps.key-info.outputs.checkout-revision }}
     - name: Build MOOS
       if: steps.cache-moos-ivp.outputs.cache-hit != 'true'
       run: cd ../moos-ivp && ./build-moos.sh
