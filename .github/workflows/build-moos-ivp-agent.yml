@@ -23,7 +23,7 @@ jobs:
     - name: Install MOOS-IvP Dependencies
       run: sudo apt-get update && sudo apt-get install -y subversion g++ cmake xterm libfltk1.3-dev freeglut3-dev libpng-dev libjpeg-dev libxft-dev libxinerama-dev libtiff5-dev
     - name: Clone latest MOOS-IvP trunk
-      run: svn co https://oceanai.mit.edu/svn/moos-ivp-aro/trunk/ /moos-ivp
+      run: svn co https://oceanai.mit.edu/svn/moos-ivp-aro/trunk/ moos-ivp
     - name: Store moos-ivp revision for cache key
       id: key-info
       run: |
