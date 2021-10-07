@@ -9,7 +9,7 @@ on:
 
 env:
   BUILD_TYPE: Release
-  USE_CACHE: true
+  USE_CACHE: false
 
 jobs:
   build:
@@ -32,7 +32,6 @@ jobs:
         echo "::set-output name=checkout-revision::$MOOS_IVP_REV"
         echo "MOOS-IvP Revision: $MOOS_IVP_REV"
     - name: Cache MOOS-IvP build
-      if: env.USE_CACHE != 'false'
       id: cache-moos-ivp
       uses: actions/cache@v2
       with:
@@ -41,10 +40,10 @@ jobs:
           ${{ github.workspace }}/moos-ivp/scripts
         key: ${{ matrix.os }}-${{ steps.key-info.outputs.checkout-revision }}
     - name: Build MOOS
-      if: steps.cache-moos-ivp.outputs.cache-hit != 'true'
+      if: steps.cache-moos-ivp.outputs.cache-hit != 'true' || env.USE_CACHE != 'false'
       run: cd moos-ivp && ./build-moos.sh
     - name: Build IvP
-      if: steps.cache-moos-ivp.outputs.cache-hit != 'true'
+      if: steps.cache-moos-ivp.outputs.cache-hit != 'true' || env.USE_CACHE != 'false'
       run: cd moos-ivp && ./build-ivp.sh
     - name: Add MOOS-IvP bin to path
       run: echo "${{github.workspace}}/moos-ivp/bin" >> $GITHUB_PATH
