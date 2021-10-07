@@ -23,11 +23,11 @@ jobs:
     - name: Install MOOS-IvP Dependencies
       run: sudo apt-get update && sudo apt-get install -y subversion g++ cmake xterm libfltk1.3-dev freeglut3-dev libpng-dev libjpeg-dev libxft-dev libxinerama-dev libtiff5-dev
     - name: Clone latest MOOS-IvP trunk
-      run: svn co https://oceanai.mit.edu/svn/moos-ivp-aro/trunk/ ../moos-ivp
+      run: svn co https://oceanai.mit.edu/svn/moos-ivp-aro/trunk/ /moos-ivp
     - name: Store moos-ivp revision for cache key
       id: key-info
       run: |
-        cd ../moos-ivp
+        cd moos-ivp
         export MOOS_IVP_REV=$(svn info --show-item revision)
         echo "::set-output name=checkout-revision::$MOOS_IVP_REV"
         echo "MOOS-IvP Revision: $MOOS_IVP_REV"
@@ -37,24 +37,24 @@ jobs:
       uses: actions/cache@v2
       with:
         path: |
-          ${{ github.workspace }}/../moos-ivp/bin
-          ${{ github.workspace }}/../moos-ivp/scripts
+          ${{ github.workspace }}/moos-ivp/bin
+          ${{ github.workspace }}/moos-ivp/scripts
         key: ${{ matrix.os }}-${{ steps.key-info.outputs.checkout-revision }}
     - name: Build MOOS
       if: steps.cache-moos-ivp.outputs.cache-hit != 'true'
-      run: cd ../moos-ivp && ./build-moos.sh
+      run: cd moos-ivp && ./build-moos.sh
     - name: Build IvP
       if: steps.cache-moos-ivp.outputs.cache-hit != 'true'
-      run: cd ../moos-ivp && ./build-ivp.sh
-   # - name: Add MOOS-IvP bin to path
-   #   run: echo "${{github.workspace}}/../moos-ivp/bin" >> $GITHUB_PATH
-   # - name: Add MOOS-IvP scripts to path
-   #   run: echo "${{github.workspace}}/../moos-ivp/scripts" >> $GITHUB_PATH
+      run: cd moos-ivp && ./build-ivp.sh
+    - name: Add MOOS-IvP bin to path
+      run: echo "${{github.workspace}}/moos-ivp/bin" >> $GITHUB_PATH
+    - name: Add MOOS-IvP scripts to path
+      run: echo "${{github.workspace}}/moos-ivp/scripts" >> $GITHUB_PATH
     - name: Debug path
       run: | 
         echo "Path $PATH Github Path $GITHUB_PATH"
         echo "$(env)"
-        echo "$(ls ../moos-ivp)"
+        echo "$(ls moos-ivp)"
 
 
 
