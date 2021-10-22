@@ -54,6 +54,7 @@ jobs:
         echo "Path $PATH Github Path $GITHUB_PATH"
         echo "$(env)"
         echo "$(ls moos-ivp)"
+        echo "${ls -la)"
 
 
 
