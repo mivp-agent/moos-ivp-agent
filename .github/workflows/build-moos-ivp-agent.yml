@@ -36,8 +36,9 @@ jobs:
       uses: actions/cache@v2
       with:
         path: |
+          ~/.cmake
           ${{ github.workspace }}/moos-ivp/
-        key: ${{ matrix.os }}-${{ steps.key-info.outputs.checkout-revision }}-v0.2
+        key: ${{ matrix.os }}-${{ steps.key-info.outputs.checkout-revision }}-v0.3
     - name: Build MOOS
       if: steps.cache-moos-ivp.outputs.cache-hit != 'true' 
       run: cd moos-ivp && ./build-moos.sh
