@@ -40,10 +40,10 @@ jobs:
           ${{ github.workspace }}/moos-ivp/scripts
         key: ${{ matrix.os }}-${{ steps.key-info.outputs.checkout-revision }}
     - name: Build MOOS
-      if: steps.cache-moos-ivp.outputs.cache-hit != 'true' && env.USE_CACHE != 'false'
+      if: env.USE_CACHE == 'false' || steps.cache-moos-ivp.outputs.cache-hit == 'true' 
       run: cd moos-ivp && ./build-moos.sh
     - name: Build IvP
-      if: steps.cache-moos-ivp.outputs.cache-hit != 'true' && env.USE_CACHE != 'false'
+      if: env.USE_CACHE == 'false' || steps.cache-moos-ivp.outputs.cache-hit == 'true'
       run: cd moos-ivp && ./build-ivp.sh
     - name: Add MOOS-IvP bin to path
       run: echo "${{github.workspace}}/moos-ivp/bin" >> $GITHUB_PATH
