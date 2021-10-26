@@ -28,7 +28,7 @@ SET( RUNTIME_OUTPUT_DIRECTORY "${IVP_EXTEND_BIN_DIR}"  CACHE PATH "" )
 #=======================================================================
 # Find MOOS
 #=======================================================================
-find_package(MOOS 10.0)
+find_package(MOOS 10.0 REQUIRED)
 INCLUDE_DIRECTORIES(${MOOS_INCLUDE_DIRS})
 
 #=======================================================================
