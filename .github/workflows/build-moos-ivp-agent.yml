@@ -1,5 +1,5 @@
 # Created by referencing https://oceanai.mit.edu/ivpman/pmwiki/pmwiki.php?n=Lab.ClassSetup#sec_course_software
-name: Build C++
+name: C++ Build
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 
 env:
   BUILD_TYPE: Release
-  DEBUG_OUTPUT: true
+  DEBUG_OUTPUT: false
 
 jobs:
   linux-build:

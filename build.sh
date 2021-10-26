@@ -44,5 +44,4 @@ echo "Configuring moos-ivp-agent..."
 cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ../
 
 echo "Making moos-ivp-agent..."
-ls
 make ${CMD_LINE_ARGS}
