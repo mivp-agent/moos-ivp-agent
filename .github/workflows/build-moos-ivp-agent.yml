@@ -36,7 +36,7 @@ jobs:
       with:
         path: |
           ${{ github.workspace }}/moos-ivp/
-        key: ${{ matrix.os }}-${{ steps.key-info.outputs.checkout-revision }}-v0.1
+        key: ${{ matrix.os }}-${{ steps.key-info.outputs.checkout-revision }}-v0.2
     - name: Build MOOS
       if: steps.cache-moos-ivp.outputs.cache-hit != 'true' 
       run: cd moos-ivp && ./build-moos.sh
