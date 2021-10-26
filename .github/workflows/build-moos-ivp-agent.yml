@@ -9,6 +9,7 @@ on:
 
 env:
   BUILD_TYPE: Release
+  DEBUG_OUTPUT: true
 
 jobs:
   build:
@@ -48,12 +49,14 @@ jobs:
     - name: Add MOOS-IvP scripts to path
       run: echo "${{github.workspace}}/moos-ivp/scripts" >> $GITHUB_PATH
     - name: Debug path
+      if: env.DEBUG_OUTPUT == 'true'
       run: | 
         echo "Path $PATH Github Path $GITHUB_PATH"
         echo "$(env)"
         echo "$(ls moos-ivp)"
         echo "$(ls -la)"
         echo "${{github.workspace}}"
+        echo "$(ls -la ~)"
     - name: Build
       run: ./build.sh
       
