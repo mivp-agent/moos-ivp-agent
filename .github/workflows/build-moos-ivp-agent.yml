@@ -59,6 +59,6 @@ jobs:
         echo "${{github.workspace}}"
         echo "$(ls -la ~)"
     - name: Build
-      run: ./build.sh
+      run: ./build.sh VERBOSE=1
       
       
