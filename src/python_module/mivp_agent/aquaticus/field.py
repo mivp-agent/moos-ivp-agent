@@ -63,8 +63,19 @@ def construct_field_figure(
   return fig, ax
 
 class FieldDiscretizer:
-  # Reference: https://stackoverflow.com/questions/62778939/python-fastest-way-to-map-continuous-coordinates-to-discrete-grid
+  '''
+  This utility is used to transform the continuous 2d spaces into a 1d discretized space with variable resolution. The method of doing so was adapted from [this source](https://stackoverflow.com/questions/62778939/python-fastest-way-to-map-continuous-coordinates-to-discrete-grid). By default it used the MIT aquaticus field lines to define the 2d space.
+
+  The discrete space is a 0...n space where 0 represents an input that is **outside** the continuous space.
+
+  See 
+  [`to_discrete_idx()`][mivp_agent.aquaticus.field.FieldDiscretizer.to_discrete_idx] for the primary means of translation.
+  '''
   def __init__(self, resolution=6):
+    '''
+    Args:
+      resolution (int): This was named **poorly**. It is not the resolution but the opposite. This variable represents the step size used between discrete points. Incresing this parameter will result in a discrete space of smaller size.
+    '''
     # Find the min/max x and y in the field
     min = None
     max = None
@@ -109,6 +120,16 @@ class FieldDiscretizer:
     assert self.space_size == len(self._idx_point_map)
   
   def to_discrete_point(self, nav_x, nav_y):
+    '''
+    This method translates continuous x / y coordinates into discrete x / y coordinates.
+
+    Args:
+      nav_x (float): A continuous x coordinate
+      nav_y (float): A continuous y coordinate
+    
+    Returns:
+      tuple/None: Will return a `tuple` with (x, y) of type `int` or `None` if the input is outside of the defined space.
+    '''
     d = self._offset + np.round((np.array([nav_x, nav_y]) - self._offset) / self._spacing) * self._spacing
     d = tuple(d.astype(int))
 
@@ -119,6 +140,16 @@ class FieldDiscretizer:
     return d
   
   def to_discrete_idx(self, nav_x, nav_y):
+    '''
+    This method translates continuous x / y coordinates into discrete 0...n index. 0 indicates that the input was outside of the defined 2d space.
+
+    Args:
+      nav_x (float): A continuous x coordinate
+      nav_y (float): A continuous y coordinate
+    
+    Returns:
+      int: A discrete index corresponding to a unique point on the 2d discrete field.
+    '''
     d = self.to_discrete_point(nav_x, nav_y)
     return self._point_idx_map[d]
   
