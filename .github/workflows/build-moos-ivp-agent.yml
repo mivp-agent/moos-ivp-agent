@@ -3,9 +3,9 @@ name: C++ Build
 
 on:
   push:
-    branches: [ actions ]
+    branches: [ main ]
   pull_request:
-    branches: [ actions ]
+    branches: [ main ]
 
 env:
   BUILD_TYPE: Release
@@ -34,9 +34,9 @@ jobs:
     - name: Cache MOOS-IvP build
       id: cache-moos-ivp
       uses: actions/cache@v2
-      with:
+      with: # Cache the ~/.cmake "User Package Registry" for find_package(MOOS)
         path: |
-          ~/.cmake # Cache the cmake "User Package Registry" for find_package(MOOS)
+          ~/.cmake 
           ${{ github.workspace }}/moos-ivp/
         key: ${{ matrix.os }}-${{ steps.key-info.outputs.checkout-revision }}-v0.3
     - name: Build MOOS
