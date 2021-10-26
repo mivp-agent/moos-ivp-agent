@@ -1,9 +1,9 @@
 #=======================================================================
-# FILE:  moos-ivp-extend/CMakeLists.txt
-# DATE:  2012/07/24
-# INFO:  Top-level CMakeLists.txt file for the moos-ivp-extend project
-# NAME:  Maintained by Mike Benjamin - Original setup by Christian Convey
-#        Chris Gagner, and tips borrowed from Dave Billin
+# FILE:  moos-ivp-agent/CMakeLists.txt
+# DATE:  2020/10/25
+# INFO:  Top-level CMakeLists.txt file for the moos-ivp-agent
+# NAME:  Maintained by Carter Fendley - Original setup by Christian Convey
+#        Chris Gagner, Mike Benjamin and tips borrowed from Dave Billin
 #=======================================================================
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
@@ -44,9 +44,7 @@ find_path( MOOSIVP_SOURCE_TREE_BASE
 )
 
 if (NOT MOOSIVP_SOURCE_TREE_BASE)
-    message("Please set MOOSIVP_SOURCE_TREE_BASE to  ")
-    message("the location of the \"moos-ivp\" folder ")
-    return()
+    message(FATAL_ERROR "Please set MOOSIVP_SOURCE_TREE_BASE to  the location of the \"moos-ivp\" folder ")
 endif()
 
 #======================================================================
