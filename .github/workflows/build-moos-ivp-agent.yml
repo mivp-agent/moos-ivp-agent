@@ -1,5 +1,5 @@
 # Created by referencing https://oceanai.mit.edu/ivpman/pmwiki/pmwiki.php?n=Lab.ClassSetup#sec_course_software
-name: BuildMOOSIvPAgent
+name: Build C++
 
 on:
   push:
@@ -12,7 +12,7 @@ env:
   DEBUG_OUTPUT: true
 
 jobs:
-  build:
+  linux-build:
     strategy:
       matrix:
         os: [ubuntu-20.04, ubuntu-18.04]
@@ -36,7 +36,7 @@ jobs:
       uses: actions/cache@v2
       with:
         path: |
-          ~/.cmake
+          ~/.cmake # Cache the cmake "User Package Registry" for find_package(MOOS)
           ${{ github.workspace }}/moos-ivp/
         key: ${{ matrix.os }}-${{ steps.key-info.outputs.checkout-revision }}-v0.3
     - name: Build MOOS
@@ -45,10 +45,6 @@ jobs:
     - name: Build IvP
       if: steps.cache-moos-ivp.outputs.cache-hit != 'true'
       run: cd moos-ivp && ./build-ivp.sh
-    - name: Add MOOS-IvP bin to path
-      run: echo "${{github.workspace}}/moos-ivp/bin" >> $GITHUB_PATH
-    - name: Add MOOS-IvP scripts to path
-      run: echo "${{github.workspace}}/moos-ivp/scripts" >> $GITHUB_PATH
     - name: Debug path
       if: env.DEBUG_OUTPUT == 'true'
       run: | 
@@ -60,5 +56,9 @@ jobs:
         echo "$(ls -la ~)"
     - name: Build
       run: ./build.sh
+    - name: Add MOOS-IvP bin to path
+      run: echo "${{github.workspace}}/moos-ivp/bin" >> $GITHUB_PATH
+    - name: Add MOOS-IvP scripts to path
+      run: echo "${{github.workspace}}/moos-ivp/scripts" >> $GITHUB_PATH
       
       
