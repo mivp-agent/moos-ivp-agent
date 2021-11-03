@@ -160,8 +160,18 @@ class FieldDiscretizer:
     return self._idx_point_map[idx]
   
 class DiscreteFieldGrapher:
-  # Blitting reference: https://matplotlib.org/stable/tutorials/advanced/blitting.html
+  '''
+  This utility uses matplotlib to graph vehicles in descrete positions as defined by an instance of [`FieldDiscretizer`][mivp_agent.aquaticus.field.FieldDiscretizer]
+
+  **WARNING:** This class is *EXTREMELY* ineffecient and should not be used in a loop which timing is important. Its primary use is for debuging.
+
+  You can see a example of how to use this visualizer with the FieldDiscretizer [here](https://github.com/CarterFendley/moos-ivp-agent/blob/main/examples/DiscreteField/run.py).
+  '''
   def __init__(self, discretizer):
+    '''
+    Args:
+      discretizer (FieldDiscretizer): Used to plot discrete points and during vehicle initalization.
+    '''
     assert isinstance(discretizer, FieldDiscretizer), 'discretizer is of wrong type'
 
     # Store discretizer
@@ -186,6 +196,18 @@ class DiscreteFieldGrapher:
     self._vehicles = {}
  
   def init_vehicle(self, name, color, start_pos=FIELD_OUT_BOUNDS_POINT, plot=True):
+    '''
+    Initalizes a vehicle specified by `name` in the DiscreteFieldGrapher class and it's matplotlib plot. To update the vehicles initalized by this method see 
+    [`update_vehicle()`][mivp_agent.aquaticus.field.DiscreteFieldGrapher.update_vehicle].
+
+    Args:
+      name (str): The name (or key) to list the vehicle under.
+      color (str): A matplotlib [named color](https://matplotlib.org/stable/gallery/color/named_colors.html).
+      start_pos (tuple): A tuple where containing the x / y position to initally render the vehicle.
+      plot (bool): A boolean indicating if the the plot should be redrawn after vehicle initalization.
+    Raises:
+      RuntimeError: If the specified `name` has already been initalized.
+    '''
     if name in self._vehicles:
       raise RuntimeError(f'FieldGrapher alread has vehicle named "{name}"')
     
@@ -208,6 +230,17 @@ class DiscreteFieldGrapher:
 
 
   def update_vehicle(self, name, discrete_position, plot=True):
+    '''
+    Used to update the position of a vehicle which has been previously initalized via [`init_vehicle()`][mivp_agent.aquaticus.field.DiscreteFieldGrapher.init_vehicle]
+
+    Args:
+      name (str): The name (or key) to list the vehicle under.
+      discrete_position (tuple): A tuple where containing the **DISCRETE** x / y position to render the vehicle at. This method **will not** pass the point through the discretizer.
+      plot (bool): A boolean indicating if the the plot should be redrawn after vehicle update.
+    
+    Raises:
+      RuntimeError: If the specified `name` has not been initalized previously.
+    '''
     if name not in self._vehicles:
       raise RuntimeError(f'FieldGrapher cannot find vehicle with name "{name}"')
     
