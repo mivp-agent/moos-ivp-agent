@@ -4,7 +4,7 @@
 
 Model agnostic ML tooling for MOOS-IvP. See very simple implementation below based on the [ManagerExample](./examples/ManagerExample). See the [mivp-agent.github.io](https://mivp-agent.github.io/) website for more information about getting started.
 
-```
+```python
 VEHICLES = ['alder', ]
 
 from mivp_agent.manager import MissionManager
