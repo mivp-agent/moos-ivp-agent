@@ -20,6 +20,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Install mivp_agent dependencies
-      run: sudo apt-get update && sudo apt-get install -y timeout-decorator
+      run: pip3 install timeout-decorator
     - name: Run python tests
       run: cd src/python_module/test && ./test_all.py
