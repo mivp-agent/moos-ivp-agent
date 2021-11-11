@@ -1,6 +1,7 @@
 # moos-ivp-agent
 
-[![C++ Build](https://github.com/CarterFendley/moos-ivp-agent/actions/workflows/build-moos-ivp-agent.yml/badge.svg)](https://github.com/CarterFendley/moos-ivp-agent/actions/workflows/build-moos-ivp-agent.yml)
+[![C++](https://github.com/CarterFendley/moos-ivp-agent/actions/workflows/build-moos-ivp-agent.yml/badge.svg)](https://github.com/CarterFendley/moos-ivp-agent/actions/workflows/build-moos-ivp-agent.yml)
+[![Python](https://github.com/mivp-agent/moos-ivp-agent/actions/workflows/py3-workflow.yml/badge.svg)](https://github.com/mivp-agent/moos-ivp-agent/actions/workflows/py3-workflow.yml)
 
 Model agnostic ML tooling for MOOS-IvP. See very simple implementation below based on the [ManagerExample](./examples/ManagerExample). See the [mivp-agent.github.io](https://mivp-agent.github.io/) website for more information about getting started.
 
