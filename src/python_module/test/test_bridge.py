@@ -3,13 +3,9 @@ from threading import Thread
 import socket
 import time
 
-import os, sys
-currentdir = os.path.dirname(os.path.realpath(__file__))
-bridgedir = os.path.join(os.path.dirname(currentdir), 'mivp_agent')
-sys.path.append(bridgedir)
 
-from bridge import ModelBridgeServer, ModelBridgeClient
-from const import KEY_EPISODE_MGR_REPORT, KEY_EPISODE_MGR_STATE, KEY_ID
+from mivp_agent.bridge import ModelBridgeServer, ModelBridgeClient
+from mivp_agent.const import KEY_EPISODE_MGR_REPORT, KEY_EPISODE_MGR_STATE, KEY_ID
 
 DUMMY_INSTR = {
   'speed': 2.0,

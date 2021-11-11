@@ -1,12 +1,7 @@
 import unittest
 import numpy as np
 
-import os, sys
-currentdir = os.path.dirname(os.path.realpath(__file__))
-bridgedir = os.path.join(os.path.dirname(currentdir), 'mivp_agent')
-sys.path.append(bridgedir)
-
-from util.data_structures import LimitedHistory 
+from mivp_agent.util.data_structures import LimitedHistory 
 
 class TestLimitedHistory(unittest.TestCase):
 

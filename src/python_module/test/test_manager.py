@@ -2,15 +2,9 @@ import unittest
 import time
 import timeout_decorator
 
-import os, sys
-
-currentdir = os.path.dirname(os.path.realpath(__file__))
-bridgedir = os.path.join(os.path.dirname(currentdir), 'mivp_agent')
-sys.path.append(bridgedir)
-
-from manager import MissionManager, MissionMessage, INSTR_SEND_STATE
-from bridge import ModelBridgeClient
-from const import KEY_ID, KEY_EPISODE_MGR_REPORT, KEY_EPISODE_MGR_STATE
+from mivp_agent.manager import MissionManager, MissionMessage, INSTR_SEND_STATE
+from mivp_agent.bridge import ModelBridgeClient
+from mivp_agent.const import KEY_ID, KEY_EPISODE_MGR_REPORT, KEY_EPISODE_MGR_STATE
 
 DUMMY_INSTR = {
   'speed': 2.0,
