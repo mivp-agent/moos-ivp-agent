@@ -1,0 +1,25 @@
+name: Python Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  BUILD_TYPE: Release
+  DEBUG_OUTPUT: false
+
+jobs:
+  linux-build:
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, ubuntu-18.04]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install mivp_agent dependencies
+      run: sudo apt-get update && sudo apt-get install -y timeout-decorator
+    - name: Run python tests
+      run: cd src/python_module/test && ./test_all.py
