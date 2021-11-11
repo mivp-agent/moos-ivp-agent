@@ -14,7 +14,7 @@ from constants import DEFAULT_RUN_MODEL
 from model import load_model
 
 
-EPISODES = 100
+EPISODES = 10
 
 # The expected agents and their enemies
 VEHICLE_PAIRING = {
@@ -89,7 +89,9 @@ def test(args):
 
         # Init globals
         episode_count = 0
-        success_count = 0
+        grab_count = 0
+        capture_count = 0
+        off_field_count = 0
         min_dists = []
         durations = []
 
@@ -153,14 +155,23 @@ def test(args):
 
                     min_dists.append(agent.min_dist)
 
+                    #if agent.had_flag:
                     if agent.had_flag:
-                        success_count += 1
+                        grab_count += 1
+                    
+                        if msg.episode_report['SUCCESS']:
+                            capture_count += 1
+
+                    if not msg.state['ONFIELD']:
+                        off_field_count += 1
 
                     # Construct report
                     report = {
                         'episode': episode_count,
                         'duration': round(durations[-1],2),
-                        'success': agent.had_flag,
+                        'grab': agent.had_flag,
+                        'capture': msg.episode_report['SUCCESS'],
+                        'left field': not msg.state['ONFIELD'],
                         'min_dist': round(agent.min_dist, 2),
                     }
 
@@ -186,7 +197,6 @@ def test(args):
                 if msg.state['HAS_FLAG'] and not agent.had_flag:
                     agent.had_flag = True
                     agent.grab_time = msg.state['MOOS_TIME']
-
 
             '''
             Part 4: Even when agent is not in new state, keep preforming
@@ -215,7 +225,9 @@ def test(args):
         progress_bar.close()
 
         # Calculate stats
-        success_precent  = round(success_count / episode_count * 100, 2)
+        grab_percent  = round(grab_count / episode_count * 100, 2)
+        capture_percent  = round(capture_count / episode_count * 100, 2)
+        grabs_captured_percent = round(capture_count / grab_count * 100, 2)
         avg_duration = round(sum(durations) / len(durations), 2)
         avg_min_dist = round(sum(min_dists) / len(min_dists), 2)
 
@@ -223,7 +235,10 @@ def test(args):
         print('\n--------------------------------------------')
         print(f'Model: {args.model}\n')
         print(f'Episodes:        {episode_count+1}')
-        print(f'Precent Success: {success_precent}')
+        print(f'Percent Successfully Grabbed: {grab_percent}')
+        print(f'Percent Successfully Captured: {capture_percent}')
+        print(f'Percent of Grabs Captured: {grabs_captured_percent}')
+        print(f'Agents that Left the Field: {off_field_count}')
         print(f'Avg Duration:    {avg_duration}')
         print(f'Avg Min Dist:    {avg_min_dist}')
         print('--------------------------------------------')

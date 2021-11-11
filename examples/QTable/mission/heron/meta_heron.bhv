@@ -48,6 +48,7 @@ set MODE     = STATIONNING {
 
     sub_var = TAGGED
     sub_var = HAS_FLAG
+    sub_var = ONFIELD
 
     sub_vehicle = drone_21
     sub_vehicle = drone_22

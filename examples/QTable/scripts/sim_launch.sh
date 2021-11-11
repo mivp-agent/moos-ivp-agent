@@ -25,8 +25,8 @@ cd ../mission/heron
 cd ..
 
 cd shoreside
-  ./launch_shoreside.sh --no_gui $LOGGING $TIME_WARP >& /dev/null &
-  #./launch_shoreside.sh $LOGGING 4 >& /dev/null &
+  #./launch_shoreside.sh --no_gui $LOGGING $TIME_WARP >& /dev/null &
+  ./launch_shoreside.sh $LOGGING 4 >& /dev/null &
   sleep 5
   echo "DEPLOYING"
   uPokeDB targ_shoreside.moos DEPLOY_ALL=true MOOS_MANUAL_OVERRIDE_ALL=false
