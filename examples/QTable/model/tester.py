@@ -14,7 +14,7 @@ from constants import DEFAULT_RUN_MODEL
 from model import load_model
 
 
-EPISODES = 10
+EPISODES = 100
 
 # The expected agents and their enemies
 VEHICLE_PAIRING = {
