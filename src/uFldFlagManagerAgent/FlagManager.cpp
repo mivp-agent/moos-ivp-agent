@@ -20,8 +20,8 @@ using namespace std;
 
 //---------------------------------------------------------
 // Constructor
-
-FlagManager::FlagManager()
+template<class AppType>
+FlagManager<AppType>::FlagManager()
 {
   // Default config values
   m_default_flag_range    = 10; // meters
@@ -57,8 +57,8 @@ FlagManager::FlagManager()
 
 //---------------------------------------------------------
 // Procedure: OnNewMail
-
-bool FlagManager::OnNewMail(MOOSMSG_LIST &NewMail)
+template<class AppType>
+bool FlagManager<AppType>::OnNewMail(MOOSMSG_LIST &NewMail)
 {
   AppCastingMOOSApp::OnNewMail(NewMail);
 
@@ -103,7 +103,8 @@ bool FlagManager::OnNewMail(MOOSMSG_LIST &NewMail)
 //---------------------------------------------------------
 // Procedure: OnConnectToServer
 
-bool FlagManager::OnConnectToServer()
+template<class AppType>
+bool FlagManager<AppType>::OnConnectToServer()
 {
   registerVariables();
   return(true);
@@ -112,7 +113,8 @@ bool FlagManager::OnConnectToServer()
 //---------------------------------------------------------
 // Procedure: Iterate()
 
-bool FlagManager::Iterate()
+template<class AppType>
+bool FlagManager<AppType>::Iterate()
 {
   AppCastingMOOSApp::Iterate();
 
@@ -134,7 +136,8 @@ bool FlagManager::Iterate()
 // Procedure: postHeartBeat()
 //            Post heatbeat message to aid in log file syncing
 
-void FlagManager::postHeartBeat()
+template<class AppType>
+void FlagManager<AppType>::postHeartBeat()
 {
   double delta_time = m_curr_time - m_heartbeat_last;
   if(delta_time > 15) {
@@ -155,7 +158,8 @@ void FlagManager::postHeartBeat()
 // Procedure: OnStartUp()
 //            happens before connection is open
 
-bool FlagManager::OnStartUp()
+template<class AppType>
+bool FlagManager<AppType>::OnStartUp()
 {
   AppCastingMOOSApp::OnStartUp();
 
@@ -270,7 +274,8 @@ bool FlagManager::OnStartUp()
 //---------------------------------------------------------
 // Procedure: registerVariables
 
-void FlagManager::registerVariables()
+template<class AppType>
+void FlagManager<AppType>::registerVariables()
 {
   AppCastingMOOSApp::RegisterVariables();
   Register("FLAG_GRAB_REQUEST", 0);
@@ -286,7 +291,8 @@ void FlagManager::registerVariables()
 // Procedure: handleConfigFlag
 //   Example: flag = x=2,y=3,range=10,label=one
 
-bool FlagManager::handleConfigFlag(string str)
+template<class AppType>
+bool FlagManager<AppType>::handleConfigFlag(string str)
 {
   XYMarker flag = string2Marker(str);
 
@@ -329,7 +335,8 @@ bool FlagManager::handleConfigFlag(string str)
 //   Example: var=SAY_MOOS_$[VNAME],     \
 //            sval={You have the flag}
 
-bool FlagManager::handleConfigGrabPost(string str)
+template<class AppType>
+bool FlagManager<AppType>::handleConfigGrabPost(string str)
 {
   VarDataPair pair = stringToVarDataPair(str);
   if(!pair.valid())
@@ -342,7 +349,8 @@ bool FlagManager::handleConfigGrabPost(string str)
 //---------------------------------------------------------
 // Procedure: handleConfigLosePost
 
-bool FlagManager::handleConfigLosePost(string str)
+template<class AppType>
+bool FlagManager<AppType>::handleConfigLosePost(string str)
 {
   VarDataPair pair = stringToVarDataPair(str);
   if(!pair.valid())
@@ -355,7 +363,8 @@ bool FlagManager::handleConfigLosePost(string str)
 //---------------------------------------------------------
 // Procedure: handleConfigNearPost
 
-bool FlagManager::handleConfigNearPost(string str)
+template<class AppType>
+bool FlagManager<AppType>::handleConfigNearPost(string str)
 {
   VarDataPair pair = stringToVarDataPair(str);
   if(!pair.valid())
@@ -368,7 +377,8 @@ bool FlagManager::handleConfigNearPost(string str)
 //---------------------------------------------------------
 // Procedure: handleConfigAwayPost
 
-bool FlagManager::handleConfigAwayPost(string str)
+template<class AppType>
+bool FlagManager<AppType>::handleConfigAwayPost(string str)
 {
   VarDataPair pair = stringToVarDataPair(str);
   if(!pair.valid())
@@ -381,7 +391,8 @@ bool FlagManager::handleConfigAwayPost(string str)
 //---------------------------------------------------------
 // Procedure: handleConfigDenyPost
 
-bool FlagManager::handleConfigDenyPost(string str)
+template<class AppType>
+bool FlagManager<AppType>::handleConfigDenyPost(string str)
 {
   VarDataPair pair = stringToVarDataPair(str);
   if(!pair.valid())
@@ -394,7 +405,8 @@ bool FlagManager::handleConfigDenyPost(string str)
 //---------------------------------------------------------
 // Procedure: handleConfigGoalPost
 
-bool FlagManager::handleConfigGoalPost(string str)
+template<class AppType>
+bool FlagManager<AppType>::handleConfigGoalPost(string str)
 {
   VarDataPair pair = stringToVarDataPair(str);
   if(!pair.valid())
@@ -407,7 +419,8 @@ bool FlagManager::handleConfigGoalPost(string str)
 //---------------------------------------------------------
 // Procedure: handleConfigHomePost
 
-bool FlagManager::handleConfigHomePost(string str)
+template<class AppType>
+bool FlagManager<AppType>::handleConfigHomePost(string str)
 {
   VarDataPair pair = stringToVarDataPair(str);
   if(!pair.valid())
@@ -420,7 +433,8 @@ bool FlagManager::handleConfigHomePost(string str)
 //---------------------------------------------------------
 // Procedure: handleConfigInfiniteFlags
 
-bool FlagManager::handleConfigInfiniteFlags(string value)
+template<class AppType>
+bool FlagManager<AppType>::handleConfigInfiniteFlags(string value)
 {
   value = tolower(stripBlankEnds(value));
 
@@ -439,7 +453,8 @@ bool FlagManager::handleConfigInfiniteFlags(string value)
 // Procedure: handleMailTaggedVehicles()
 //   Example: TAGGED_VEHICLES = henry,gus,hal
 
-bool FlagManager::handleMailTaggedVehicles(string str)
+template<class AppType>
+bool FlagManager<AppType>::handleMailTaggedVehicles(string str)
 {
   m_tagged_vnames.clear();
 
@@ -455,7 +470,8 @@ bool FlagManager::handleMailTaggedVehicles(string str)
 //------------------------------------------------------------
 // Procedure: handleMailNodeReport()
 
-bool FlagManager::handleMailNodeReport(string str)
+template<class AppType>
+bool FlagManager<AppType>::handleMailNodeReport(string str)
 {
   NodeRecord new_record = string2NodeRecord(str);
 
@@ -485,7 +501,8 @@ bool FlagManager::handleMailNodeReport(string str)
 //   Example: FLAG_RESET = vname=henry
 //   Example: FLAG_RESET = label=alpha
 
-bool FlagManager::handleMailFlagReset(string str)
+template<class AppType>
+bool FlagManager<AppType>::handleMailFlagReset(string str)
 {
   bool some_flags_were_reset = false;
 
@@ -519,7 +536,8 @@ bool FlagManager::handleMailFlagReset(string str)
 // Procedure: handleMailFlagGrab
 //   Example: GRAB_FLAG_REQUEST = "vname=henry"
 
-bool FlagManager::handleMailFlagGrab(string str, string community)
+template<class AppType>
+bool FlagManager<AppType>::handleMailFlagGrab(string str, string community)
 {
   m_total_grab_requests_rcvd++;
 
@@ -645,8 +663,8 @@ bool FlagManager::handleMailFlagGrab(string str, string community)
 // Procedure: updateVehiclesInFlagRange
 //   Purpose: For each vehicle determine if it is within the range
 //            of an enemy flag.
-
-void FlagManager::updateVehiclesInFlagRange()
+template<class AppType>
+void FlagManager<AppType>::updateVehiclesInFlagRange()
 {
   map<string, NodeRecord>::iterator p;
   for(p=m_map_record.begin(); p!=m_map_record.end(); p++) {
@@ -693,8 +711,8 @@ void FlagManager::updateVehiclesInFlagRange()
 
 //------------------------------------------------------------
 // Procedure: updateVehiclesHaveScored
-
-void FlagManager::updateVehiclesHaveScored()
+template<class AppType>
+void FlagManager<AppType>::updateVehiclesHaveScored()
 {
   // For each vehicle, check if it has scored.
   map<string, NodeRecord>::iterator p;
@@ -737,8 +755,8 @@ void FlagManager::updateVehiclesHaveScored()
 
 //------------------------------------------------------------
 // Procedure: updateVehiclesFlagRender
-
-void FlagManager::updateVehiclesFlagRender()
+template<class AppType>
+void FlagManager<AppType>::updateVehiclesFlagRender()
 {
   // For each vehicle, check if it has scored.
   map<string, NodeRecord>::iterator p;
@@ -774,8 +792,8 @@ void FlagManager::updateVehiclesFlagRender()
 
 //------------------------------------------------------------
 // Procedure: updateVehiclesUntagged
-
-void FlagManager::updateVehiclesUntagged()
+template<class AppType>
+void FlagManager<AppType>::updateVehiclesUntagged()
 {
   // For each vehicle, check if it is tagged, and if it is home now.
   map<string, NodeRecord>::iterator p;
@@ -820,7 +838,8 @@ void FlagManager::updateVehiclesUntagged()
 //   Returns: true if a flag was indeed reset, possibly visuals
 //            then need updating
 
-bool FlagManager::resetFlagsByLabel(string label)
+template<class AppType>
+bool FlagManager<AppType>::resetFlagsByLabel(string label)
 {
   bool some_flags_were_reset = false;
   
@@ -863,7 +882,8 @@ bool FlagManager::resetFlagsByLabel(string label)
 //   Returns: true if a flag was indeed reset, possibly visuals
 //            then need updating
 
-bool FlagManager::resetFlagsAll()
+template<class AppType>
+bool FlagManager<AppType>::resetFlagsAll()
 {
   bool some_flags_were_reset = false;
 
@@ -904,7 +924,8 @@ bool FlagManager::resetFlagsAll()
 //   Returns: true if a flag was indeed reset, possibly visuals
 //            then need updating
 
-bool FlagManager::resetFlagsByVName(string vname)
+template<class AppType>
+bool FlagManager<AppType>::resetFlagsByVName(string vname)
 {
   bool some_flags_were_reset = false;
   
@@ -943,8 +964,8 @@ bool FlagManager::resetFlagsByVName(string vname)
 // Procedure: postFlagMarkers
 //      Note: Typically JUST called on startup unless marker
 //            positions or colors are allowed to change.
-
-void FlagManager::postFlagMarkers(bool force)
+template<class AppType>
+void FlagManager<AppType>::postFlagMarkers(bool force)
 {
   for(unsigned int i=0; i<m_flags.size(); i++) {
     if(m_flags_changed[i] || force) {
@@ -968,8 +989,8 @@ void FlagManager::postFlagMarkers(bool force)
 // Procedure: postPolygons
 //      Note: Typically JUST called on startup unless marker
 //            positions or colors are allowed to change.
-
-void FlagManager::postPolygons()
+template<class AppType>
+void FlagManager<AppType>::postPolygons()
 {
   for(unsigned int i=0; i<m_flags.size(); i++) {
     string spec = "format=radial";
@@ -995,8 +1016,8 @@ void FlagManager::postPolygons()
 //            primary_color=red, type=circle,owner=evan,label=red #
 //            x=-58,y=-71, width=3,range=10,primary_color=blue,           
 //            type=circle,label=blue   
-
-void FlagManager::postFlagSummary()
+template<class AppType>
+void FlagManager<AppType>::postFlagSummary()
 {
   string summary;
   for(unsigned int i=0; i<m_flags.size(); i++) {
@@ -1020,7 +1041,8 @@ void FlagManager::postFlagSummary()
 //   Purpose: Determine if the given vehicle has a flag. No check
 //            is made w.r.t. type/color of flag. 
 
-bool FlagManager::hasFlag(string vname)
+template<class AppType>
+bool FlagManager<AppType>::hasFlag(string vname)
 {
   for(unsigned int i=0; i<m_flags.size(); i++) {
     if(tolower(m_flags[i].get_owner()) == tolower(vname))
@@ -1031,8 +1053,8 @@ bool FlagManager::hasFlag(string vname)
 
 //------------------------------------------------------------
 // Procedure: invokePosts()
-
-void FlagManager::invokePosts(string ptype, string vname, string vteam,
+template<class AppType>
+void FlagManager<AppType>::invokePosts(string ptype, string vname, string vteam,
 			      string fname, string reason)
 {
   vector<VarDataPair> pairs;
@@ -1085,7 +1107,8 @@ void FlagManager::invokePosts(string ptype, string vname, string vteam,
 //------------------------------------------------------------
 // Procedure: buildReport()
 
-bool FlagManager::buildReport()
+template<class AppType>
+bool FlagManager<AppType>::buildReport()
 {
   m_msgs << "Configuration Summary: " << endl;
   m_msgs << "======================================" << endl;

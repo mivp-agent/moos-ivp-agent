@@ -8,6 +8,7 @@
 #include <string>
 #include "MBUtils.h"
 #include "ColorParse.h"
+#include "MOOS/libMOOS/Thirdparty/AppCasting/AppCastingMOOSApp.h"
 #include "FlagManager.h"
 #include "FlagManager_Info.h"
 
@@ -43,7 +44,8 @@ int main(int argc, char *argv[])
   cout << "uFldFlagMgr launching as " << run_command << endl;
   cout << termColor() << endl;
 
-  FlagManager flag_mgr;
+  FlagManager<AppCastingMOOSApp> flag_mgr;
+  //FlagManager flag_mgr;
 
   flag_mgr.Run(run_command.c_str(), mission_file.c_str());
   

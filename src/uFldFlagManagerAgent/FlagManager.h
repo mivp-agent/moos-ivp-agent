@@ -16,7 +16,8 @@
 #include "XYMarker.h"
 #include "VarDataPair.h"
 
-class FlagManager : public AppCastingMOOSApp
+template<class AppType>
+class FlagManager : public AppType
 {
  public:
   FlagManager();
@@ -70,7 +71,7 @@ class FlagManager : public AppCastingMOOSApp
 
   void postHeartBeat();
   
- private: // Config variables
+ protected: // Config variables
   
   // Flag Configurations. Flag ownership is stored in XYMarker.
   // So m_flags is really also a state variable.
@@ -107,7 +108,7 @@ class FlagManager : public AppCastingMOOSApp
   // moos-ivp-agent edit
   bool m_infinite_flags;
 
- private: // State variables
+ protected: // State variables
   
   // Vehicle node report state vars. Each map keyed on vname.
   std::map<std::string, NodeRecord>   m_map_record;
