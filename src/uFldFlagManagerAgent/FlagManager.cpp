@@ -604,6 +604,7 @@ bool FlagManager::handleMailFlagGrab(string str, string community)
           m_flags_changed[i] = true;
         }else{
           XYMarker new_flag = string2Marker(m_flags[i].get_spec());
+          //new_flag.set_label(m_flags[i].get_label() + up_vname);
           new_flag.set_owner(grabbing_vname);
           new_flags.push_back(new_flag);
         }
@@ -621,8 +622,6 @@ bool FlagManager::handleMailFlagGrab(string str, string community)
   // moos-ivp-agent edit
   // Add any new flags to list
   for(unsigned int i=0; i<new_flags.size(); i++){
-    // Change label to a unique 
-    //new_flags[i].set_label(new_flags[i].get_label()+intToString(m_flags.size()));
     m_flags.push_back(new_flags[i]);
     m_flags_changed.push_back(true);
   }
