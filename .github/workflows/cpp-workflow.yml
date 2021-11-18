@@ -37,7 +37,7 @@ jobs:
         echo "${{github.workspace}}"
         echo "$(ls -la ~)"
     - name: Install moos-ivp-agent dependencies
-      - run: sudo apt-get install -y python3.6-dev
+      run: sudo apt-get install -y python3.6-dev
     - name: Build moos-ivp-agent
       uses: ./.github/actions/build-cpp
     - name: Add MOOS-IvP bin to path
