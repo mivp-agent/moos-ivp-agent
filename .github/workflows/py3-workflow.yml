@@ -3,6 +3,7 @@ name: Python Build
 on:
   push:
     branches: [ main ]
+    branches: [ actions ]
   pull_request:
     branches: [ main ]
 

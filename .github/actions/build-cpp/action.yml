@@ -1,0 +1,7 @@
+name: "Build moos-ivp-agent c++"
+description: "Runs the build script for moos-ivp-agent"
+runs:
+  using: "composite"
+  steps:
+    - name: Build
+      run: ./build.sh
