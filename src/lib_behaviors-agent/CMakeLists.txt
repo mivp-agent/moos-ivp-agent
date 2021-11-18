@@ -33,11 +33,20 @@ ENDMACRO(ADD_BHV)
 #--------------------------------------------------------
 #                                               BHV_Agent
 #--------------------------------------------------------
-FIND_PACKAGE(PythonLibs 3.7 EXACT REQUIRED)
-INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_DIRS})
-
-ADD_LIBRARY(BHV_Agent SHARED 
+add_library(BHV_Agent SHARED 
    BHV_Agent.cpp PyInterface.cpp)
+
+if(${CMAKE_VERSION} VERSION_LESS "3.12")
+  message("Using legacy FindPythonLibs due to cmake ${CMAKE_VERSION}")
+  find_package(PythonLibs 3.7 EXACT REQUIRED)
+  include_directories(${PYTHON_INCLUDE_DIRS})
+  target_link_libraries(BHV_Agent ${PYTHON_LIBRARIES})
+else()
+  find_package(Python 3.7 EXACT COMPONENTS Development REQUIRED)
+  include_directories(${Python_INCLUDE_DIRS})
+  target_link_libraries(BHV_Agent ${Python_LIBRARIES})
+endif()
+
 TARGET_LINK_LIBRARIES(BHV_Agent
    helmivp
    behaviors 
@@ -46,7 +55,6 @@ TARGET_LINK_LIBRARIES(BHV_Agent
    ivpcore 
    bhvutil 
    mbutil 
-   geometry 
-   ${PYTHON_LIBRARIES}
+   geometry
    ${SYSTEM_LIBS})
 
