@@ -72,6 +72,8 @@ jobs:
         echo "$(ls -la ~)"
     - name: Install moos-ivp-agent dependencies
       run: brew install python@3.7
+    - name: Add brew python to path
+      run: echo "/usr/local/opt/python@3.7/bin" >> $GITHUB_PATH
     - name: Build moos-ivp-agent
       uses: ./.github/actions/build-cpp
     - name: Add MOOS-IvP bin to path
