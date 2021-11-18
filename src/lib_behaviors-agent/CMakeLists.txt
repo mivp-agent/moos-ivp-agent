@@ -33,7 +33,7 @@ ENDMACRO(ADD_BHV)
 #--------------------------------------------------------
 #                                               BHV_Agent
 #--------------------------------------------------------
-FIND_PACKAGE(PythonLibs)
+FIND_PACKAGE(PythonLibs 3.6 EXACT REQUIRED)
 INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_DIRS})
 
 ADD_LIBRARY(BHV_Agent SHARED 
