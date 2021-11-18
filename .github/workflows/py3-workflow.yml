@@ -2,8 +2,7 @@ name: Python Build
 
 on:
   push:
-    branches: [ main ]
-    branches: [ actions ]
+    branches: [ main, actions ]
   pull_request:
     branches: [ main ]
 
