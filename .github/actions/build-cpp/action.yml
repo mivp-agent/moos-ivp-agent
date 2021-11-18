@@ -5,3 +5,4 @@ runs:
   steps:
     - name: Build
       run: ./build.sh
+      shell: bash
