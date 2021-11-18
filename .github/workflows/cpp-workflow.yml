@@ -25,7 +25,7 @@ jobs:
     - name: Build moos-ivp
       uses: ./.github/actions/build-moos-ivp
       with:
-        caching: 'false'
+        caching: 'true'
         os: ${{ matrix.os }}
     - name: Debug path
       if: env.DEBUG_OUTPUT == 'true'
