@@ -52,7 +52,6 @@ jobs:
       matrix:
         os: [macos-11, macos-10.15]
     runs-on: ${{ matrix.os }}
-
     steps:
     - uses: actions/checkout@v2
     - name: Install MOOS-IvP Dependencies
@@ -71,6 +70,8 @@ jobs:
         echo "$(ls -la)"
         echo "${{github.workspace}}"
         echo "$(ls -la ~)"
+    - name: Install moos-ivp-agent dependencies
+      run: brew install python@3.7
     - name: Build moos-ivp-agent
       uses: ./.github/actions/build-cpp
     - name: Add MOOS-IvP bin to path
