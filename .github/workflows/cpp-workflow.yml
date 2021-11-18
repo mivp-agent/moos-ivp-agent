@@ -40,7 +40,7 @@ jobs:
       run: | 
         sudo add-apt-repository ppa:deadsnakes/ppa
         sudo apt update
-        sudo apt-get install -y python3.6-dev
+        sudo apt-get install -y python3.7-dev
     - name: Build moos-ivp-agent
       uses: ./.github/actions/build-cpp
     - name: Add MOOS-IvP bin to path
