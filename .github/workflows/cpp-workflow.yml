@@ -22,7 +22,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: Install MOOS-IvP Dependencies
       run: sudo apt-get update && sudo apt-get install -y subversion g++ cmake xterm libfltk1.3-dev freeglut3-dev libpng-dev libjpeg-dev libxft-dev libxinerama-dev libtiff5-dev
-    - name: Build moos-ivp
+    - name: Build MOOS-IvP
       uses: ./.github/actions/build-moos-ivp
       with:
         caching: 'true'
@@ -36,6 +36,8 @@ jobs:
         echo "$(ls -la)"
         echo "${{github.workspace}}"
         echo "$(ls -la ~)"
+    - name: Install moos-ivp-agent dependencies
+      - run: sudo apt-get install -y python3.6-dev
     - name: Build moos-ivp-agent
       uses: ./.github/actions/build-cpp
     - name: Add MOOS-IvP bin to path
