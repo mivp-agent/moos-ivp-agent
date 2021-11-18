@@ -31,7 +31,7 @@ runs:
         path: |
           ~/.cmake 
           ${{ github.workspace }}/moos-ivp/
-        key: ${{ inputs.os }}-${{ steps.key-info.outputs.checkout-revision }}-v0.3
+        key: ${{ inputs.os }}-${{ steps.key-info.outputs.checkout-revision }}-v0.1
     - name: Build MOOS
       if: |
         inputs.caching == 'false' || 
