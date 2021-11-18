@@ -1,8 +1,47 @@
 name: "Build moos-ivp"
-description: "Builds moos-ivp with optional caching"
+description: "Builds moos-ivp with optional caching based on OS type"
+inputs:
+  caching:
+    description: "true/false to enable/disable caching"
+    required: true
+    default: 'true'
+  os:
+    description: "To be combined with the moos-ivp rev # to generate a cache key"
+    required: true
 runs:
   using: "composite"
   steps:
-    - name: Build
-      run: ./build.sh
+    - name: Clone latest MOOS-IvP trunk
+      run: svn co https://oceanai.mit.edu/svn/moos-ivp-aro/trunk/ moos-ivp
       shell: bash
+    - name: Store moos-ivp revision for cache key
+      if: inputs.caching == 'true'
+      id: key-info
+      run: |
+        cd moos-ivp
+        export MOOS_IVP_REV=$(svn info --show-item revision)
+        echo "::set-output name=checkout-revision::$MOOS_IVP_REV"
+        echo "MOOS-IvP Revision: $MOOS_IVP_REV"
+      shell: bash
+    - name: Cache MOOS-IvP build
+      if: inputs.caching == 'true'
+      id: cache-moos-ivp
+      uses: actions/cache@v2
+      with: # Cache the ~/.cmake "User Package Registry" for find_package(MOOS)
+        path: |
+          ~/.cmake 
+          ${{ github.workspace }}/moos-ivp/
+        key: ${{ inputs.os }}-${{ steps.key-info.outputs.checkout-revision }}-v0.3
+    - name: Build MOOS
+      if: |
+        inputs.caching == 'false' || 
+        steps.cache-moos-ivp.outputs.cache-hit != 'true' 
+      run: cd moos-ivp && ./build-moos.sh
+      shell: bash
+    - name: Build IvP
+      if: |
+        inputs.caching == 'false' || 
+        steps.cache-moos-ivp.outputs.cache-hit != 'true'
+      run: cd moos-ivp && ./build-ivp.sh
+      shell: bash
+    
