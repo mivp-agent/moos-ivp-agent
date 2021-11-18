@@ -1,0 +1,8 @@
+name: "Build moos-ivp"
+description: "Builds moos-ivp with optional caching"
+runs:
+  using: "composite"
+  steps:
+    - name: Build
+      run: ./build.sh
+      shell: bash

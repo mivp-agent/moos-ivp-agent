@@ -22,29 +22,11 @@ jobs:
     - uses: actions/checkout@v2
     - name: Install MOOS-IvP Dependencies
       run: sudo apt-get update && sudo apt-get install -y subversion g++ cmake xterm libfltk1.3-dev freeglut3-dev libpng-dev libjpeg-dev libxft-dev libxinerama-dev libtiff5-dev
-    - name: Clone latest MOOS-IvP trunk
-      run: svn co https://oceanai.mit.edu/svn/moos-ivp-aro/trunk/ moos-ivp
-    - name: Store moos-ivp revision for cache key
-      id: key-info
-      run: |
-        cd moos-ivp
-        export MOOS_IVP_REV=$(svn info --show-item revision)
-        echo "::set-output name=checkout-revision::$MOOS_IVP_REV"
-        echo "MOOS-IvP Revision: $MOOS_IVP_REV"
-    - name: Cache MOOS-IvP build
-      id: cache-moos-ivp
-      uses: actions/cache@v2
-      with: # Cache the ~/.cmake "User Package Registry" for find_package(MOOS)
-        path: |
-          ~/.cmake 
-          ${{ github.workspace }}/moos-ivp/
-        key: ${{ matrix.os }}-${{ steps.key-info.outputs.checkout-revision }}-v0.3
-    - name: Build MOOS
-      if: steps.cache-moos-ivp.outputs.cache-hit != 'true' 
-      run: cd moos-ivp && ./build-moos.sh
-    - name: Build IvP
-      if: steps.cache-moos-ivp.outputs.cache-hit != 'true'
-      run: cd moos-ivp && ./build-ivp.sh
+    - name: Build moos-ivp
+      uses: ./.github/actions/build-moos-ivp
+      with:
+        caching: 'true'
+        os: ${{ matrix.os }}
     - name: Debug path
       if: env.DEBUG_OUTPUT == 'true'
       run: | 
@@ -54,7 +36,7 @@ jobs:
         echo "$(ls -la)"
         echo "${{github.workspace}}"
         echo "$(ls -la ~)"
-    - name: Build
+    - name: Build moos-ivp-agent
       uses: ./.github/actions/build-cpp
     - name: Add MOOS-IvP bin to path
       run: echo "${{github.workspace}}/moos-ivp/bin" >> $GITHUB_PATH
