@@ -47,5 +47,35 @@ jobs:
       run: echo "${{github.workspace}}/moos-ivp/bin" >> $GITHUB_PATH
     - name: Add MOOS-IvP scripts to path
       run: echo "${{github.workspace}}/moos-ivp/scripts" >> $GITHUB_PATH
+  osx-build:
+    strategy:
+      matrix:
+        os: [macos-11, macos-10.15]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install MOOS-IvP Dependencies
+      run: brew install cmake subversion wget libtiff fltk
+    - name: Build moos-ivp
+      uses: ./.github/actions/build-moos-ivp
+      with:
+        caching: 'true'
+        os: ${{ matrix.os }}
+    - name: Debug path
+      if: env.DEBUG_OUTPUT == 'true'
+      run: | 
+        echo "Path $PATH Github Path $GITHUB_PATH"
+        echo "$(env)"
+        echo "$(ls moos-ivp)"
+        echo "$(ls -la)"
+        echo "${{github.workspace}}"
+        echo "$(ls -la ~)"
+    - name: Build moos-ivp-agent
+      uses: ./.github/actions/build-cpp
+    - name: Add MOOS-IvP bin to path
+      run: echo "${{github.workspace}}/moos-ivp/bin" >> $GITHUB_PATH
+    - name: Add MOOS-IvP scripts to path
+      run: echo "${{github.workspace}}/moos-ivp/scripts" >> $GITHUB_PATH
       
       
