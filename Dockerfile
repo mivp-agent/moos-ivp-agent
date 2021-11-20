@@ -44,4 +44,4 @@ ENV IVP_BEHAVIOR_DIRS="${IVP_BEHAVIOR_DIRS}:/home/moos/${MIVP_AGENT}/lib"
 RUN mkdir -p ${MIVP_AGENT}
 COPY --chown=moos:moos . ${MIVP_AGENT}/
 
-RUN cd ${MIVP_AGENT} && ./build.sh
+RUN cd ${MIVP_AGENT} && ./build.sh --test
