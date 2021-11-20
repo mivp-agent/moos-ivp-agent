@@ -4,6 +4,12 @@ BUILD_TYPE="None"
 TEST="no"
 CMD_LINE_ARGS=""
 
+if [[ "$OSTYPE" == "darwin"* ]]; then
+	CMD_LINE_ARGS="-j $(sysctl -n hw.physicalcpu)"
+else
+	CMD_LINE_ARGS="-j $(nproc)"
+fi
+
 #-------------------------------------------------------------------
 #  Part 1: Check for and handle command-line arguments
 #-------------------------------------------------------------------
