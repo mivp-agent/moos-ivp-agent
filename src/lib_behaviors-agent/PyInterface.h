@@ -12,10 +12,12 @@
 #include <Python.h>
 #include "VarDataPair.h"
 
+using namespace std;
+
 class PyInterface
 {
  public:
-  PyInterface();
+  PyInterface(string module_name);
   ~PyInterface();
 
  public: 
@@ -42,6 +44,7 @@ class PyInterface
   // Objects
   PyObject* m_bridge_client;
 
+  string m_module_name;
   bool m_is_connected;
 };
 

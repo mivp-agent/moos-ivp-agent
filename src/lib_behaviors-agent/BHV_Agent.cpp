@@ -20,7 +20,8 @@ using namespace std;
 // Constructor
 
 BHV_Agent::BHV_Agent(IvPDomain domain) :
-  IvPBehavior(domain)
+  IvPBehavior(domain),
+  bridge("mivp_agent.bridge")
 {
   // Provide a default behavior name
   IvPBehavior::setParam("name", "rl_agent");

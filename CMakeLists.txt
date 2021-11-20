@@ -5,16 +5,49 @@
 # NAME:  Maintained by Carter Fendley - Original setup by Christian Convey
 #        Chris Gagner, Mike Benjamin and tips borrowed from Dave Billin
 #=======================================================================
+CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
-PROJECT( IVP_EXTEND )
+# Use cmake 3.0+ versioning
+CMAKE_POLICY(SET CMP0048 NEW)
+
+PROJECT(IVP_AGENT VERSION 0.1)
 
 set (CMAKE_CXX_STANDARD 11)
 
 #=======================================================================
-# Set the output directories for the binary and library files
+# Find python libraries
 #=======================================================================
 
+# NOTE: There is some interaction going on between this find_package for
+# python and the one inside gtest. It seems that I need to find the
+# Interpeter component here or any re-build of the project will fail. Not
+# 100% sure why or if the order of these two matter.
+
+if(${CMAKE_VERSION} VERSION_LESS "3.12")
+  message("Using legacy FindPythonLibs due to cmake ${CMAKE_VERSION}")
+  find_package(PythonLibs 3.7 EXACT REQUIRED)
+  
+  # Rename
+  set(Python_INCLUDE_DIRS ${PYTHON_INCLUDE_DIRS})
+  set(Python_LIBRARIES ${PYTHON_LIBRARIES})
+else()
+  find_package(Python 3.7 EXACT COMPONENTS Interpreter Development REQUIRED)
+endif()
+
+include_directories(${Python_INCLUDE_DIRS})
+
+message("Python include dirs: ${Python_INCLUDE_DIRS}")
+message("Python libraries: ${Python_LIBRARIES}")
+
+#=======================================================================
+# Enable Google Testing
+#=======================================================================
+add_subdirectory(thirdparty/gtest)
+enable_testing()
+
+#=======================================================================
+# Set the output directories for the binary and library files
+#=======================================================================
 GET_FILENAME_COMPONENT(IVP_EXTEND_BIN_DIR "${CMAKE_SOURCE_DIR}/bin"  ABSOLUTE )
 GET_FILENAME_COMPONENT(IVP_EXTEND_LIB_DIR "${CMAKE_SOURCE_DIR}/lib"  ABSOLUTE )
 
@@ -99,4 +132,5 @@ ENDIF( ${WIN32} )
 #=======================================================================
 # Add Subdirectories
 #=======================================================================
-ADD_SUBDIRECTORY( src )
+ADD_SUBDIRECTORY(src)
+ADD_SUBDIRECTORY(test)

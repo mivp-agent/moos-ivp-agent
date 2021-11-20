@@ -16,13 +16,17 @@ using namespace std;
 //---------------------------------------------------------
 // Constructor
 
-PyInterface::PyInterface()
+PyInterface::PyInterface(string module_name)
 {
+  m_module_name = module_name;
   m_bridge_client = NULL;
 
   m_is_connected = false;
 
+  // Bellow will fatal error on failure, no-op on second call
   Py_Initialize();
+
+  // Attempt to load the module
   loadModule();
 }
 
@@ -38,10 +42,10 @@ bool PyInterface::loadModule()
   }
   
   // Load module
-  PyObject* m_bridge_module = PyImport_ImportModule("mivp_agent.bridge");
+  PyObject* m_bridge_module = PyImport_ImportModule(m_module_name.c_str());
 
   if(!m_bridge_module){
-    fprintf(stderr, "ERROR: Failed to import bridge module\n");
+    fprintf(stderr, "ERROR: Failed to import bridge module \"%s\"\n", m_module_name.c_str());
     PyErr_Print();
     return false;
   }
