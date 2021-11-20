@@ -24,13 +24,13 @@ for ARGI; do
 		printf "     if your machine has two cores. -j4 etc for quad core. \n"
 		exit 0;
 	elif [[ "${ARGI}" == "--debug" || "${ARGI}" == "-d" ]]; then
-			BUILD_TYPE="Debug"
+		BUILD_TYPE="Debug"
 	elif [[ "${ARGI}" == "--release" || "${ARGI}" == "-r" ]]; then
-			BUILD_TYPE="Release"
-	elif [[ "${ARGI}" == "--test " || "${ARGI}" == "-t" ]]; then
+		BUILD_TYPE="Release"
+	elif [[ "${ARGI}" == "--test" || "${ARGI}" == "-t" ]]; then
 		TEST="yes"
 	else
-			CMD_LINE_ARGS=$CMD_LINE_ARGS" "$ARGI
+		CMD_LINE_ARGS=$CMD_LINE_ARGS" "$ARGI
 	fi
 done
 
