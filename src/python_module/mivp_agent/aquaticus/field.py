@@ -165,7 +165,7 @@ class DiscreteFieldGrapher:
 
   **WARNING:** This class is *EXTREMELY* ineffecient and should not be used in a loop which timing is important. Its primary use is for debuging.
 
-  You can see a example of how to use this visualizer with the FieldDiscretizer [here](https://github.com/CarterFendley/moos-ivp-agent/blob/main/examples/DiscreteField/run.py).
+  You can see a example of how to use this visualizer with the FieldDiscretizer [here](https://github.com/mivp-agent/moos-ivp-agent/blob/main/examples/DiscreteField/run.py).
   '''
   def __init__(self, discretizer):
     '''

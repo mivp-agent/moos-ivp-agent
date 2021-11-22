@@ -47,7 +47,7 @@ See [this](https://docs.docker.com/get-docker/) page for instructions for each m
 ### Download this repo
 
 ```
-git clone https://github.com/CarterFendley/moos-ivp-agent.git
+git clone https://github.com/mivp-agent/moos-ivp-agent.git
 ```
 
 See the docker section below for usage of the docker container.
@@ -93,7 +93,7 @@ If on mac, read the "XQuartz on OSX section" carefully and follow the steps. Aft
 
 **I can't install or get something work**
 
-Open an [issue](https://github.com/CarterFendley/moos-ivp-agent/issues) this repository is still **very** young and I need to know about any issues with the install process.
+Open an [issue](https://github.com/mivp-agent/moos-ivp-agent/issues) this repository is still **very** young and I need to know about any issues with the install process.
 
 ## Using the docker script
 
