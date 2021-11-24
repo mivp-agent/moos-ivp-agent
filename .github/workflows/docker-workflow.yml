@@ -1,0 +1,20 @@
+name: Docker Build
+
+on:
+  push:
+    branches: [ main, actions ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  linux-build:
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, ubuntu-18.04, macos-11, macos-10.15]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build docker container
+      run: ./docker build
