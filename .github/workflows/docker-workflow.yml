@@ -16,5 +16,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: Debug Info
+      run: ls -la
     - name: Build docker container
       run: ./docker.sh build
