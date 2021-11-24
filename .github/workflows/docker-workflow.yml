@@ -17,4 +17,4 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build docker container
-      run: ./docker build
+      run: ./docker.sh build
