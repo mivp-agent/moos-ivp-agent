@@ -1,0 +1,10 @@
+syntax = "proto2";
+
+package mivp_agent;
+
+message NodeReport {
+  required string vname = 1;
+  required float NAV_X = 2;
+  required float NAV_Y = 3;
+  required float NAV_HEADING = 4;
+}

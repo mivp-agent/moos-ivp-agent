@@ -1,0 +1,13 @@
+syntax = "proto2";
+
+package mivp_agent;
+
+import "node_report.proto";
+import "aquaticus_vehicle.proto";
+
+message AgentState {
+  required float MOOS_TIME = 1;
+  required AquaticusVehicle vehicle = 2;
+
+  repeated NodeReport other_reports = 3;
+}

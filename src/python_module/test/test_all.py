@@ -9,12 +9,14 @@ import unittest
 import test_bridge
 import test_manager
 import test_data_structures
+import test_proto
 
 if __name__ == '__main__':
   suite = unittest.TestSuite()
   suite.addTest(unittest.makeSuite(test_bridge.TestBridge))
   suite.addTest(unittest.makeSuite(test_manager.TestManager))
   suite.addTest(unittest.makeSuite(test_data_structures.TestLimitedHistory))
+  suite.addTest(unittest.makeSuite(test_proto.TestProto))
 
   
   runner = unittest.TextTestRunner()
