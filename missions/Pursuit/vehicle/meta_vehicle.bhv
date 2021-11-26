@@ -1,0 +1,71 @@
+initialize DELPOY     = false
+initialize ACTION     = $(BEHAVIOR)
+initialize TAGGED     = false
+
+set MODE     = ACTIVE {
+  DEPLOY     = true
+} INACTIVE
+
+set MODE     = RETURN_BASE {
+  MODE       = ACTIVE
+  (ACTION != AGENT) and ((HAS_FLAG = true) or (TAGGED = true))
+} PLAY
+
+set MODE     = TAGGING {
+  MODE       = ACTIVE:PLAY
+  (ACTION = TAG) and (TAGGED = false)
+}
+
+set MODE    = AVOIDING {
+  MODE      = ACTIVE:PLAY
+  (ACTION = AVOID) and (TAGGED = false)
+}
+
+set MODE     = STATIONNING {
+  MODE       = ACTIVE:PLAY
+  ACTION     = STATION
+}
+
+#ifdef ROLE agent
+  //#############################################################################
+  Behavior = BHV_Agent
+  {
+    name = agent
+    pwt  = 100
+    perpetual = true
+
+    condition = MODE == ACTIVE
+
+    sub_var = TAGGED
+    sub_var = HAS_FLAG
+
+    sub_vehicle = drone_21
+    sub_vehicle = drone_22
+    sub_vehicle = drone_23
+    sub_vehicle = drone_24
+    sub_vehicle = drone_25
+  }
+#endif
+
+//#############################################################################
+Behavior = BHV_StationKeep
+{
+  name                    = station_keep
+  pwt                     = 100
+  condition               = MODE == STATIONNING
+  runflag                 = BOT_DIALOG_STATUS=Stationing
+
+  center_activate         = true
+  hibernation_radius      = 5
+  inner_radius            = 4
+  outer_radius            = 15
+  outer_speed             = 5
+  transit_speed           = 5
+  swing_time              = 3
+
+  visual_hints            = vertex_size = 1 // default
+  visual_hints            = edge_color = light_blue // default
+  visual_hints            = edge_size = 1 // default
+  visual_hints            = label_color = white // default
+  visual_hints            = vertex_color = red // default
+}

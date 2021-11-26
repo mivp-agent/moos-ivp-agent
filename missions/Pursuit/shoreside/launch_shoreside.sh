@@ -4,8 +4,6 @@
 #-------------------------------------------------------
 TIME_WARP=1
 JUST_MAKE="no"
-BLUE_FLAG="x=-52,y=-70"
-RED_FLAG="x=50,y=-24"
 
 # moos-ivp-agent specific
 GUI="yes"
@@ -43,7 +41,7 @@ done
 #  Part 1: Create the Shoreside MOOS file
 #-------------------------------------------------------
 nsplug meta_shoreside.moos targ_shoreside.moos -f WARP=$TIME_WARP    \
-    SPORT="9000" GUI=$GUI LOGGING=$LOGGING
+    SPORT="9000" SHARE_LISTEN="9300" GUI=$GUI LOGGING=$LOGGING
 
 if [ ! -e targ_shoreside.moos ]; then echo "no targ_shoreside.moos"; exit 1; fi
 

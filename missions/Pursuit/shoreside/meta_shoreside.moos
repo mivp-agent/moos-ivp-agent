@@ -5,7 +5,7 @@ ServerHost = localhost
 ServerPort = $(SPORT)
 Community  = shoreside
 
-#include ../plug_origin_warp.moos
+#include ../common/plug_origin_warp.moos
 
 //--------------------------------------------------------
 Processconfig = ANTLER
@@ -74,16 +74,6 @@ ProcessConfig = uFldTagManagerAgent
   can_tag = drone_25=agent_15
 }
 
-//---------------------------------------------------------
-// pShare Configuration Block
-
-ProcessConfig = pShare
-{
-  AppTick    = 2
-  CommsTick  = 2
-
-  input = route =  localhost:$(SHARE_LISTEN)
-}
 
 //--------------------------------------------------
 // ufldnodecomms Configuration Block
@@ -131,16 +121,6 @@ ProcessConfig = uFldShoreBroker
 
   qbridge = AQUATICUS_GAME
   qbridge = UFMG_HEARTBEAT
-}
-
-
-//--------------------------------------------------
-ProcessConfig = pHostInfo
-{
-  AppTick     = 2
-  CommsTick   = 2
-
-//  DEFAULT_HOSTIP = localhost
 }
 
 //--------------------------------------------------
@@ -215,28 +195,5 @@ ProcessConfig = uProcessWatch
   summary_wait = 10
 }
 
-//------------------------------------------
-ProcessConfig = iSay
-{
-  AppTick   = 5
-  CommsTick = 5
-
-  min_utter_interval = 1.5
-  interval_policy    = from_start
-
-  os_mode=both
-  audio_dir=sounds
-}
-
-//----------------------------------------
-ProcessConfig = pTimeWatch
-{
-  AppTick   = 4
-  CommsTick = 4
-  
-  watch_var = NODE_REPORT
-
-  threshhold = 30
-  //local_offset = 30
-}
-
+#include ../common/plug_pShare.moos
+#include ../common/plug_pHostInfo.moos
