@@ -5,6 +5,10 @@ import os, sys
 currentdir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.dirname(currentdir))
 
+# Test generated file dir
+generated_dir = os.path.join(currentdir, '.generated')
+assert os.listdir(generated_dir) == ['README.txt'], 'test/.generated directory corrupted'
+
 import unittest
 import test_bridge
 import test_manager
@@ -20,6 +24,7 @@ if __name__ == '__main__':
   suite.addTest(unittest.makeSuite(test_manager.TestManager))
   suite.addTest(unittest.makeSuite(test_data_structures.TestLimitedHistory))
   suite.addTest(unittest.makeSuite(test_proto.TestProto))
+  suite.addTest(unittest.makeSuite(test_proto.TestLogger))
 
   
   runner = unittest.TextTestRunner()

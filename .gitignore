@@ -23,3 +23,6 @@ CMakeFiles
 
 # Weights and biases
 **/wandb/*
+
+# Files generated during python testing
+src/python_module/test/.generated/**
