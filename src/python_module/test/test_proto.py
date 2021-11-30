@@ -9,6 +9,7 @@ generated_dir = os.path.join(current_dir, '.generated')
 import unittest
 
 from google.protobuf.message import EncodeError
+from google.protobuf.message import Message
 from mivp_agent.proto import agent_state_pb2, node_report_pb2, aquaticus_vehicle_pb2
 
 class TestProto(unittest.TestCase):
@@ -117,8 +118,32 @@ class TestLogger(unittest.TestCase):
     with self.assertRaises(RuntimeError):
       ProtoLogger(test2_dir, node_report_pb2.NodeReport, 'r')
     
-    log = ProtoLogger(save_dir, node_report_pb2.NodeReport, 'r')
     clean_dir(test2_dir, file_pattern="*.txt")
+    
+    log = ProtoLogger(save_dir, node_report_pb2.NodeReport, 'r')
+
+    # Test that we can get the amount request
+    msgs = log.read(1)
+    self.assertEqual(len(msgs), 1)
+    self.assertTrue(isinstance(msgs[0], Message))
+    self.assertTrue(isinstance(msgs[0], node_report_pb2.NodeReport))
+    self.assertEqual(msgs[0], self.report)
+
+    # Test that reading separate files will happen seemlessly (remember 2 messages per file in the above)
+    # Test that a too high n won't break
+    msgs = log.read(3)
+    self.assertEqual(len(msgs), 2, "Expected only 2 messages to remain on disk")
+    
+    for msg in msgs:
+      self.assertTrue(isinstance(msg, Message))
+      self.assertTrue(isinstance(msg, node_report_pb2.NodeReport))
+      self.assertEqual(msg, self.report)
+
+      # Sanity check
+      self.assertNotEqual(msg, self.vehicle)
+    
+    # Test subsequent reads just return nothing =
+    self.assertEqual(len(log.read(1)), 0)
 
     # Clean up
     clean_dir(save_dir, file_pattern="*.gz")

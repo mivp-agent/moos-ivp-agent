@@ -3,6 +3,8 @@ import sys
 import time
 import gzip
 
+from google.protobuf import message
+
 from mivp_agent.util import packit
 
 from google.protobuf.message import Message
@@ -27,7 +29,7 @@ class ProtoLogger:
       assert os.path.isdir(path), "Provided path is not existing directory"
       assert len(os.listdir(path)) != 0, "Provided directory is empty"
       for f in os.listdir(path):
-        if f[-3] != '.gz':
+        if f[-3:len(f)] != '.gz':
           raise RuntimeError(f"ProtoLogger dir contains non gzip file '{f}'")
 
     assert isinstance(type, GeneratedProtocolMessageType), "Type must be a generated MessageType class"
@@ -47,8 +49,26 @@ class ProtoLogger:
     # Open the directory
     if self._mode == MODE_WRITE:
       os.makedirs(self._path, exist_ok=False)
+    if self._mode == MODE_READ:
+      # Read save directory and sort by timestamp
+      self._gzip_files = os.listdir(self._path)
+      self._gzip_files.sort()
+
+      # Current file index in self._gzip_files
+      self._gzip_idx = 0
+
+      # Messages from the most recently read file
+      self._current_messages = []
+
   
   def write(self, message):
+    '''
+    Method used to write protobuf messages of type specified in __init__ to a buffer. The buffer will be written to a .gz file when the length is greater than or equal to `max_messages` or open close() / context manager exit.
+
+    Args:
+      message (Message): A protobuf message of type specified in __init__
+    '''
+
     assert self._mode == MODE_WRITE, "Method add() only supported in write mode"
     assert isinstance(message, Message), "Message must be protobuf message"
     assert isinstance(message, self._type), "Message not of type specified by constructor"
@@ -69,8 +89,8 @@ class ProtoLogger:
       save_path = os.path.join(self._path, str(time.time())+'.gz')
 
       # Use gzip in write bytes mode
-      with gzip.open(save_path, 'wb') as f:
-        f.write(self._buffer)
+      with gzip.open(save_path, 'wb') as gz:
+        gz.write(self._buffer)
 
       # Clean up
       self._msg_count = 0
@@ -78,6 +98,51 @@ class ProtoLogger:
     except Exception as e:
       print(e, file=sys.stderr)
       print("Warning: unable to write to gzip file, deffering write", file=sys.stderr)
+  
+  def read(self, n: int):
+    '''
+    Method is used to read a specified number of messages from disk.
+
+    Args:
+      n (int): Number of messages to read
+    Returns:
+      A python list of protobuf messages. The length of this list will be less than or equal to `n`
+    '''
+    
+    messages_out = []
+    while len(messages_out) < n:
+      # See if we have messages to parse from previously read gz
+      if len(self._current_messages) == 0:
+        # Check if we have exhausted all files
+        if self._gzip_idx == len(self._gzip_files):
+          break # Out of messages
+
+        # If there are more gzip files, read next
+        filepath = os.path.join(self._path, self._gzip_files[self._gzip_idx])
+        with gzip.open(filepath, mode='rb') as gz:
+          buffer = gz.read()
+
+          # Get binary messages and parse
+          bmsgs = packit.unpack_buffer(buffer)
+          for bmsg in bmsgs:
+            msg = self._type()
+            msg.ParseFromString(bmsg)
+
+            self._current_messages.append(msg)
+          
+          # Indicate this file has been read
+          self._gzip_idx += 1
+      
+      # Here we should have more messages, find out how many message we should add to message_out
+      amt = min(n - len(messages_out), len(self._current_messages))
+
+      # Add that amount to the returned list
+      messages_out.extend(self._current_messages[:amt])
+
+      # Remove that amount from the queue thing
+      self._current_messages = self._current_messages[amt:]
+    
+    return messages_out
 
   # Not 100% if I need the following
   def __enter__(self):

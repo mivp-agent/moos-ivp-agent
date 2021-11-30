@@ -87,6 +87,20 @@ class TestPackitDecode(unittest.TestCase):
           self.assertTrue(isinstance(msg, bytearray))
           msg_str = msg.decode('utf-8')
           self.assertEqual(msg_str, self.message_str)
+  
+  def test_once(self):
+    buffer = self.message_packed
+    msgs = packit.unpack_buffer(buffer)
+    self.assertEqual(len(msgs), 1)
+    self.assertTrue(isinstance(msgs[0], bytearray))
+    self.assertEqual(msgs[0].decode('utf-8'), self.message_str)
+
+    # Assert runtime error on extra bytes
+    buffer += b'h'
+    with self.assertRaises(RuntimeError):
+      packit.unpack_buffer(buffer)
+    
+    
 
 if __name__ == '__main__':
   unittest.main()
