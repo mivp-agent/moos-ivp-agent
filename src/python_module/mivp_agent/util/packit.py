@@ -7,21 +7,21 @@ def unpack(more):
   This method is used to parse messages in a stream which have been previously packed using the associated pack(data) method.
 
   Args:
-    more (callable): Should return a python byte string when called
+    more (callable): Should return a python byte string / array when called
   Returns:
-    messages (list): A list of unpacked messages in byte string format. This list can be empty if a more() call returns an empty byte string.
+    messages (list): A list of unpacked messages in bytearray() format. This list can be empty if a more() call returns an empty byte string.
   '''
 
   assert callable(more), '"more" argument is not callable'
 
-  tmp_data = b'' # To store data being processed
+  tmp_data = bytearray() # To store data being processed
   messages = [] # To store complete messages 
 
   # When not None we are parsing a message
   current_len = None
 
   # Get some initial data
-  tmp_data = more()
+  tmp_data = bytearray(more())
   
   if len(tmp_data) == 0:
     return []
@@ -30,7 +30,7 @@ def unpack(more):
   while len(tmp_data) != 0:
     # If necessary, get more data for the header
     while len(tmp_data) < HEADER_SIZE:
-      tmp_data += more()
+      tmp_data.extend(bytearray(more()))
     
     # We will have a full header here, parse it into current_len
     current_len = struct.unpack('>L', tmp_data[:HEADER_SIZE])[0]
@@ -40,7 +40,7 @@ def unpack(more):
 
     # If necessary, get more data for our message
     while len(tmp_data) < current_len:
-      tmp_data += more()
+      tmp_data.extend(bytearray(more()))
 
     # Here we will have a full message, parse it into messages
     messages.append(tmp_data[:current_len])

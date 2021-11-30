@@ -42,7 +42,7 @@ class TestPackitDecode(unittest.TestCase):
     self.assertEqual(len(unpacked_msgs), 1)
     
     unpacked_msg = unpacked_msgs[0]
-    self.assertTrue(isinstance(unpacked_msg, bytes))
+    self.assertTrue(isinstance(unpacked_msg, bytearray))
     
     unpacked_str = unpacked_msg.decode('utf-8')
     self.assertEqual(self.message_str, unpacked_str)
@@ -56,7 +56,7 @@ class TestPackitDecode(unittest.TestCase):
       self.assertEqual(len(unpacked_msgs), x)
 
       for msg in unpacked_msgs:
-        self.assertTrue(isinstance(msg, bytes))
+        self.assertTrue(isinstance(msg, bytearray))
         msg_str = msg.decode('utf-8')
         self.assertEqual(msg_str, self.message_str)
   
@@ -84,7 +84,7 @@ class TestPackitDecode(unittest.TestCase):
         self.assertEqual(len(all_messages), x)
 
         for msg in all_messages:
-          self.assertTrue(isinstance(msg, bytes))
+          self.assertTrue(isinstance(msg, bytearray))
           msg_str = msg.decode('utf-8')
           self.assertEqual(msg_str, self.message_str)
 
