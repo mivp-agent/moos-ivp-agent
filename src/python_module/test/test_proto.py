@@ -69,6 +69,18 @@ class TestLogger(unittest.TestCase):
     cls.report.NAV_HEADING = 143.2
     cls.report.SerializeToString()
 
+    cls.reports = []
+    for i in range(100):
+      report = node_report_pb2.NodeReport()
+      report.vname = f"vname{i}"
+      report.NAV_X = 40.1
+      report.NAV_Y = -50.4
+      report.NAV_HEADING = 143.2
+      # Test is valid 
+      report.SerializeToString()
+
+      cls.reports.append(report)
+
     cls.vehicle = aquaticus_vehicle_pb2.AquaticusVehicle()
     cls.vehicle.tagged = False
     cls.vehicle.has_flag = True
@@ -147,6 +159,53 @@ class TestLogger(unittest.TestCase):
 
     # Clean up
     clean_dir(save_dir, file_pattern="*.gz")
+  
+  def test_matrix(self):
+    matrix_dir = os.path.join(generated_dir, 'matrix')
+    for store_amt in range(1, 50, 5):
+      for read_amt in range(1, 50, 5):
+        # Make sure the directory not created yet
+        self.assertFalse(os.path.isdir(matrix_dir), "Expected matrix directory to be empty at begining of test")
+
+        # Write the messages with max_msgs set to store_amount
+        with ProtoLogger(
+            matrix_dir,
+            node_report_pb2.NodeReport,
+            'w',
+            max_msgs=store_amt) as log:
+          for msg in self.reports:
+            log.write(msg)
+        
+        # Check that the proper number of files have been generated
+        # NOTE: Reference https://stackoverflow.com/questions/14822184/is-there-a-ceiling-equivalent-of-operator-in-python
+        file_amt = -(len(self.reports) // -store_amt)
+        self.assertEqual(len(os.listdir(matrix_dir)), file_amt)
+
+        # Open previously written dir in read mode 
+        all_messages = []
+        with ProtoLogger(
+            matrix_dir,
+            node_report_pb2.NodeReport,
+            'r',) as log:
+            
+            while len(all_messages) != len(self.reports):
+              msgs = log.read(read_amt)
+
+              self.assertNotEqual(len(msgs), 0, "Read returned empty list before all messages were decoded")
+
+              if len(msgs) != read_amt:
+                self.assertEqual(len(log.read(read_amt)), 0, "Read did not fulfill `n` requested when more messages were remaining")
+
+              all_messages.extend(msgs)
+
+        for i, msg in enumerate(all_messages):
+          self.assertTrue(isinstance(msg, Message))
+          self.assertTrue(isinstance(msg, node_report_pb2.NodeReport))
+          self.assertEqual(msg, self.reports[i], "Message either corrupted or out of order")
+        
+        # Clean up
+        clean_dir(matrix_dir, file_pattern="*.gz")
+        
     
 if __name__ == '__main__':
   unittest.main()

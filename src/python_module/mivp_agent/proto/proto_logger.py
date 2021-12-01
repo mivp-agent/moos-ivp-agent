@@ -19,6 +19,9 @@ MODES_SUPPORTED = (
 )
 
 class ProtoLogger:
+  '''
+  max_msgs will not be used in MODE_READ
+  '''
   def __init__(self, path, type, mode='r', max_msgs=1000):
     assert mode in MODES_SUPPORTED, f"Unsupported mode '{mode}'"
 
@@ -49,10 +52,15 @@ class ProtoLogger:
     # Open the directory
     if self._mode == MODE_WRITE:
       os.makedirs(self._path, exist_ok=False)
+      self._time_stamp = str(round(time.time()))
+      self._current_idx = 0
     if self._mode == MODE_READ:
-      # Read save directory and sort by timestamp
+      # Read save directory
       self._gzip_files = os.listdir(self._path)
-      self._gzip_files.sort()
+      
+      # Sort by index
+      index = lambda x: int(x.split('.')[0].split('-')[1])
+      self._gzip_files = sorted(self._gzip_files, key=index)
 
       # Current file index in self._gzip_files
       self._gzip_idx = 0
@@ -86,13 +94,14 @@ class ProtoLogger:
 
     # Incase something goes wrong, don't crash
     try:
-      save_path = os.path.join(self._path, str(time.time())+'.gz')
+      save_path = os.path.join(self._path, f'{self._time_stamp}-{self._current_idx}.gz')
 
       # Use gzip in write bytes mode
       with gzip.open(save_path, 'wb') as gz:
         gz.write(self._buffer)
 
       # Clean up
+      self._current_idx += 1
       self._msg_count = 0
       self._buffer.clear()
     except Exception as e:
@@ -146,15 +155,15 @@ class ProtoLogger:
 
   # Not 100% if I need the following
   def __enter__(self):
-    pass
+    return self
 
-  def __exit__(self):
+  def __exit__(self, exc_type, exc_value, tracebac):
     self.close()
   
   def close(self):
     if self._mode == MODE_WRITE:
       self._write_buffer()
     elif self._mode == MODE_READ:
-      raise RuntimeError('Implement')
+      pass # No file pointers to close
     else:
       raise RuntimeError(f'Unexpected mode "{self._mode}" on close')
