@@ -27,22 +27,22 @@ class TestProto(unittest.TestCase):
     with self.assertRaises(TypeError):
       var.sval = 1203.2
   
-  def do_state_translate_test(self, state, debug=False):
-    proto_state = translate.state_from_dict(state)
+  def do_translate_test(self, input, from_dict, to_dict, debug=False):
+    proto = from_dict(input)
 
     # Make sure we can serialize
-    proto_state.SerializeToString()
+    proto.SerializeToString()
 
     # Untranslate and compare with original
-    out_state = translate.state_to_dict(proto_state)
+    out = to_dict(proto)
 
     if debug:
-      print("IN STATE --------------------")
-      print(state)
-      print("OUT STATE --------------------")
-      print(out_state)
+      print("IN --------------------")
+      print(input)
+      print("OUT -------------------")
+      print(out)
 
-    self.assertEqual(state, out_state)
+    self.assertEqual(input, out)
 
   def test_translate_state(self):
     state = {
@@ -54,10 +54,18 @@ class TestProto(unittest.TestCase):
       KEY_EPISODE_MGR_REPORT: None
     }
 
-    self.do_state_translate_test(state)
+    self.do_translate_test(
+      state, 
+      translate.state_from_dict,
+      translate.state_to_dict
+    )
 
     state['TAGGED'] = True
-    self.do_state_translate_test(state)
+    self.do_translate_test(
+      state, 
+      translate.state_from_dict,
+      translate.state_to_dict
+    )
 
     # Test with bad episode report
     state[KEY_EPISODE_MGR_REPORT] = {
@@ -66,10 +74,18 @@ class TestProto(unittest.TestCase):
       'WILL_PAUSE': False,
     }
     with self.assertRaises(KeyError):
-      self.do_state_translate_test(state)
+      self.do_translate_test(
+      state, 
+      translate.state_from_dict,
+      translate.state_to_dict
+    )
 
     state[KEY_EPISODE_MGR_REPORT]['DURATION'] = 2.0
-    self.do_state_translate_test(state)
+    self.do_translate_test(
+      state, 
+      translate.state_from_dict,
+      translate.state_to_dict
+    )
 
     # Test with bad other vehicle first
     state['NODE_REPORTS'] = {}
@@ -80,11 +96,61 @@ class TestProto(unittest.TestCase):
       'NAV_HEADING': 140,
     }
     with self.assertRaises(KeyError):
-      self.do_state_translate_test(state)
+      self.do_translate_test(
+      state, 
+      translate.state_from_dict,
+      translate.state_to_dict
+    )
     
     state['NODE_REPORTS']['henry']['MOOS_TIME'] = 0.123
-    self.do_state_translate_test(state)
+    self.do_translate_test(
+      state, 
+      translate.state_from_dict,
+      translate.state_to_dict
+    )
 
+  def test_translate_action(self):
+    action = {
+      'speed': 2.0,
+      'course': 120.0,
+      'posts': {},
+      'ctrl_msg': 'SEND_STATE'
+    }
+
+    self.do_translate_test(
+      action, 
+      translate.action_from_dict,
+      translate.action_to_dict
+    )
+
+    action['posts']['myVar'] = True
+    self.do_translate_test(
+      action, 
+      translate.action_from_dict,
+      translate.action_to_dict
+    )
+
+    action['posts']['myVar'] = "String"
+    self.do_translate_test(
+      action, 
+      translate.action_from_dict,
+      translate.action_to_dict
+    )
+
+    action['posts']['myVar'] = 3.1415
+    self.do_translate_test(
+      action, 
+      translate.action_from_dict,
+      translate.action_to_dict
+    )
+
+    del action['speed']
+    with self.assertRaises(AssertionError):
+      self.do_translate_test(
+      action, 
+      translate.action_from_dict,
+      translate.action_to_dict
+    )
 
 from mivp_agent.proto.proto_logger import ProtoLogger
 
