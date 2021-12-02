@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto2',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x10mivp_agent.proto\x12\nmivp_agent\x1a\nmoos.proto\"S\n\rEpisodeReport\x12\x0b\n\x03NUM\x18\x01 \x02(\x05\x12\x0f\n\x07SUCCESS\x18\x02 \x02(\x08\x12\x10\n\x08\x44URATION\x18\x03 \x02(\x01\x12\x12\n\nWILL_PAUSE\x18\x04 \x02(\x08\"\xb2\x01\n\x05State\x12%\n\x05vinfo\x18\x01 \x02(\x0b\x32\x16.mivp_agent.NodeReport\x12!\n\x04vars\x18\x02 \x03(\x0b\x32\x13.mivp_agent.MOOSVar\x12,\n\x0cnode_reports\x18\x03 \x03(\x0b\x32\x16.mivp_agent.NodeReport\x12\x31\n\x0e\x65pisode_report\x18\x04 \x01(\x0b\x32\x19.mivp_agent.EpisodeReport\"K\n\x06\x41\x63tion\x12\x0e\n\x06\x63ourse\x18\x01 \x02(\x01\x12\r\n\x05speed\x18\x02 \x02(\x01\x12\"\n\x05posts\x18\x03 \x03(\x0b\x32\x13.mivp_agent.MOOSVar\"i\n\nTransition\x12\x1d\n\x02s1\x18\x01 \x02(\x0b\x32\x11.mivp_agent.State\x12\x1d\n\x01\x61\x18\x02 \x02(\x0b\x32\x12.mivp_agent.Action\x12\x1d\n\x02s2\x18\x03 \x02(\x0b\x32\x11.mivp_agent.State'
+  serialized_pb=b'\n\x10mivp_agent.proto\x12\nmivp_agent\x1a\nmoos.proto\"S\n\rEpisodeReport\x12\x0b\n\x03NUM\x18\x01 \x02(\x05\x12\x0f\n\x07SUCCESS\x18\x02 \x02(\x08\x12\x10\n\x08\x44URATION\x18\x03 \x02(\x01\x12\x12\n\nWILL_PAUSE\x18\x04 \x02(\x08\"\xb2\x01\n\x05State\x12%\n\x05vinfo\x18\x01 \x02(\x0b\x32\x16.mivp_agent.NodeReport\x12!\n\x04vars\x18\x02 \x03(\x0b\x32\x13.mivp_agent.MOOSVar\x12,\n\x0cnode_reports\x18\x03 \x03(\x0b\x32\x16.mivp_agent.NodeReport\x12\x31\n\x0e\x65pisode_report\x18\x04 \x01(\x0b\x32\x19.mivp_agent.EpisodeReport\"]\n\x06\x41\x63tion\x12\x0e\n\x06\x63ourse\x18\x01 \x02(\x01\x12\r\n\x05speed\x18\x02 \x02(\x01\x12\"\n\x05posts\x18\x03 \x03(\x0b\x32\x13.mivp_agent.MOOSVar\x12\x10\n\x08\x63trl_msg\x18\x04 \x02(\t\"i\n\nTransition\x12\x1d\n\x02s1\x18\x01 \x02(\x0b\x32\x11.mivp_agent.State\x12\x1d\n\x01\x61\x18\x02 \x02(\x0b\x32\x12.mivp_agent.Action\x12\x1d\n\x02s2\x18\x03 \x02(\x0b\x32\x11.mivp_agent.State'
   ,
   dependencies=[moos__pb2.DESCRIPTOR,])
 
@@ -162,6 +162,13 @@ _ACTION = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='ctrl_msg', full_name='mivp_agent.Action.ctrl_msg', index=3,
+      number=4, type=9, cpp_type=9, label=2,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -175,7 +182,7 @@ _ACTION = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=310,
-  serialized_end=385,
+  serialized_end=403,
 )
 
 
@@ -220,8 +227,8 @@ _TRANSITION = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=387,
-  serialized_end=492,
+  serialized_start=405,
+  serialized_end=510,
 )
 
 _STATE.fields_by_name['vinfo'].message_type = moos__pb2._NODEREPORT

@@ -22,6 +22,7 @@ message Action {
   required double course = 1;
   required double speed = 2;
   repeated MOOSVar posts = 3;
+  required string ctrl_msg = 4;
 }
 
 message Transition {

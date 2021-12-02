@@ -1,7 +1,7 @@
 from mivp_agent.util import validate
 from mivp_agent.const import KEY_ID, KEY_EPISODE_MGR_STATE, KEY_EPISODE_MGR_REPORT
 from mivp_agent.proto.moos_pb2 import MOOSVar, NodeReport
-from mivp_agent.proto.mivp_agent_pb2 import State, EpisodeReport
+from mivp_agent.proto.mivp_agent_pb2 import State, Action, EpisodeReport
 
 core_keys = (
   KEY_ID,
@@ -13,6 +13,27 @@ core_keys = (
   "MOOS_TIME",
   "NODE_REPORTS"
 )
+
+'''
+=================================
+Begin "From Dictionary" functions
+=================================
+'''
+
+def moos_var_from_kp(key, val):
+  var = MOOSVar()
+  var.key = key
+
+  if isinstance(val, float):
+    var.dval = val
+  elif isinstance(val, str):
+    var.sval = val
+  elif isinstance(val, bool):
+    var.bval = val
+  else:
+    raise TypeError(f"Unexpected type when parsing moos var {key}:{val}")
+  
+  return var
 
 def node_report_from_dict(report, vname):
   assert isinstance(report, dict), "Report must be dict"
@@ -56,24 +77,45 @@ def state_from_dict(state):
   # Find other vars
   for key in state:
     if key not in core_keys:
-      var = MOOSVar()
-      var.key = key
-
-      if isinstance(state[key], float):
-        var.dval = state[key]
-      elif isinstance(state[key], str):
-        var.sval = state[key]
-      elif isinstance(state[key], bool):
-        var.bval = state[key]
-      else:
-        raise TypeError(f"Unexpected type when parsing moos var {key}:{state[key]}")
-
-      proto_state.vars.add().CopyFrom(var)
+      proto_state.vars.add().CopyFrom(moos_var_from_kp(key, state[key]))
 
   if state[KEY_EPISODE_MGR_REPORT] is not None:
     proto_state.episode_report.CopyFrom(episode_report_from_dict(state[KEY_EPISODE_MGR_REPORT]))
 
   return proto_state
+
+def action_from_dict(action):
+  validate.validateInstruction(action)
+
+  proto_action = Action()
+
+  proto_action.course = action['course']
+  proto_action.speed = action['speed']
+
+  for post in action['posts']:
+    proto_action.posts.add().CopyFrom(moos_var_from_kp(post, action['posts'][post]))
+  
+  proto_action.ctrl_msg = action['ctrl_msg']
+
+  return proto_action
+
+'''
+===============================
+Begin "To Dictionary" functions
+===============================
+'''
+
+def moos_var_to_kp(var):
+  assert isinstance(var, MOOSVar), "Input var is not of known MOOSVar prototype"
+
+  if var.HasField('sval'):
+    return var.key, var.sval
+  elif var.HasField('dval'):
+    return var.key, var.dval
+  elif var.HasField('bval'):
+    return var.key, var.bval
+  else:
+    raise TypeError("Could not find valid type in MOOSVar message")
 
 def node_report_to_dict(report):
   assert isinstance(report, NodeReport), "Input report is not of known NodeReport prototype"
@@ -121,14 +163,7 @@ def state_to_dict(state):
   
   # Parse other vars
   for var in state.vars:
-    if var.HasField('sval'):
-      dict_state[var.key] = var.sval
-    elif var.HasField('dval'):
-      dict_state[var.key] = var.dval
-    elif var.HasField('bval'):
-      dict_state[var.key] = var.bval
-    else:
-      raise TypeError("Could not find valid type in MOOSVar message")
+    dict_state[var.key] = moos_var_to_kp(var)[1]
   
   # Parse episode report
   if state.HasField('episode_report'):
@@ -137,3 +172,18 @@ def state_to_dict(state):
     dict_state[KEY_EPISODE_MGR_REPORT] = None
   
   return dict_state
+
+def action_to_dict(action):
+  assert isinstance(action, Action), "Input action is not of known Action prototype"
+
+  dict_action = {}
+
+  dict_action['course'] = action.course
+  dict_action['speed'] = action.speed
+  dict_action['ctrl_msg'] = action.ctrl_msg
+
+  dict_action['posts'] = {}
+  for post in action.posts:
+    dict_action['posts'][post.key] = moos_var_to_kp(post)[1]
+  
+  return dict_action

@@ -2,7 +2,8 @@ import unittest
 import time
 import timeout_decorator
 
-from mivp_agent.manager import MissionManager, MissionMessage, INSTR_SEND_STATE
+from mivp_agent.manager import MissionManager
+from mivp_agent.messages import MissionMessage, INSTR_SEND_STATE
 from mivp_agent.bridge import ModelBridgeClient
 from mivp_agent.const import KEY_ID, KEY_EPISODE_MGR_REPORT, KEY_EPISODE_MGR_STATE
 
