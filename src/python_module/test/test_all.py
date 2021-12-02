@@ -10,6 +10,7 @@ generated_dir = os.path.join(currentdir, '.generated')
 assert os.listdir(generated_dir) == ['README.txt'], 'test/.generated directory corrupted'
 
 import unittest
+import test_file_system
 import test_bridge
 import test_manager
 import test_data_structures
@@ -18,6 +19,7 @@ import test_packit
 
 if __name__ == '__main__':
   suite = unittest.TestSuite()
+  suite.addTest(unittest.makeSuite(test_file_system.TestSafeClean))
   suite.addTest(unittest.makeSuite(test_packit.TestPackitEncode))
   suite.addTest(unittest.makeSuite(test_packit.TestPackitDecode))
   suite.addTest(unittest.makeSuite(test_bridge.TestBridge))
