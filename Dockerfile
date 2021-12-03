@@ -23,11 +23,11 @@ RUN apt-get install -y vim emacs-nox tmux git
 # Add debuging utilities
 RUN apt-get install -y gdb psmisc 
 # Legacy plearn stuff
-RUN pip3 install --no-cache-dir numpy matplotlib 'tensorflow==1.5' 'keras==2.0.8' colorama 'h5py==2.10.0'
+RUN pip3 install --no-cache-dir numpy 'tensorflow==1.5' 'keras==2.0.8' colorama 'h5py==2.10.0'
 # Matplotlib X11 forwarding with GTK
 ENV DEBIAN_FRONTEND="noninteractive"
 RUN apt-get install -y python3-tk
-RUN pip3 install tqdm wandb==0.11.2 timeout-decorator
+RUN pip3 install tqdm pandas matplotlib wandb==0.11.2 timeout-decorator
 
 USER moos
 
@@ -38,6 +38,7 @@ RUN cd "${HOME}/${MOOS}" && ./build.sh
 # mivp-agent tree
 ENV MIVP_AGENT="moos-ivp-agent"
 ENV PATH="/home/moos/${MIVP_AGENT}/bin:${PATH}"
+ENV PATH="${PATH}:/home/moos/${MIVP_AGENT}/src/python_module/scripts"
 ENV PYTHONPATH="${PYTHONPATH}:/home/moos/${MIVP_AGENT}/src/python_module"
 ENV IVP_BEHAVIOR_DIRS="${IVP_BEHAVIOR_DIRS}:/home/moos/${MIVP_AGENT}/lib"
 
