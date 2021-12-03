@@ -21,6 +21,9 @@ CMakeFiles
 # Any trained model folder
 **/trained/*
 
+# Any data folders
+**/.last_manager_log/*
+
 # Weights and biases
 **/wandb/*
 

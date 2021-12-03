@@ -5,7 +5,7 @@ from queue import Queue, Empty
 from threading import Thread, Lock
 
 # For core
-from mivp_agent.const import KEY_ID
+from mivp_agent.const import KEY_ID, LAST_LOG_DIR
 from mivp_agent.messages import MissionMessage, INSTR_SEND_STATE, INSTR_RESET_FAILURE, INSTR_RESET_SUCCESS
 from mivp_agent.bridge import ModelBridgeServer
 
@@ -16,7 +16,7 @@ from mivp_agent.proto.mivp_agent_pb2 import Transition
 from mivp_agent.proto import translate
 
 
-LAST_LOG_DIR = '.last_manager_log'
+
 
 class MissionManager:
     '''

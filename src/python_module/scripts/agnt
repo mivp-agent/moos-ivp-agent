@@ -1,0 +1,7 @@
+#!/usr/bin/env python3
+
+import sys
+import agent_cli
+
+if __name__ == '__main__':
+  agent_cli.main(sys.argv)

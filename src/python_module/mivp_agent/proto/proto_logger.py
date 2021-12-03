@@ -68,7 +68,6 @@ class ProtoLogger:
       # Messages from the most recently read file
       self._current_messages = []
 
-  
   def write(self, message):
     '''
     Method used to write protobuf messages of type specified in __init__ to a buffer. The buffer will be written to a .gz file when the length is greater than or equal to `max_messages` or open close() / context manager exit.
