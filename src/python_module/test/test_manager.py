@@ -160,7 +160,7 @@ class TestManagerLogger(unittest.TestCase):
   def test_basic(self):
     path = None
     with ModelBridgeClient() as client:
-      with MissionManager() as mgr:
+      with MissionManager(logging=True) as mgr:
         path = mgr._log_path
         
         # Basic existence checks
@@ -200,7 +200,7 @@ class TestManagerLogger(unittest.TestCase):
   def test_transition(self):
     path = None
     with ModelBridgeClient() as client:
-      with MissionManager(immediate_transition=False) as mgr:
+      with MissionManager(logging=True, immediate_transition=False) as mgr:
         path = mgr._log_path
 
         # Basic existence checks
@@ -246,7 +246,7 @@ class TestManagerLogger(unittest.TestCase):
       'henry': ModelBridgeClient(),
       'alpha': ModelBridgeClient()
     }
-    with MissionManager(immediate_transition=False, log_whitelist=('felix', 'henry')) as mgr:
+    with MissionManager(logging=True, immediate_transition=False, log_whitelist=('felix', 'henry')) as mgr:
       path = mgr._log_path
 
       # Basic existence checks

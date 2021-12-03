@@ -34,7 +34,7 @@ class MissionManager:
       ```
     '''
 
-    def __init__(self, logging=True, immediate_transition=True, log_whitelist=None):
+    def __init__(self, logging=False, immediate_transition=True, log_whitelist=None):
         '''
         The initializer for MissionManager
 
