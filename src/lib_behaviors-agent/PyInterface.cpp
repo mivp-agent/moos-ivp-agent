@@ -326,11 +326,13 @@ PyObject* PyInterface::nodeReportToDict(std::string report){
   double x = tokDoubleParse(report, "X", ',', '=');
   double y = tokDoubleParse(report, "Y", ',', '=');
   double heading = tokDoubleParse(report, "HDG", ',', '=');
+  double time = tokDoubleParse(report, "TIME", ',', '=');
 
-  PyObject* dict = Py_BuildValue("{s:d,s:d,s:d}",
+  PyObject* dict = Py_BuildValue("{s:d,s:d,s:d,s:d}",
     "NAV_X", x,
     "NAV_Y", y,
-    "NAV_HEADING", heading
+    "NAV_HEADING", heading,
+    "MOOS_TIME", time
   );
 
   return dict;
