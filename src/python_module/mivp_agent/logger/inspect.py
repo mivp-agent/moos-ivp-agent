@@ -26,7 +26,7 @@ def do_dists(transitions, only=False):
   
   print('Dist:')
   s = Series(dists)
-  write_describe(s.describe(percentiles=[]))
+  write_describe(s.describe())
 
   if only:
     print('Showing plot, if you are in a terminal only session the behavior is undefined...')
@@ -41,7 +41,7 @@ def do_tds(transitions, only=False):
 
   print('Time Delta:')
   s = Series(td)
-  write_describe(s.describe(percentiles=[]))
+  write_describe(s.describe())
 
   if only:
     print('Showing plot, if you are in a terminal only session the behavior is undefined...')
@@ -84,6 +84,18 @@ def inspect(path, args):
   print(f'%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
   print(f'Transitions: {len(transitions)}')
 
+  # Count episodes
+  e_count = 0
+  e_number = None
+  for t in transitions:
+    if t.s1.HasField('episode_report'):
+      report = t.s1.episode_report
+      if report.NUM != e_number:
+        e_count +=1
+      e_number = report.NUM
+  print(f'Episodes: {e_count}')
+
+  # Run any commands
   for _, runable in commands.items():
     runable(transitions)
 
