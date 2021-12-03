@@ -176,7 +176,7 @@ class MissionManager:
             path = os.path.join(self._log_path, msg.vname)
             self._logs[msg.vname] = ProtoLogger(path, Transition, mode='w')
 
-        if msg.is_transition:
+        if msg._is_transition:
             # Write a transition if this is not the first state ever
             if msg.vname in self._last_state:
                 t = Transition()

@@ -153,10 +153,11 @@ class TestManagerLogger(unittest.TestCase):
           },
           'ctrl_msg': 'SEND_STATE'
         })
+  
+      os.chdir('.generated')
       return super().setUpClass()
 
   def test_basic(self):
-    os.chdir('.generated')
     path = None
     with ModelBridgeClient() as client:
       with MissionManager() as mgr:
@@ -192,6 +193,47 @@ class TestManagerLogger(unittest.TestCase):
       self.assertEqual(a, self.actions[i])
       self.assertEqual(s2, self.states_parsed[i+1])
 
+    # Clean up
+    safe_clean(path, patterns=['*.gz'])
+    os.rmdir(path)
+  
+  def test_transition(self):
+    path = None
+    with ModelBridgeClient() as client:
+      with MissionManager(immediate_transition=False) as mgr:
+        path = mgr._log_path
+
+        # Basic existence checks
+        self.assertTrue(os.path.exists(mgr._log_path))
+        self.assertEqual(len(os.listdir(mgr._log_path)), 0)
+
+        # Connect client
+        while not client.connect():
+          time.sleep(0.1)
+
+        for i in range(10):
+          client.send_state(self.states[i])
+          time.sleep(0.1)
+          msg = mgr.get_message()
+          if i == 0 or i == 5:
+            msg.mark_transition()
+          msg.act(self.actions[i])
+
+    log = ProtoLogger(os.path.join(path, 'felix'), Transition, mode='r')
+
+    transitions = []
+    while log.has_more():
+      transitions.append(log.read(1)[0])
+
+    self.assertEqual(len(transitions), 1)
+
+    t = transitions[0]
+    s1 = translate.state_to_dict(t.s1)
+    a = translate.action_to_dict(t.a)
+    s2 = translate.state_to_dict(t.s2)
+    self.assertEqual(s1, self.states_parsed[0])
+    self.assertEqual(a, self.actions[0])
+    self.assertEqual(s2, self.states_parsed[5])
 
     # Clean up
     safe_clean(path, patterns=['*.gz'])

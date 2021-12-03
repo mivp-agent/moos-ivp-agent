@@ -87,10 +87,16 @@ class MissionMessage:
             self.episode_state = self.state[KEY_EPISODE_MGR_STATE]
         
         # For use by logger
-        self.is_transition = is_transition
+        self._is_transition = is_transition
 
     def _assert_no_rsp(self):
         assert self._response is None, 'This message has already been responded to'
+
+    def mark_transition(self):
+        with self._rsp_lock:
+            assert self._response is None, "A message's state can only be marked at a transition before a response to that message has been set."
+
+            self._is_transition = True
 
     def act(self, action):
         '''
