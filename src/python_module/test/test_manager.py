@@ -238,5 +238,65 @@ class TestManagerLogger(unittest.TestCase):
     # Clean up
     safe_clean(path, patterns=['*.gz'])
     os.rmdir(path)
+  
+  def test_whitelist(self):
+    path = None
+    clients = {
+      'felix': ModelBridgeClient(),
+      'henry': ModelBridgeClient(),
+      'alpha': ModelBridgeClient()
+    }
+    with MissionManager(immediate_transition=False, log_whitelist=('felix', 'henry')) as mgr:
+      path = mgr._log_path
+
+      # Basic existence checks
+      self.assertTrue(os.path.exists(mgr._log_path))
+      self.assertEqual(len(os.listdir(mgr._log_path)), 0)
+
+      # Connect all client
+      all_connected = False
+      while not all_connected:
+        all_connected = True
+        for c in clients:
+          if not clients[c].connect():
+            all_connected = False
+        time.sleep(0.1)
+
+      for i in range(10):
+        # Send states for 
+        for vname in clients:
+          s = self.states[i].copy()
+          s[KEY_ID] = vname
+          clients[vname].send_state(s)
+        time.sleep(0.1)
+
+        msg = mgr.get_message(block=False)
+        while msg is not None:
+          if i == 0 or i == 5:
+            msg.mark_transition()
+          msg.act(self.actions[i])
+
+          # Try to get new 
+          msg = mgr.get_message(block=False)
+    
+    for c in clients:
+      clients[c].close()
+
+    self.assertTrue(os.path.isdir(os.path.join(path, 'felix')))
+    self.assertTrue(os.path.isdir(os.path.join(path, 'henry')))
+    self.assertFalse(os.path.isdir(os.path.join(path, 'alpha')))
+
+    for c in clients:
+      if c != 'alpha':
+        log = ProtoLogger(os.path.join(path, c), Transition, mode='r')
+
+        transitions = []
+        while log.has_more():
+          transitions.append(log.read(1)[0])
+
+        self.assertEqual(len(transitions), 1)
+
+    safe_clean(path, patterns=['*.gz'])
+    os.rmdir(path)
 if __name__ == '__main__':
   unittest.main()

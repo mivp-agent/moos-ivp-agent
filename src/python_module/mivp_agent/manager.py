@@ -1,7 +1,7 @@
 # General
 import os
 import time
-from queue import Queue
+from queue import Queue, Empty
 from threading import Thread, Lock
 
 # For core
@@ -34,7 +34,7 @@ class MissionManager:
       ```
     '''
 
-    def __init__(self, logging=True, immediate_transition=True):
+    def __init__(self, logging=True, immediate_transition=True, log_whitelist=None):
         '''
         The initializer for MissionManager
 
@@ -62,6 +62,8 @@ class MissionManager:
         self._logging = logging
         self._imm_transition = immediate_transition
         if self._logging:
+            self._log_whitelist = log_whitelist
+
             print(os.getcwd())
             self._log_path = os.path.join(os.path.abspath(os.getcwd()), LAST_LOG_DIR)
 
@@ -120,7 +122,8 @@ class MissionManager:
                                 address_map[vname] = addr
                                 self._vnames.append(vname)
                                 self._vehicle_count += 1
-                        assert address_map[vname] == addr, "Vehicle changed vname. This violates routing / logging assumptions made by MissionManager"
+
+                        assert address_map[msg[KEY_ID]] == addr, "Vehicle changed vname. This violates routing / logging assumptions made by MissionManager"
 
                         m = MissionMessage(
                           addr,
@@ -171,6 +174,11 @@ class MissionManager:
         if not self._logging:
             return
         
+        # Check in whitelist if exists
+        if self._log_whitelist is not None:
+            if msg.vname not in self._log_whitelist:
+                return
+
         # Check if this is a new vehicle
         if msg.vname not in self._logs:
             path = os.path.join(self._log_path, msg.vname)
@@ -245,7 +253,10 @@ class MissionManager:
             })
           ```
         '''
-        return self._msg_queue.get(block=block)
+        try:
+            return self._msg_queue.get(block=block)
+        except Empty:
+            return None
 
     def get_vehicle_count(self):
         '''
