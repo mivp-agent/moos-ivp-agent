@@ -81,11 +81,8 @@ class MissionMessage:
         # For use by client
         self.state = msg
         self.vname = msg[KEY_ID]
-        self.episode_report = None
+        self.episode_report = self.state[KEY_EPISODE_MGR_REPORT]
         self.episode_state = None
-        if self.state[KEY_EPISODE_MGR_REPORT] is not None:
-            self.episode_report = parse_report(
-                self.state[KEY_EPISODE_MGR_REPORT])
         if self.state[KEY_EPISODE_MGR_STATE] is not None:
             self.episode_state = self.state[KEY_EPISODE_MGR_STATE]
         

@@ -1,4 +1,5 @@
 import unittest
+import os
 import time
 import timeout_decorator
 
@@ -6,6 +7,12 @@ from mivp_agent.manager import MissionManager
 from mivp_agent.messages import MissionMessage, INSTR_SEND_STATE
 from mivp_agent.bridge import ModelBridgeClient
 from mivp_agent.const import KEY_ID, KEY_EPISODE_MGR_REPORT, KEY_EPISODE_MGR_STATE
+
+from mivp_agent.util.parse import parse_report
+from mivp_agent.util.file_system import safe_clean
+from mivp_agent.proto.proto_logger import ProtoLogger
+from mivp_agent.proto.mivp_agent_pb2 import Transition
+from mivp_agent.proto import translate
 
 DUMMY_INSTR = {
   'speed': 2.0,
@@ -32,6 +39,9 @@ DUMMY_STATE = {
   KEY_EPISODE_MGR_STATE: 'PAUSED'
 }
 
+DUMMY_STATE_PARSED = DUMMY_STATE.copy()
+DUMMY_STATE_PARSED[KEY_EPISODE_MGR_REPORT] = parse_report(DUMMY_STATE_PARSED[KEY_EPISODE_MGR_REPORT] )
+
 DUMMY_REPORT ={
   'NUM': 0,
   'DURATION': 60.57,
@@ -43,11 +53,11 @@ def dummy_connect_client(client):
   while not client.connect():
     time.sleep(0.2)
 
-class TestManager(unittest.TestCase):
+class TestManagerCore(unittest.TestCase):
   @timeout_decorator.timeout(5)
   def test_basic(self):
     with ModelBridgeClient() as client:
-      with MissionManager() as mgr:
+      with MissionManager(logging=False) as mgr:
         # Test client connection
         #
         while not client.connect():
@@ -61,7 +71,7 @@ class TestManager(unittest.TestCase):
         # Check recving of state
         msg = mgr.get_message(block=True)
         self.assertTrue(isinstance(msg, MissionMessage))
-        self.assertEqual(msg.state, DUMMY_STATE)
+        self.assertEqual(msg.state, DUMMY_STATE_PARSED)
         self.assertEqual(msg.episode_report, DUMMY_REPORT)
         self.assertEqual(msg.episode_state, 'PAUSED')
         # Make sure there are no messages for the client yet
@@ -73,7 +83,7 @@ class TestManager(unittest.TestCase):
   
   @timeout_decorator.timeout(5)
   def test_wait_for(self):
-    with MissionManager() as mgr:
+    with MissionManager(logging=False) as mgr:
       # Make sure manager doesn't know about evan or felix
       self.assertFalse(mgr.are_present(['evan', 'felix']))
 
@@ -112,7 +122,79 @@ class TestManager(unittest.TestCase):
         time.sleep(0.1)
         self.assertTrue(mgr.are_present(['evan', 'felix']))
 
-      
+class TestManagerLogger(unittest.TestCase):
+  @classmethod
+  def setUpClass(cls) -> None:
+      cls.states = []
+      for i in range(10):
+        cls.states.append({
+          KEY_ID: 'felix',
+          'MOOS_TIME': 16923.012+i,
+          'NAV_X': 98.0-i,
+          'NAV_Y': 40.0+i,
+          'NAV_HEADING': 180.0-i,
+          KEY_EPISODE_MGR_REPORT: f'NUM={i},DURATION=6{i}.57,SUCCESS=false,WILL_PAUSE=false',
+          KEY_EPISODE_MGR_STATE: 'PAUSED'
+        })
 
+      cls.states_parsed = []
+      for s in cls.states:
+        sp = s.copy()
+        sp[KEY_EPISODE_MGR_REPORT] = parse_report(sp[KEY_EPISODE_MGR_REPORT])
+        cls.states_parsed.append(sp)
+      
+      cls.actions = []
+      for i in range(10):
+        cls.actions.append({
+          'speed': 2.0+i,
+          'course': 120.0-i,
+          'posts': {
+            'FAKE_VAR': f'fake_val_{i}'
+          },
+          'ctrl_msg': 'SEND_STATE'
+        })
+      return super().setUpClass()
+
+  def test_basic(self):
+    os.chdir('.generated')
+    path = None
+    with ModelBridgeClient() as client:
+      with MissionManager() as mgr:
+        path = mgr._log_path
+        
+        # Basic existence checks
+        self.assertTrue(os.path.exists(mgr._log_path))
+        self.assertEqual(len(os.listdir(mgr._log_path)), 0)
+
+        # Connect client
+        while not client.connect():
+          time.sleep(0.1)
+
+        for i in range(10):
+          client.send_state(self.states[i])
+          time.sleep(0.1)
+          msg = mgr.get_message()
+          msg.act(self.actions[i])
+
+    log = ProtoLogger(os.path.join(path, 'felix'), Transition, mode='r')
+    
+    transitions = []
+    while log.has_more():
+      transitions.append(log.read(1)[0])
+    
+    self.assertEqual(len(transitions), 9)
+
+    for i, t in enumerate(transitions):
+      s1 = translate.state_to_dict(t.s1)
+      a = translate.action_to_dict(t.a)
+      s2 = translate.state_to_dict(t.s2)
+      self.assertEqual(s1, self.states_parsed[i])
+      self.assertEqual(a, self.actions[i])
+      self.assertEqual(s2, self.states_parsed[i+1])
+
+
+    # Clean up
+    safe_clean(path, patterns=['*.gz'])
+    os.rmdir(path)
 if __name__ == '__main__':
   unittest.main()

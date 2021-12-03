@@ -5,6 +5,8 @@ import sys
 import traceback
 
 from mivp_agent.util.validate import validateInstruction, validateState
+from mivp_agent.util.parse import parse_report
+from mivp_agent.const import KEY_EPISODE_MGR_REPORT
 
 HEADER_SIZE=4
 MAX_BUFFER_SIZE=8192
@@ -120,7 +122,12 @@ class ModelBridgeServer:
       return None 
 
     assert len(msgs) == 1, 'State should only come one at a time'
-    return pickle.loads(msgs[0])
+    state = pickle.loads(msgs[0])
+
+    if state[KEY_EPISODE_MGR_REPORT] is not None:
+      state[KEY_EPISODE_MGR_REPORT] = parse_report(state[KEY_EPISODE_MGR_REPORT])
+
+    return state
 
   def close_clients(self):
     for client in self._clients:

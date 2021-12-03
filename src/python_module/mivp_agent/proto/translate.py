@@ -6,7 +6,6 @@ from mivp_agent.proto.mivp_agent_pb2 import State, Action, EpisodeReport
 core_keys = (
   KEY_ID,
   KEY_EPISODE_MGR_REPORT,
-  KEY_EPISODE_MGR_STATE,
   "NAV_X",
   "NAV_Y",
   "NAV_HEADING",
@@ -60,7 +59,6 @@ def episode_report_from_dict(report):
 
 def state_from_dict(state):
   validate.validateState(state)
-  
   # Create new protobuf to store information
   proto_state = State()
 

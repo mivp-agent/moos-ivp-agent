@@ -1,12 +1,22 @@
+# General
+import os
 import time
 from queue import Queue
 from threading import Thread, Lock
 
+# For core
 from mivp_agent.const import KEY_ID
-from mivp_agent.messages import MissionMessage, INSTR_SEND_STATE
+from mivp_agent.messages import MissionMessage, INSTR_SEND_STATE, INSTR_RESET_FAILURE, INSTR_RESET_SUCCESS
 from mivp_agent.bridge import ModelBridgeServer
-from mivp_agent.util.file_system import safe_clean
 
+# For logging
+from mivp_agent.util.file_system import safe_clean
+from mivp_agent.proto.proto_logger import ProtoLogger
+from mivp_agent.proto.mivp_agent_pb2 import Transition
+from mivp_agent.proto import translate
+
+
+LAST_LOG_DIR = '.last_manager_log'
 
 class MissionManager:
     '''
@@ -24,7 +34,15 @@ class MissionManager:
       ```
     '''
 
-    def __init__(self):
+    def __init__(self, logging=True, immediate_transition=True):
+        '''
+        The initializer for MissionManager
+
+        Args:
+            logging (bool): Enables logging of transition data
+
+            immediate_transition (bool): Will set msg.is_transition by default to be `True` and assume that all next states are transitions. (Helpful when discretizing space rather than time)
+        '''
         self._msg_queue = Queue()
 
         self._vnames = []
@@ -40,6 +58,25 @@ class MissionManager:
 
         self._thread = None
         self._stop_signal = False
+
+        self._logging = logging
+        self._imm_transition = immediate_transition
+        if self._logging:
+            print(os.getcwd())
+            self._log_path = os.path.join(os.path.abspath(os.getcwd()), LAST_LOG_DIR)
+
+            if not os.path.isdir(self._log_path):
+                assert not os.path.isfile(self._log_path), f"There is a file in the expected log path '{self._log_path}' please remove or disable logging"
+
+                os.makedirs(self._log_path)
+
+            # Clean latests_dir
+            assert safe_clean(self._log_path, patterns=["*.gz"]), f"Unable to clean log path '{self._log_path}' of files with given patterns. This directory may be corrupted. Clean manually or disable logging."
+
+            # Create data structs needed to log data from each vehicle
+            self._logs = {}
+            self._last_state = {}
+            self._last_act = {}
 
     def __enter__(self):
         self.start()
@@ -83,8 +120,13 @@ class MissionManager:
                                 address_map[vname] = addr
                                 self._vnames.append(vname)
                                 self._vehicle_count += 1
+                        assert address_map[vname] == addr, "Vehicle changed vname. This violates routing / logging assumptions made by MissionManager"
 
-                        m = MissionMessage(addr, msg)
+                        m = MissionMessage(
+                          addr,
+                          msg,
+                          is_transition=self._imm_transition
+                        )
 
                         with self._ems_lock:
                             self._episode_manager_states[m.vname] = m.episode_state
@@ -107,19 +149,46 @@ class MissionManager:
                         live_msg_list.remove(m)
                         server.send_instr(m._addr, m._response)
 
+                        # Do logging
+                        self._do_logging(m)
+
                 # Handle reseting of vehicles
                 while not self._vresets.empty():
                     vname, success = self._vresets.get()
 
                     if vname not in address_map:
                         raise RuntimeError(
-                            f'Receeived reset for unknown vehicle: {vname}')
+                            f'Received reset for unknown vehicle: {vname}')
 
                     instr = INSTR_RESET_FAILURE
                     if success:
                         instr = INSTR_RESET_SUCCESS
 
                     server.send_instr(address_map[vname], instr)
+
+    # This message should only be called on msgs which have actions
+    def _do_logging(self, msg):
+        if not self._logging:
+            return
+        
+        # Check if this is a new vehicle
+        if msg.vname not in self._logs:
+            path = os.path.join(self._log_path, msg.vname)
+            self._logs[msg.vname] = ProtoLogger(path, Transition, mode='w')
+
+        if msg.is_transition:
+            # Write a transition if this is not the first state ever
+            if msg.vname in self._last_state:
+                t = Transition()
+                t.s1.CopyFrom(translate.state_from_dict(self._last_state[msg.vname]))
+                t.a.CopyFrom(translate.action_from_dict(self._last_act[msg.vname]))
+                t.s2.CopyFrom(translate.state_from_dict(msg.state))
+
+                self._logs[msg.vname].write(t)
+
+            # Update the storage for next transition
+            self._last_state[msg.vname] = msg.state
+            self._last_act[msg.vname] = msg._response
 
     def are_present(self, vnames):
         '''
@@ -215,6 +284,9 @@ class MissionManager:
         if self._thread is not None:
             self._stop_signal = True
             self._thread.join()
+        if self._logging:
+            for vehicle in self._logs:
+                self._logs[vehicle].close()
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()

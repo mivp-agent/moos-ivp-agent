@@ -108,6 +108,11 @@ class ProtoLogger:
       print(e, file=sys.stderr)
       print("Warning: unable to write to gzip file, deffering write", file=sys.stderr)
   
+  def has_more(self):
+    assert self._mode == MODE_READ, "Method has_more() only supported in write mode"
+
+    return len(self._current_messages) != 0 or self._gzip_idx != len(self._gzip_files)
+
   def read(self, n: int):
     '''
     Method is used to read a specified number of messages from disk.
@@ -117,7 +122,8 @@ class ProtoLogger:
     Returns:
       A python list of protobuf messages. The length of this list will be less than or equal to `n`
     '''
-    
+    assert self._mode == MODE_READ, "Method read() only supported in write mode"
+
     messages_out = []
     while len(messages_out) < n:
       # See if we have messages to parse from previously read gz
