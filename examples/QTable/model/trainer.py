@@ -80,7 +80,7 @@ def train(args, config):
   )
 
   agents = {}
-  with MissionManager() as mgr:
+  with MissionManager(logging=True, immediate_transition=False) as mgr:
     print('Waiting for sim vehicle connection...')
     mgr.wait_for(EXPECTED_VEHICLES)
 
@@ -123,6 +123,7 @@ def train(args, config):
       msg = mgr.get_message()
       # If pEpisodeManager is paused, start and continue to next agent
       if msg.episode_state == 'PAUSED':
+        msg.mark_transition() # Initial state should be a transition
         msg.start()
         continue
       agent_data = agents[msg.vname]
@@ -149,6 +150,9 @@ def train(args, config):
         '''
         Part 2: Handle the ending of episodes
         '''
+        # Mark this state as a transition to record it to logs
+        msg.mark_transition()
+
         if msg.episode_report is None:
           assert agent_data.agent_episode_count == 0
         elif msg.episode_report['DURATION'] < 2:
