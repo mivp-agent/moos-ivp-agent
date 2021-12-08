@@ -29,3 +29,6 @@ CMakeFiles
 
 # Files generated during python testing
 src/python_module/test/.generated/**
+
+# Python distribution stuff
+**/*.egg-info/
