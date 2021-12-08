@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 
-# Add the module's surrounding dir to the path
+# Test generated file dir
 import os, sys
 currentdir = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.dirname(currentdir))
-
-# Test generated file dir
 generated_dir = os.path.join(currentdir, '.generated')
 assert os.listdir(generated_dir) == ['README.txt'], 'test/.generated directory corrupted'
 
