@@ -2,13 +2,16 @@ import os
 import sys
 from google.protobuf import descriptor
 import pandas as pd
-import matplotlib.pyplot as plt
+import plotly.express as px
+import plotly.graph_objects as go
 from pandas.core.series import Series
 
 from mivp_agent.proto.mivp_agent_pb2 import Transition
 from mivp_agent.proto.proto_logger import ProtoLogger
 
 from mivp_agent.util.math import dist
+
+from . import glog
 
 def write_describe(describe, prefix='    ', file=sys.stdout):
   for t, l in describe.items():
@@ -25,13 +28,14 @@ def do_dists(transitions, only=False):
     dists.append(dist((x1,y1), (x2,y2)))
   
   print('Dist:')
-  s = Series(dists)
+  s = pd.DataFrame(dists)
+  s.columns = ['distances',]
   write_describe(s.describe())
 
   if only:
     print('Showing plot, if you are in a terminal only session the behavior is undefined...')
-    s.hist()
-    plt.show()
+    fig = px.histogram(s, x='distances')
+    fig.show()
 
 def do_tds(transitions, only=False):
 # Parse the time which each transition takes
@@ -50,7 +54,8 @@ def do_tds(transitions, only=False):
 
 commands = {
   'dist': do_dists,
-  'td': do_tds
+  'td': do_tds,
+  'glog': glog.do_glog
 }
 
 def help():
