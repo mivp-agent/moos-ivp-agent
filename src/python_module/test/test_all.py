@@ -33,5 +33,5 @@ if __name__ == '__main__':
   runner = unittest.TextTestRunner()
   result = runner.run(suite)
 
-  if len(result.failures) != 0:
+  if len(result.failures) != 0 or len(result.errors) != 0:
     exit(1)
