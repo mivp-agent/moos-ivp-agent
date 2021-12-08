@@ -153,8 +153,7 @@ class TestManagerLogger(unittest.TestCase):
           },
           'ctrl_msg': 'SEND_STATE'
         })
-  
-      os.chdir('.generated')
+
       return super().setUpClass()
 
   def test_basic(self):

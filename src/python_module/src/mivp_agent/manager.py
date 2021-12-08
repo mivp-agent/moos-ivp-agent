@@ -64,7 +64,6 @@ class MissionManager:
         if self._logging:
             self._log_whitelist = log_whitelist
 
-            print(os.getcwd())
             self._log_path = os.path.join(os.path.abspath(os.getcwd()), LAST_LOG_DIR)
 
             if not os.path.isdir(self._log_path):

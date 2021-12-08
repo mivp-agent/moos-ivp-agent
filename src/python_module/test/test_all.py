@@ -6,6 +6,8 @@ currentdir = os.path.dirname(os.path.realpath(__file__))
 generated_dir = os.path.join(currentdir, '.generated')
 assert os.listdir(generated_dir) == ['README.txt'], 'test/.generated directory corrupted'
 
+os.chdir(generated_dir)
+
 import unittest
 import test_file_system
 import test_bridge
