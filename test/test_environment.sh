@@ -16,6 +16,7 @@ if [[ "$1" != "" ]]; then
 fi 
 
 require_exe(){
+  printf "Looking for a executable named \"$1\"..."
   if [[ "$(which $1)" == "" ]]; then
     printf "Error: Unable to find executable \"$1\"\n"
 
@@ -27,6 +28,7 @@ require_exe(){
 }
 
 require_module(){
+  printf "Looking for a module named \"$1\"..."
   $PYTHON -c "import $1" 2>&1 /dev/null
   if [[ "$?" != "0" ]]; then
     printf "Error: Unable to find python module \"$1\"\n"
