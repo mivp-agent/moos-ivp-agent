@@ -20,3 +20,5 @@ jobs:
       run: ls -la
     - name: Build docker container
       run: ./docker.sh build
+    - name: Test docker container
+      run: ./docker.sh test
