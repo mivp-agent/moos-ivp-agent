@@ -133,4 +133,4 @@ ENDIF( ${WIN32} )
 # Add Subdirectories
 #=======================================================================
 ADD_SUBDIRECTORY(src)
-ADD_SUBDIRECTORY(test)
+ADD_SUBDIRECTORY(test/cpp)
