@@ -4,6 +4,9 @@
 DIRNAME="$(dirname $0)"
 cd $DIRNAME
 
+# Make sure script exits if sub commands fail
+set -e
+
 # Test OS type for use letter
 OS_TYPE="UNSET"
 
@@ -16,11 +19,53 @@ else
     exit 1
 fi
 
+# Define names or tags to use when testing / normal operation
 NAME="mivp-agent"
 if [[ -n "$2" ]]; then
     printf "Settting name to $2...\n"
     NAME="$2"
 fi
+TEST_NAME="$NAME-testing"
+
+require_image(){
+    if [[ "$(docker images -q $NAME)" == "" ]]; then
+        printf "Error: Unable to find docker image with tag \"$NAME\".\n\n"
+        printf "Maybe run ./docker.sh build to build it?\n"
+        exit 1;
+    fi
+}
+
+require_no_container(){
+    if [[ "$(docker ps -a | grep $1)" != "" ]]; then
+        printf "Error: Existing container with name \"$1\".\n"
+        exit 1;
+    fi
+}
+
+do_run(){
+    if [[ "$1" == "" || "$2" == "" ]]; then
+        printf "Error: do_run should be called with two arguments\n"
+        exit 1
+    fi
+    if [[ "$OS_TYPE" == "osx" ]]; then
+        docker run --env="DISPLAY=host.docker.internal:0" \
+            --volume="/tmp/.X11-unix:/tmp/.X11-unix" \
+            --mount type=bind,source="$(pwd)"/missions,target=/home/moos/moos-ivp-agent/missions \
+            --mount type=bind,source="$(pwd)"/src,target=/home/moos/moos-ivp-agent/src \
+            --mount type=bind,source="$(pwd)"/examples,target=/home/moos/moos-ivp-agent/examples \
+            --workdir="/home/moos/moos-ivp-agent" \
+            --name "$2" "-it$3" "$1:1.0" bash
+    elif [[ "$OS_TYPE" == "linux" ]]; then
+        docker run --env="DISPLAY" \
+            --volume="/tmp/.X11-unix:/tmp/.X11-unix" \
+            --mount type=bind,source="$(pwd)"/missions,target=/home/moos/moos-ivp-agent/missions \
+            --mount type=bind,source="$(pwd)"/src,target=/home/moos/moos-ivp-agent/src \
+            --mount type=bind,source="$(pwd)"/examples,target=/home/moos/moos-ivp-agent/examples \
+            --workdir="/home/moos/moos-ivp-agent" \
+	    --user "$(id -u):$(id -g)" \
+            --name "$2" "-it$3" "$1:1.0" bash 
+    fi
+}
 
 # Handle arguments
 if [[ -z "$1" ]] || [[ "$1" = "help" ]] || [[ "$1" = "--help" ]] || [[ "$1" = "-h" ]]; then
@@ -44,6 +89,10 @@ elif [[ "$1" == "build" ]]; then
             --build-arg GROUP_ID=$(id -g) .
     fi
 elif [[ "$1" == "run" ]]; then
+    # Make sure an image has been build
+    require_image
+    require_no_container $NAME
+
     printf "Enabling xhost server...\n"
     xhost +
     printf "Starting docker container...\n"
@@ -52,24 +101,8 @@ elif [[ "$1" == "run" ]]; then
     printf "= To detach: CTRL+p CTRL+q               =\n"
     printf "==========================================\n\n"
 
-    if [[ "$OS_TYPE" == "osx" ]]; then
-        docker run --env="DISPLAY=host.docker.internal:0" \
-            --volume="/tmp/.X11-unix:/tmp/.X11-unix" \
-            --mount type=bind,source="$(pwd)"/missions,target=/home/moos/moos-ivp-agent/missions \
-            --mount type=bind,source="$(pwd)"/src,target=/home/moos/moos-ivp-agent/src \
-            --mount type=bind,source="$(pwd)"/examples,target=/home/moos/moos-ivp-agent/examples \
-            --workdir="/home/moos/moos-ivp-agent" \
-            --name "$NAME" -it "$NAME:1.0" bash
-    elif [[ "$OS_TYPE" == "linux" ]]; then
-        docker run --env="DISPLAY" \
-            --volume="/tmp/.X11-unix:/tmp/.X11-unix" \
-            --mount type=bind,source="$(pwd)"/missions,target=/home/moos/moos-ivp-agent/missions \
-            --mount type=bind,source="$(pwd)"/src,target=/home/moos/moos-ivp-agent/src \
-            --mount type=bind,source="$(pwd)"/examples,target=/home/moos/moos-ivp-agent/examples \
-            --workdir="/home/moos/moos-ivp-agent" \
-	    --user "$(id -u):$(id -g)" \
-            --name "$NAME" -it "$NAME:1.0" bash 
-    fi
+    do_run $NAME $NAME
+    
     printf "WARNING: Docker container will run in background unless stopped\n"
 elif [[ "$1" == "connect" ]]; then
     printf "Conecting to docker container...\n"
@@ -83,6 +116,62 @@ elif [[ "$1" == "stop" ]]; then
 elif [[ "$1" == "rm" ]]; then
     printf "Deleting docker container...\n"
     docker rm "$NAME"
+elif [[ "$1" == "test" ]]; then
+    require_image
+    require_no_container $TEST_NAME
+
+    printf "Starting container for testing...\n"
+    do_run $NAME $TEST_NAME "d" > /dev/null
+    printf "Running tests with docker container...\n"
+    # Prevent failure for exiting script
+    set +e
+    
+    # Run C++ tests
+    printf "====================================\n"
+    printf "                C++                 \n"
+    printf "====================================\n"
+    docker exec -it $TEST_NAME bash -c "cd build && ctest --verbose; exit $?"
+    CPP_TEST="$?"
+
+    # Run python tests
+    printf "====================================\n"
+    printf "               Python               \n"
+    printf "====================================\n"
+    docker exec -it $TEST_NAME bash -c "cd src/python_module/test && ./test_all.py"
+    PYTHON_TEST="$?"
+
+    # Reset -e
+    set -e 
+    printf "Cleaning up test container...\n"
+    docker stop "$TEST_NAME" > /dev/null
+    docker rm "$TEST_NAME" > /dev/null
+
+    # Display results and exit
+    EXIT="0"
+
+    printf "====================================\n"
+    printf "\tC++ = "
+    if [[ "$CPP_TEST" != "0" ]]; then
+        printf "FAILED\n"
+        EXIT="1"
+    else
+        printf "SUCCESS\n"
+    fi
+
+    printf "\tPYTHON = "
+    if [[ "$PYTHON_TEST" != "0" ]]; then
+        printf "FAILED\n"
+        EXIT="1"
+    else
+        printf "SUCCESS\n"
+    fi
+    printf "====================================\n"
+
+    exit $EXIT
+elif [[ "$1" == "clean" ]]; then
+    # Following run in sub shell so -e doesn't catch it
+    NO_FAIL="$(docker stop $NAME)"
+    NO_FAIL="$(docker rm $NAME)"
 else
     printf "Error: Unrecognized argument\n"
     exit;

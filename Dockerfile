@@ -83,7 +83,7 @@ RUN cd ${AGENT_PATH}/src/python_module && python3 -m pip install -e .[test] --pr
 # ================================== #
 # Setup moos-ivp-agent C++ package
 # ================================== #
-RUN cd ${AGENT_PATH} && ./build.sh --test
+RUN cd ${AGENT_PATH} && ./build.sh
 
 ENV PATH="${AGENT_PATH}/bin:${PATH}"
 ENV IVP_BEHAVIOR_DIRS="${IVP_BEHAVIOR_DIRS}:${AGENT_PATH}/lib"
