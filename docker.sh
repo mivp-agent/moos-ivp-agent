@@ -147,19 +147,19 @@ elif [[ "$1" == "test" ]]; then
     printf "====================================\n"
     printf "             Environment            \n"
     printf "====================================\n"
-    docker exec -it $TEST_NAME bash -c "./test/test_environment.sh" || fail_test "Environment"
+    docker exec -i $TEST_NAME bash -c "./test/test_environment.sh" || fail_test "Environment"
     
     # Run C++ tests
     printf "====================================\n"
     printf "                C++                 \n"
     printf "====================================\n"
-    docker exec -it $TEST_NAME bash -c "cd build && ctest --verbose; exit $?" || fail_test "C++"
+    docker exec -i $TEST_NAME bash -c "cd build && ctest --verbose; exit $?" || fail_test "C++"
 
     # Run python tests
     printf "====================================\n"
     printf "               Python               \n"
     printf "====================================\n"
-    docker exec -it $TEST_NAME bash -c "cd src/python_module/test && ./test_all.py" || fail_test "Python"
+    docker exec -i $TEST_NAME bash -c "cd src/python_module/test && ./test_all.py" || fail_test "Python"
 
     # Still need to clean up if no failures
     test_clean_up
