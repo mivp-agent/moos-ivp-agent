@@ -125,49 +125,47 @@ elif [[ "$1" == "test" ]]; then
     printf "Running tests with docker container...\n"
     # Prevent failure for exiting script
     set +e
+
+    test_clean_up(){
+        # Reset -e
+        set -e
+ 
+        printf "Cleaning up test container...\n"
+        docker stop "$TEST_NAME" > /dev/null
+        docker rm "$TEST_NAME" > /dev/null
+    }
+
+    fail_test(){
+        printf "====================================\n"
+        printf " Failed \"$1\" tests\n"
+        printf "====================================\n"
+        test_clean_up
+        exit 1
+    }
+
+    # Run environment tests
+    printf "====================================\n"
+    printf "             Environment            \n"
+    printf "====================================\n"
+    docker exec -it $TEST_NAME bash -c "./test/test_environment.sh" || fail_test "Environment"
     
     # Run C++ tests
     printf "====================================\n"
     printf "                C++                 \n"
     printf "====================================\n"
-    docker exec -it $TEST_NAME bash -c "cd build && ctest --verbose; exit $?"
-    CPP_TEST="$?"
+    docker exec -it $TEST_NAME bash -c "cd build && ctest --verbose; exit $?" || fail_test "C++"
 
     # Run python tests
     printf "====================================\n"
     printf "               Python               \n"
     printf "====================================\n"
-    docker exec -it $TEST_NAME bash -c "cd src/python_module/test && ./test_all.py"
-    PYTHON_TEST="$?"
+    docker exec -it $TEST_NAME bash -c "cd src/python_module/test && ./test_all.py" || fail_test "Python"
 
-    # Reset -e
-    set -e 
-    printf "Cleaning up test container...\n"
-    docker stop "$TEST_NAME" > /dev/null
-    docker rm "$TEST_NAME" > /dev/null
+    # Still need to clean up if no failures
+    test_clean_up
 
     # Display results and exit
     EXIT="0"
-
-    printf "====================================\n"
-    printf "\tC++ = "
-    if [[ "$CPP_TEST" != "0" ]]; then
-        printf "FAILED\n"
-        EXIT="1"
-    else
-        printf "SUCCESS\n"
-    fi
-
-    printf "\tPYTHON = "
-    if [[ "$PYTHON_TEST" != "0" ]]; then
-        printf "FAILED\n"
-        EXIT="1"
-    else
-        printf "SUCCESS\n"
-    fi
-    printf "====================================\n"
-
-    exit $EXIT
 elif [[ "$1" == "clean" ]]; then
     # Following run in sub shell so -e doesn't catch it
     NO_FAIL="$(docker stop $NAME)"

@@ -76,6 +76,8 @@ COPY --chown=moos:moos . ${AGENT_PATH}/
 # ================================== #
 # Install the mivp_agent python package
 # ================================== #
+# Put the local directory in the path cause this is where we will be installing things
+ENV PATH="/home/moos/.local/bin:${PATH}"
 # Yay more fun pip / python things (potentially the last)! I am putting pip install in -e to make development of the mivp_agent package easier here (so it live updates). However b/c the system level python package dir (/usr/local/lib/python3.7/site-packages in this case) is not editable by the `moos` user pip will default to user mode regardless of the --user flag being added. But there seems to be a conflict between -e and --user (https://github.com/pypa/pip/issues/7953). To fix this you can use --prefix=~/.local instead of --user. However some of the path comparison inside pip will output warnings unless I specify --prefix=/home/moos/.local (I think this is due to some docker user stangeness)
 RUN cd ${AGENT_PATH}/src/python_module && python3 -m pip install -e . --prefix=/home/moos/.local
 RUN cd ${AGENT_PATH}/src/python_module && python3 -m pip install -e .[test] --prefix=/home/moos/.local
