@@ -151,6 +151,9 @@ class ModelBridgeClient:
   def __enter__(self):
     return self
 
+  def is_connected(self):
+    return self._socket is not None
+
   def connect(self):
     if self._socket is not None:
       raise RuntimeError("Clients should not be connect more than once")

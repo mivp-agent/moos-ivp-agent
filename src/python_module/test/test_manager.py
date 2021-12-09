@@ -257,7 +257,9 @@ class TestManagerLogger(unittest.TestCase):
       while not all_connected:
         all_connected = True
         for c in clients:
-          if not clients[c].connect():
+          if not clients[c].is_connected():
+            # Attempt to connect until the timeout
+            clients[c].connect()
             all_connected = False
         time.sleep(0.1)
 
