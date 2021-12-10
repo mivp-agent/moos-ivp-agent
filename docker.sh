@@ -161,6 +161,41 @@ elif [[ "$1" == "test" ]]; then
     printf "====================================\n"
     docker exec -i $TEST_NAME bash -c "cd src/python_module/test && ./test_all.py" || fail_test "Python"
 
+    # Function for testing linkings
+    printf "====================================\n"
+    printf "            File Stystem            \n"
+    printf "====================================\n"
+    test_links(){
+        echo "Testing links between docker files and host machine files in directory $1..."
+        [[ "$1" == "" ]] && printf "Internal error!" && fail_test "File System" 
+
+        testing_file="__docker_script_testing__"
+        [[ -f "$1/$testing_file" ]] && echo "Internal Error! Testing file already exists in $1." && fail_test "File System";
+
+        # Create file in docker container make sure it shows on host machine
+        docker exec -i $TEST_NAME bash -c "touch $1/$testing_file"
+        if [[ "$?" != "0" ]]; then
+            echo "Failed to create testing file named $testing_file in path $1. This can indicate improper permissions for the default docker user"
+            fail_test "File System" 
+        fi
+
+        if [[ ! -f "$1/$testing_file" ]]; then
+            echo "Testing file in directory $1 failed to show up on the host machine. Check the volume mounting of the docker container."
+            # Don't need to cleanup $testing_file here b/c it won't have made it to the host machine so wont persist
+            fail_test "File System" 
+        fi
+
+        docker exec -i $TEST_NAME bash -c "rm $1/$testing_file"
+        if [[ "$?" != "0" ]]; then
+            echo "Failed to remove testing file named $testing_file in path $1. This can indicate improper permissions for the default docker user"
+            fail_test "File System" 
+        fi
+    }
+
+    test_links "examples"
+    test_links "src"
+    test_links "missions"
+
     # Still need to clean up if no failures
     test_clean_up
 
