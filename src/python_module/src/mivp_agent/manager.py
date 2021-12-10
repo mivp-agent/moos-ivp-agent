@@ -5,18 +5,15 @@ from queue import Queue, Empty
 from threading import Thread, Lock
 
 # For core
-from mivp_agent.const import KEY_ID, LAST_LOG_DIR
+from mivp_agent.const import KEY_ID
 from mivp_agent.messages import MissionMessage, INSTR_SEND_STATE, INSTR_RESET_FAILURE, INSTR_RESET_SUCCESS
 from mivp_agent.bridge import ModelBridgeServer
 
 # For logging
-from mivp_agent.util.file_system import safe_clean
+from mivp_agent.util.file_system import find_unique
 from mivp_agent.proto.proto_logger import ProtoLogger
 from mivp_agent.proto.mivp_agent_pb2 import Transition
 from mivp_agent.proto import translate
-
-
-
 
 class MissionManager:
     '''
@@ -34,7 +31,7 @@ class MissionManager:
       ```
     '''
 
-    def __init__(self, logging=False, immediate_transition=True, log_whitelist=None):
+    def __init__(self, logging=False, immediate_transition=True, log_whitelist=None, output_suffix=""):
         '''
         The initializer for MissionManager
 
@@ -59,25 +56,31 @@ class MissionManager:
         self._thread = None
         self._stop_signal = False
 
+        # Create a location to store data regarding this session 
+        self._data_dir = os.path.join(
+            os.path.abspath(os.getcwd()),
+            "generated_files",
+            f"data-{round(time.time())}{output_suffix}"
+        )
+        self._data_dir = find_unique(self._data_dir)
+
+        assert not os.path.isdir(self._data_dir), f"There is already a output directory for data named {self._data_dir}. This is an internal error to do with unique name finding"
+        assert not os.path.isfile(self._data_dir), f"There is a file in the expected output directory for data '{self._data_dir}'"
+
+        os.makedirs(self._data_dir)
+
         self._logging = logging
         self._imm_transition = immediate_transition
         if self._logging:
             self._log_whitelist = log_whitelist
 
-            self._log_path = os.path.join(os.path.abspath(os.getcwd()), LAST_LOG_DIR)
-
-            if not os.path.isdir(self._log_path):
-                assert not os.path.isfile(self._log_path), f"There is a file in the expected log path '{self._log_path}' please remove or disable logging"
-
-                os.makedirs(self._log_path)
-
-            # Clean latests_dir
-            assert safe_clean(self._log_path, patterns=["*.gz"]), f"Unable to clean log path '{self._log_path}' of files with given patterns. This directory may be corrupted. Clean manually or disable logging."
-
             # Create data structs needed to log data from each vehicle
             self._logs = {}
             self._last_state = {}
             self._last_act = {}
+
+    def get_data_dir(self):
+        return self._data_dir
 
     def __enter__(self):
         self.start()
@@ -180,7 +183,7 @@ class MissionManager:
 
         # Check if this is a new vehicle
         if msg.vname not in self._logs:
-            path = os.path.join(self._log_path, msg.vname)
+            path = os.path.join(self._data_dir, f"log_{msg.vname}")
             self._logs[msg.vname] = ProtoLogger(path, Transition, mode='w')
 
         if msg._is_transition:

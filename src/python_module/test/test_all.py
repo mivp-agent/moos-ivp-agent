@@ -4,6 +4,8 @@
 import os, sys
 currentdir = os.path.dirname(os.path.realpath(__file__))
 generated_dir = os.path.join(currentdir, '.generated')
+if not os.path.isdir(generated_dir):
+  os.makedirs(generated_dir)
 assert os.listdir(generated_dir) == ['README.txt'], 'test/.generated directory corrupted'
 
 os.chdir(generated_dir)

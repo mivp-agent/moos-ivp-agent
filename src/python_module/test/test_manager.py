@@ -160,11 +160,11 @@ class TestManagerLogger(unittest.TestCase):
     path = None
     with ModelBridgeClient() as client:
       with MissionManager(logging=True) as mgr:
-        path = mgr._log_path
+        path = mgr.get_data_dir()
         
         # Basic existence checks
-        self.assertTrue(os.path.exists(mgr._log_path))
-        self.assertEqual(len(os.listdir(mgr._log_path)), 0)
+        self.assertTrue(os.path.exists(path))
+        self.assertEqual(len(os.listdir(path)), 0)
 
         # Connect client
         while not client.connect():
@@ -176,7 +176,7 @@ class TestManagerLogger(unittest.TestCase):
           msg = mgr.get_message()
           msg.act(self.actions[i])
 
-    log = ProtoLogger(os.path.join(path, 'felix'), Transition, mode='r')
+    log = ProtoLogger(os.path.join(path, 'log_felix'), Transition, mode='r')
     
     transitions = []
     while log.has_more():
@@ -200,11 +200,11 @@ class TestManagerLogger(unittest.TestCase):
     path = None
     with ModelBridgeClient() as client:
       with MissionManager(logging=True, immediate_transition=False) as mgr:
-        path = mgr._log_path
+        path = mgr.get_data_dir()
 
         # Basic existence checks
-        self.assertTrue(os.path.exists(mgr._log_path))
-        self.assertEqual(len(os.listdir(mgr._log_path)), 0)
+        self.assertTrue(os.path.exists(path))
+        self.assertEqual(len(os.listdir(path)), 0)
 
         # Connect client
         while not client.connect():
@@ -218,7 +218,7 @@ class TestManagerLogger(unittest.TestCase):
             msg.mark_transition()
           msg.act(self.actions[i])
 
-    log = ProtoLogger(os.path.join(path, 'felix'), Transition, mode='r')
+    log = ProtoLogger(os.path.join(path, 'log_felix'), Transition, mode='r')
 
     transitions = []
     while log.has_more():
@@ -246,11 +246,11 @@ class TestManagerLogger(unittest.TestCase):
       'alpha': ModelBridgeClient()
     }
     with MissionManager(logging=True, immediate_transition=False, log_whitelist=('felix', 'henry')) as mgr:
-      path = mgr._log_path
+      path = mgr.get_data_dir()
 
       # Basic existence checks
-      self.assertTrue(os.path.exists(mgr._log_path))
-      self.assertEqual(len(os.listdir(mgr._log_path)), 0)
+      self.assertTrue(os.path.exists(path))
+      self.assertEqual(len(os.listdir(path)), 0)
 
       # Connect all client
       all_connected = False
@@ -283,13 +283,13 @@ class TestManagerLogger(unittest.TestCase):
     for c in clients:
       clients[c].close()
 
-    self.assertTrue(os.path.isdir(os.path.join(path, 'felix')))
-    self.assertTrue(os.path.isdir(os.path.join(path, 'henry')))
-    self.assertFalse(os.path.isdir(os.path.join(path, 'alpha')))
+    self.assertTrue(os.path.isdir(os.path.join(path, 'log_felix')))
+    self.assertTrue(os.path.isdir(os.path.join(path, 'log_henry')))
+    self.assertFalse(os.path.isdir(os.path.join(path, 'log_alpha')))
 
     for c in clients:
       if c != 'alpha':
-        log = ProtoLogger(os.path.join(path, c), Transition, mode='r')
+        log = ProtoLogger(os.path.join(path, f'log_{c}'), Transition, mode='r')
 
         transitions = []
         while log.has_more():

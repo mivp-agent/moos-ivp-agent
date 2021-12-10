@@ -5,7 +5,7 @@ from pathlib import Path
 current_dir = os.path.dirname(os.path.realpath(__file__))
 generated_dir = os.path.join(current_dir, '.generated')
 
-from mivp_agent.util.file_system import safe_clean
+from mivp_agent.util.file_system import safe_clean, find_unique
 
 class TestSafeClean(unittest.TestCase):
 

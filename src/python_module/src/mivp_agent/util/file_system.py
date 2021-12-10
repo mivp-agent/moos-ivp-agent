@@ -34,3 +34,12 @@ def safe_clean(dir, patterns=[]):
   if len(os.listdir(dir)) != 0:
     return False
   return True
+
+def find_unique(path, ext=""):
+  c = 0
+  test_path = path
+  while os.path.isdir(test_path) or os.path.isfile(test_path):
+    test_path = f'{path}-{c}'
+    c += 1
+  
+  return test_path

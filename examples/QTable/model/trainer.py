@@ -68,19 +68,22 @@ class AgentData:
     self.grab_time = None
 
 
-def train(args, config):
-  # Setup model
-  q = QLearn(
-    lr=config['lr'],
-    gamma=config['gamma'],
-    action_space_size=config['action_space_size'],
-    field_res=config['field_res'],
-    verbose=args.debug,
-    save_dir=args.save_dir
-  )
-
+def train(args, config, run_name):
   agents = {}
-  with MissionManager(logging=True, immediate_transition=False) as mgr:
+  with MissionManager(logging=True, immediate_transition=False, output_suffix=run_name) as mgr:
+    # Create a directory for the model to save
+    model_save_dir = os.path.join(mgr.get_data_dir(), "trained_models")
+    os.makedirs(model_save_dir)
+
+    # Setup model
+    q = QLearn(
+      lr=config['lr'],
+      gamma=config['gamma'],
+      action_space_size=config['action_space_size'],
+      field_res=config['field_res'],
+      verbose=args.debug,
+      save_dir=model_save_dir
+    )
     print('Waiting for sim vehicle connection...')
     mgr.wait_for(EXPECTED_VEHICLES)
 
@@ -272,11 +275,8 @@ def train(args, config):
 
 
 if __name__ == '__main__':
-  save_dir = os.path.join(SAVE_DIR, str(round(time.time())))
-
   parser = argparse.ArgumentParser()
   parser.add_argument('--debug', action='store_true')
-  parser.add_argument('--save_dir', default=save_dir)
   parser.add_argument('--no_wandb', action='store_true')
   
   args = parser.parse_args()
@@ -305,10 +305,9 @@ if __name__ == '__main__':
   }
 
   if args.no_wandb:
-    train(args, config)
+    train(args, config, "")
   else:
     wandb.login(key=WANDB_KEY)
     with wandb.init(project='mivp_agent_qtable', config=config):
       config = wandb.config
-      args.save_dir = os.path.join(SAVE_DIR, f'{str(round(time.time()))}_{wandb.run.name}')
-      train(args, config)
+      train(args, config, f'-{wandb.run.name}')
