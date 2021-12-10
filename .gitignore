@@ -18,8 +18,9 @@ CMakeFiles
 # python files
 *.pyc 
 
-# Any trained model folder
+# Legacy trained folders
 **/trained/*
+**/generated_files/*
 
 # Any data folders
 **/.last_manager_log/*
