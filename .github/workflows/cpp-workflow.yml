@@ -42,6 +42,10 @@ jobs:
         sudo add-apt-repository ppa:deadsnakes/ppa
         sudo apt update
         sudo apt-get install -y python3.7-dev
+    - name: Update pip version
+      run: python3.7 -m pip install --upgrade pip
+    - name: Install mivp_agent pip package
+      run: cd src/python_module && python3.7 -m pip install .
     - name: Build moos-ivp-agent
       uses: ./.github/actions/build-cpp
     - name: Add MOOS-IvP bin to path
@@ -75,6 +79,8 @@ jobs:
       run: brew install python@3.7
     - name: Add brew python to path
       run: echo "/usr/local/opt/python@3.7/bin" >> $GITHUB_PATH
+    - name: Install mivp_agent pip package
+      run: cd src/python_module && python3.7 -m pip install .
     - name: Build moos-ivp-agent
       uses: ./.github/actions/build-cpp
     - name: Add MOOS-IvP bin to path
