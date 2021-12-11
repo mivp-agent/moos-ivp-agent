@@ -82,6 +82,8 @@ class MissionManager:
             self._log_dir.task_dir(task),
             self._id
         )
+        self._model_path = os.path.abspath(self._model_path)
+        self._log_path = os.path.abspath(self._log_path)
 
         self._log = log
         self._imm_transition = immediate_transition
@@ -110,7 +112,7 @@ class MissionManager:
     def model_output_dir(self):
         if not os.path.isdir(self._model_path):
             os.makedirs(self._model_path)
-        return self._model_dir
+        return self._model_path
     
     def log_output_dir(self):
         assert self._log, "This method should not be used, when logging is disabled"

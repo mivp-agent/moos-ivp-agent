@@ -70,10 +70,9 @@ class AgentData:
 
 def train(args, config, run_name):
   agents = {}
-  with MissionManager(logging=True, immediate_transition=False, output_suffix=run_name) as mgr:
+  with MissionManager('trainer', log=True, immediate_transition=False, id_suffix=run_name) as mgr:
     # Create a directory for the model to save
-    model_save_dir = os.path.join(mgr.get_data_dir(), "trained_models")
-    os.makedirs(model_save_dir)
+    model_save_dir = mgr.model_output_dir()
 
     # Setup model
     q = QLearn(
@@ -305,9 +304,9 @@ if __name__ == '__main__':
   }
 
   if args.no_wandb:
-    train(args, config, "")
+    train(args, config, None)
   else:
     wandb.login(key=WANDB_KEY)
     with wandb.init(project='mivp_agent_qtable', config=config):
       config = wandb.config
-      train(args, config, f'-{wandb.run.name}')
+      train(args, config, f'{wandb.run.name}')
