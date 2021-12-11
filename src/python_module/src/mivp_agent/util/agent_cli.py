@@ -6,7 +6,7 @@ from mivp_agent.const import LAST_LOG_DIR
 def help():
   print('Usage: agnt <command> [OPTIONS]\n')
   print('COMMANDS:')
-  print('   ilog [PATH]')
+  print('   ilog [PATH] [COMMANDS]')
   print('       Inspects log files. If path is left blank the command will attempt to find the log directories in the current working directory.')
 
 def main(argv):
