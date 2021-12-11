@@ -57,7 +57,7 @@ class TestManagerCore(unittest.TestCase):
   @timeout_decorator.timeout(5)
   def test_basic(self):
     with ModelBridgeClient() as client:
-      with MissionManager(logging=False) as mgr:
+      with MissionManager('test', log=False) as mgr:
         # Test client connection
         #
         while not client.connect():
@@ -83,7 +83,7 @@ class TestManagerCore(unittest.TestCase):
   
   @timeout_decorator.timeout(5)
   def test_wait_for(self):
-    with MissionManager(logging=False) as mgr:
+    with MissionManager('test', log=False) as mgr:
       # Make sure manager doesn't know about evan or felix
       self.assertFalse(mgr.are_present(['evan', 'felix']))
 
@@ -159,8 +159,8 @@ class TestManagerLogger(unittest.TestCase):
   def test_basic(self):
     path = None
     with ModelBridgeClient() as client:
-      with MissionManager(logging=True) as mgr:
-        path = mgr.get_data_dir()
+      with MissionManager('test', log=True) as mgr:
+        path = mgr.log_output_dir()
         
         # Basic existence checks
         self.assertTrue(os.path.exists(path))
@@ -199,8 +199,8 @@ class TestManagerLogger(unittest.TestCase):
   def test_transition(self):
     path = None
     with ModelBridgeClient() as client:
-      with MissionManager(logging=True, immediate_transition=False) as mgr:
-        path = mgr.get_data_dir()
+      with MissionManager('test', log=True, immediate_transition=False) as mgr:
+        path = mgr.log_output_dir()
 
         # Basic existence checks
         self.assertTrue(os.path.exists(path))
@@ -245,8 +245,8 @@ class TestManagerLogger(unittest.TestCase):
       'henry': ModelBridgeClient(),
       'alpha': ModelBridgeClient()
     }
-    with MissionManager(logging=True, immediate_transition=False, log_whitelist=('felix', 'henry')) as mgr:
-      path = mgr.get_data_dir()
+    with MissionManager('test', log=True, immediate_transition=False, log_whitelist=('felix', 'henry')) as mgr:
+      path = mgr.log_output_dir()
 
       # Basic existence checks
       self.assertTrue(os.path.exists(path))

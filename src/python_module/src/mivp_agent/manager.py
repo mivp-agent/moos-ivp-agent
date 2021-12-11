@@ -5,12 +5,12 @@ from queue import Queue, Empty
 from threading import Thread, Lock
 
 # For core
-from mivp_agent.const import KEY_ID
+from mivp_agent.const import KEY_ID, DATA_DIRECTORY
 from mivp_agent.messages import MissionMessage, INSTR_SEND_STATE, INSTR_RESET_FAILURE, INSTR_RESET_SUCCESS
 from mivp_agent.bridge import ModelBridgeServer
 
 # For logging
-from mivp_agent.util.file_system import find_unique
+from mivp_agent.log.directory import LogDirectory
 from mivp_agent.proto.proto_logger import ProtoLogger
 from mivp_agent.proto.mivp_agent_pb2 import Transition
 from mivp_agent.proto import translate
@@ -25,20 +25,28 @@ class MissionManager:
       ```
       from mivp_agent.manager import MissionManager
 
-      with MissionManager() as mgr:
+      with MissionManager('trainer') as mgr:
         mgr.wait_for(['felix', 'evan'])
         ...
       ```
     '''
 
-    def __init__(self, logging=False, immediate_transition=True, log_whitelist=None, output_suffix=""):
+    def __init__(self, task, log=True, immediate_transition=True, log_whitelist=None, id_suffix=None, output_dir=None):
         '''
         The initializer for MissionManager
 
         Args:
-            logging (bool): Enables logging of transition data
+            task (str): For organization of saved data type is required to specify what task the MissionManager is preforming. For example a `MissionManager('trainer')` will log data under `generated_files/trainer/` in the current working directory.
 
-            immediate_transition (bool): Will set msg.is_transition by default to be `True` and assume that all next states are transitions. (Helpful when discretizing space rather than time)
+            log (bool): Logging of agent transitions can be disabled by setting this to `False`.
+
+            immediate_transition (bool): By default the the manager will assume that all messages received from BHV_Agents represent a new transition. If set to `False` one must manually tell set `msg.is_transition = True` on any objects returned from `get_message()`. This is helpful when you want to control what is considered a "state" in your Markov Decsion Process.
+
+            log_whitelist (list): Setting this parameter will only log some transitions according to their reported `vnames`.
+
+            id_suffix (str): Will be appended to the generated session id.
+
+            output_dir (str): Path to a place to store files.
         '''
         self._msg_queue = Queue()
 
@@ -55,32 +63,58 @@ class MissionManager:
 
         self._thread = None
         self._stop_signal = False
+        
+        if output_dir is None:
+            output_dir = os.path.join(
+                os.path.abspath(os.getcwd()),
+                DATA_DIRECTORY
+            )
 
-        # Create a location to store data regarding this session 
-        self._data_dir = os.path.join(
-            os.path.abspath(os.getcwd()),
-            "generated_files",
-            f"data-{round(time.time())}{output_suffix}"
+        self._log_dir = LogDirectory(output_dir)
+        self._id = self._init_session(id_suffix)
+
+        # Calculate the path to the directories we will be writing to. This will be created when we first use them / return them to the user.
+        self._model_path = os.path.join(
+            self._log_dir.models_dir(),
+            self._id
         )
-        self._data_dir = find_unique(self._data_dir)
+        self._log_path = os.path.join(
+            self._log_dir.task_dir(task),
+            self._id
+        )
 
-        assert not os.path.isdir(self._data_dir), f"There is already a output directory for data named {self._data_dir}. This is an internal error to do with unique name finding"
-        assert not os.path.isfile(self._data_dir), f"There is a file in the expected output directory for data '{self._data_dir}'"
-
-        os.makedirs(self._data_dir)
-
-        self._logging = logging
+        self._log = log
         self._imm_transition = immediate_transition
-        if self._logging:
+        if self._log:
             self._log_whitelist = log_whitelist
-
             # Create data structs needed to log data from each vehicle
             self._logs = {}
             self._last_state = {}
             self._last_act = {}
 
-    def get_data_dir(self):
-        return self._data_dir
+            # Go ahead and create the log path
+            os.makedirs(self._log_path)
+
+    def _init_session(self, id_suffix):
+        # Start the session id with the current timestamp
+        id = str(round(time.time()))
+
+        # Add suffix if it exists
+        if id_suffix is not None:
+            id += f"-{id_suffix}"
+
+        id = self._log_dir.meta.registry.register(id)
+
+        return id
+
+    def model_output_dir(self):
+        if not os.path.isdir(self._model_path):
+            os.makedirs(self._model_path)
+        return self._model_dir
+    
+    def log_output_dir(self):
+        assert self._log, "This method should not be used, when logging is disabled"
+        return self._log_path
 
     def __enter__(self):
         self.start()
@@ -173,7 +207,7 @@ class MissionManager:
 
     # This message should only be called on msgs which have actions
     def _do_logging(self, msg):
-        if not self._logging:
+        if not self._log:
             return
         
         # Check in whitelist if exists
@@ -183,7 +217,7 @@ class MissionManager:
 
         # Check if this is a new vehicle
         if msg.vname not in self._logs:
-            path = os.path.join(self._data_dir, f"log_{msg.vname}")
+            path = os.path.join(self._log_path, f"log_{msg.vname}")
             self._logs[msg.vname] = ProtoLogger(path, Transition, mode='w')
 
         if msg._is_transition:
@@ -297,9 +331,10 @@ class MissionManager:
         if self._thread is not None:
             self._stop_signal = True
             self._thread.join()
-        if self._logging:
+        if self._log:
             for vehicle in self._logs:
                 self._logs[vehicle].close()
+
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()

@@ -70,5 +70,20 @@ class TestSafeClean(unittest.TestCase):
 
     os.rmdir(path)
 
+class TestUnique(unittest.TestCase):
+
+  def test_basic(self):
+    name = find_unique(generated_dir, 'file', ext='.txt')
+    self.assertEqual(name, 'file')
+
+    path = os.path.join(generated_dir, 'file.txt')
+    Path(path).touch()
+
+    name = find_unique(generated_dir, 'file', ext='.txt')
+    self.assertEqual(name, 'file-0')
+
+    # Clean up
+    os.remove(path)
+
 if __name__ == '__main__':
   unittest.main()
