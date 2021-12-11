@@ -19,6 +19,10 @@ import test_data_structures
 import test_proto
 import test_packit
 
+from mivp_agent.util.file_system import safe_clean
+from mivp_agent.const import DATA_DIRECTORY
+
+
 if __name__ == '__main__':
   suite = unittest.TestSuite()
   suite.addTest(unittest.makeSuite(test_file_system.TestSafeClean))
@@ -32,10 +36,14 @@ if __name__ == '__main__':
   suite.addTest(unittest.makeSuite(test_data_structures.TestLimitedHistory))
   suite.addTest(unittest.makeSuite(test_proto.TestProto))
   suite.addTest(unittest.makeSuite(test_proto.TestLogger))
-
   
   runner = unittest.TextTestRunner()
   result = runner.run(suite)
+
+  # Clean any log files
+  log_dir = os.path.join(generated_dir, DATA_DIRECTORY)
+  safe_clean(log_dir, patterns=['*.gz', '*.session'])
+  os.rmdir(log_dir)
 
   if len(result.failures) != 0 or len(result.errors) != 0:
     exit(1)
