@@ -6,7 +6,7 @@ META_DIR = '.meta'
 MODELS_DIR = 'models'
 
 class LogDirectory:
-  def __init__(self, path):
+  def __init__(self, path, must_exist=False):
     self._path = path
 
     assert not os.path.isfile(self._path), 'There is a file in the place of the log directory, please remove this file if you wish a log directory to be created'
@@ -15,7 +15,9 @@ class LogDirectory:
     self._models_path = os.path.join(self._path, MODELS_DIR)
 
     # Initialize if it doesn't exist
-    if not os.path.isdir(self._path): 
+    if not os.path.isdir(self._path):
+      if must_exist:
+        raise RuntimeError('Could not find specified log directory')
       self._init_directory()
 
     self.meta = LogMetadata(self._path)

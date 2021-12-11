@@ -26,12 +26,15 @@ class RegistryDatum:
   def validate(self):
     for p in os.listdir(self.path):
       if not os.path.isfile(p):
-        print('WARNING: There is a director in the metadata registry. This indicates a corrupted registry.', file=sys.stderr)
+        print('WARNING: There is a directory in the metadata registry. This indicates a corrupted registry.', file=sys.stderr)
 
   def list_sessions(self):
     for p in os.listdir(self.path):
-      if os.path.isfile(p):
+      if os.path.isfile(os.path.join(self.path, p)):
         yield p
+  
+  def session_count(self):
+    return len(list(self.list_sessions()))
   
   def register(self, name):
     # Find a unique name
@@ -55,7 +58,6 @@ class LogMetadata:
     self._path = os.path.join(path, '.meta')
 
     # We don't init here because .meta is a signal that the directory is a valid logging directory
-    print(self._path)
     assert os.path.isdir(self._path), "Metadata directory not found, is this a valid log directory?"
 
     self.registry = RegistryDatum(os.path.join(self._path, 'registry'))
