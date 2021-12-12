@@ -1,0 +1,27 @@
+from mivp_agent.proto import translate
+
+class Consumer:
+  '''
+  This is an abstract class meant to help with providing a general interface to consume transition data.
+  '''
+
+  def _inject(self, data):
+    pb2_run = False
+
+    try:
+      self.pb2_data(data)
+      pb2_run = True
+    except AttributeError:
+      pass
+    
+    if not pb2_run:
+      try:
+        s1 = translate.state_to_dict(data.s1)
+        a = translate.action_to_dict(data.a)
+        s2 = translate.state_to_dict(data.s2)
+        self.dict_data(s1, a, s2)
+      except AttributeError as e:
+        raise AttributeError('No consumer method found to parse data') from None
+    
+    return pb2_run
+    

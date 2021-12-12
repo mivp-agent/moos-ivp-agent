@@ -17,6 +17,7 @@ import test_log
 import test_manager
 import test_data_structures
 import test_proto
+import test_consumer
 import test_packit
 
 from mivp_agent.util.file_system import safe_clean
@@ -31,10 +32,11 @@ if __name__ == '__main__':
   suite.addTest(unittest.makeSuite(test_packit.TestPackitDecode))
   suite.addTest(unittest.makeSuite(test_bridge.TestBridge))
   suite.addTest(unittest.makeSuite(test_log.TestMetadata))
+  suite.addTest(unittest.makeSuite(test_proto.TestProto))
+  suite.addTest(unittest.makeSuite(test_consumer.TestConsumer))
   suite.addTest(unittest.makeSuite(test_manager.TestManagerCore))
   suite.addTest(unittest.makeSuite(test_manager.TestManagerLogger))
   suite.addTest(unittest.makeSuite(test_data_structures.TestLimitedHistory))
-  suite.addTest(unittest.makeSuite(test_proto.TestProto))
   suite.addTest(unittest.makeSuite(test_proto.TestLogger))
   
   runner = unittest.TextTestRunner()
