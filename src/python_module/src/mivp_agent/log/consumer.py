@@ -1,4 +1,5 @@
 from mivp_agent.proto import translate
+from google.protobuf.message import Message
 
 class Consumer:
   '''
@@ -6,14 +7,15 @@ class Consumer:
   '''
 
   def _inject(self, data):
-    pb2_run = False
+    assert isinstance(data, Message)
 
+    pb2_run = False
     try:
       self.pb2_data(data)
       pb2_run = True
-    except AttributeError:
+    except AttributeError as e:
       pass
-    
+
     if not pb2_run:
       try:
         s1 = translate.state_to_dict(data.s1)

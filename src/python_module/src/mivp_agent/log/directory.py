@@ -25,6 +25,9 @@ class LogDirectory:
     os.makedirs(self._meta_path)
     os.makedirs(self._models_path)
   
+  def path(self):
+    return self._path
+
   def task_dir(self, task):
     path = os.path.join(self._path, task)
 

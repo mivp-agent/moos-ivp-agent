@@ -111,6 +111,16 @@ class ProtoLogger:
     assert self._mode == MODE_READ, "Method has_more() only supported in write mode"
 
     return len(self._current_messages) != 0 or self._gzip_idx != len(self._gzip_files)
+  
+  def total_files(self):
+    assert self._mode == MODE_READ, "Method total_files() only supported in write mode"
+
+    return len(self._gzip_files)
+  
+  def current_file(self):
+    assert self._mode == MODE_READ, "Method current_file() only supported in write mode"
+
+    return self._gzip_idx
 
   def read(self, n: int):
     '''

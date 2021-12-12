@@ -1,11 +1,7 @@
 from genericpath import exists, isdir
 import os, sys
 
-from mivp_agent.const import DATA_DIRECTORY
-from mivp_agent.log.directory import LogDirectory
-
-from mivp_agent.proto.mivp_agent_pb2 import Transition
-from mivp_agent.proto.proto_logger import ProtoLogger
+from mivp_agent.cli.util import load_data_dir, get_log
 
 class Log:
   def __init__(self, parser):
@@ -14,14 +10,6 @@ class Log:
     parser.add_argument('log', nargs=1, help='The log file to preform the requested operations on. Can be the name of a session or a path.')
 
     self.parser.set_defaults(func=self.do_it)
-  
-  def get_log(self, path):
-    log = None
-    try:
-      log = ProtoLogger(path, Transition, mode='r')
-    except:
-      print(f'Error: Failed to load log at path: {path}', file=sys.stderr)
-    return log
 
   def handle_log(self, log, args):
     transitions = []
@@ -36,15 +24,15 @@ class Log:
     print()
 
   def do_it(self, args):
+    '''
+    This is the function called by argparse to kick off the processing
+    '''
     if os.path.isdir(args.log[0]):
-      self.handle_log(self.get_log(args.log[0]), args)
+      self.handle_log(get_log(args.log[0]), args)
       return
-    
-    data = None
-    try:
-      data = LogDirectory(DATA_DIRECTORY, must_exist=True)
-    except RuntimeError:
-      print(f'Error: Unable to load data directory to check input against session names. Please either provide a path to the log directory or move to a directory with a {DATA_DIRECTORY} directory', file=sys.stderr)
+
+    data = load_data_dir(print_error=False)
+    if data is None:
       return
     
     if not data.meta.registry.has_session(args.log[0]):
