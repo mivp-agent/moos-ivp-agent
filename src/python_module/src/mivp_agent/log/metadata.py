@@ -3,6 +3,10 @@ import sys
 from pathlib import Path
 
 from mivp_agent.util.file_system import find_unique
+from mivp_agent.log.const import CORE_DIRS
+
+from mivp_agent.proto.mivp_agent_pb2 import Transition
+from mivp_agent.proto.proto_logger import ProtoLogger
 
 class RegistryDatum:
   '''
@@ -27,6 +31,9 @@ class RegistryDatum:
     for p in os.listdir(self.path):
       if not os.path.isfile(p):
         print('WARNING: There is a directory in the metadata registry. This indicates a corrupted registry.', file=sys.stderr)
+
+  def has_session(self, id):
+    return os.path.isfile(os.path.join(self.path, f'{id}.session'))
 
   def list_sessions(self):
     for p in os.listdir(self.path):
@@ -55,10 +62,37 @@ class LogMetadata:
     Args:
       path (str): The logging directory.
     '''
+    self._data_dir = path
     self._path = os.path.join(path, '.meta')
 
     # We don't init here because .meta is a signal that the directory is a valid logging directory
     assert os.path.isdir(self._path), "Metadata directory not found, is this a valid log directory?"
 
     self.registry = RegistryDatum(os.path.join(self._path, 'registry'))
+  
+  def get_logs(self, id):
+    '''
+    This function is used to get the logs associated with a specific session id
+    '''
+    # Check if the session id is valid in this context
+    if not self.registry.has_session(id):
+      return None
+    
+    logs = []
+    for subdir in os.listdir(self._data_dir):
+      if subdir not in CORE_DIRS:
+        # We have a task folder
+        session_path = os.path.join(
+          self._data_dir,
+          subdir,
+          id
+        )
+
+        if os.path.isdir(session_path):
+          for log_dir in os.listdir(session_path):
+            path = os.path.join(session_path, log_dir)
+            logs.append(ProtoLogger(path, Transition, mode='r'))
+    
+    return logs
+
   

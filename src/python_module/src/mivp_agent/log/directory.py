@@ -1,9 +1,7 @@
 import os
 
+from mivp_agent.log.const import META_DIR, MODELS_DIR
 from mivp_agent.log.metadata import LogMetadata
-
-META_DIR = '.meta'
-MODELS_DIR = 'models'
 
 class LogDirectory:
   def __init__(self, path, must_exist=False):
