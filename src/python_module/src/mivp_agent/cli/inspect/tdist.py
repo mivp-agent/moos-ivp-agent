@@ -1,8 +1,16 @@
+import plotly.graph_objects as go
 from .consumers import PlotlyScalars
 
 from mivp_agent.util.math import dist
 
 class TransitionDist(PlotlyScalars):
+  def layout(self):
+    return go.Layout(
+      title='Transition Distance vs Time',
+      xaxis_title='Episode',
+      yaxis_title='Transition Distance'
+    )
+  
   def pb2_data(self, data):
     x1 = data.s1.vinfo.NAV_X
     y1 = data.s1.vinfo.NAV_Y

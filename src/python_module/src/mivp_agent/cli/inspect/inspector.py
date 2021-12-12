@@ -5,32 +5,45 @@ from mivp_agent.cli.util import get_log
 
 from .import tdist
 
+options = {}
+options['tdist'] = {
+  'class': tdist.TransitionDist,
+  'help': 'This command show a scatter plot of the transition distance (the distance between s1 and s2)'
+}
+
 class Inspector:
   def __init__(self, parser):
     self.parser = parser
 
     parser.add_argument('log', nargs=1, help='The log file to preform the requested operations on. Can be the name of a session or a path.')
 
+    for opt in options:
+      parser.add_argument(f'--{opt}', action='store_true', help=options[opt]['help'])
+
     self.parser.set_defaults(func=self.do_it)
 
-  def handle_log(self, log, args):
-    g = tdist.TransitionDist()
+  def handle_log(self, log, graphers):
+    # Initalized all graphers
+    for i, g in enumerate(graphers):
+      graphers[i] = g()
 
     last_idx = None
     progress_bar = tqdm(total=log.total_files(), desc="Log Files")
     while log.has_more():
       t = log.read(1)[0]
-      g._inject(t)
 
-      if log.current_file() == 10:
-        break
+      # Update all graphers
+      for g in graphers:
+        g._inject(t)
 
       # If we are on a new file update the progress bar
       if log.current_file() != last_idx:
         progress_bar.update(1)
         last_idx = log.current_file()
     
-    g._get_fig().show()
+    # Show all graphers
+    for g in graphers:
+      g._get_fig().show()
 
   def do_it(self, args):
     '''
@@ -43,4 +56,14 @@ class Inspector:
     if log is None:
       return
 
-    self.handle_log(log, args)
+    graphers = []
+    var_args = vars(args)
+    for opt in options:
+      if var_args[opt]:
+        graphers.append(options[opt]['class'])
+    
+    if len(graphers) == 0:
+      print('You must select at least one grapher. See usage.', file=sys.stderr)
+      return
+
+    self.handle_log(log, graphers)
