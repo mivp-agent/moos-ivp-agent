@@ -3,16 +3,16 @@ from tqdm import tqdm
 
 from mivp_agent.cli.util import get_log
 
-from .graphers import tdist, mindist
+from .graphers import tdist, flagdist
 
 options = {}
 options['tdist'] = {
   'class': tdist.TransitionDist,
   'help': 'This command show a scatter plot of the transition distance (the distance between s1 and s2)'
 }
-options['mindist'] = {
-  'class': mindist.MinDist,
-  'help': 'help'
+options['flagdist'] = {
+  'class': flagdist.FlagDist,
+  'help': 'Plot the min distance that the agent gets to the blue flag for each episode'
 }
 
 class Inspector:

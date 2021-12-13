@@ -5,12 +5,12 @@ from mivp_agent.cli.inspect.consumers import PlotlyScalars
 from mivp_agent.util.math import dist
 from mivp_agent.aquaticus.const import FIELD_BLUE_FLAG
 
-class MinDist(PlotlyScalars):
+class FlagDist(PlotlyScalars):
   def layout(self):
     return go.Layout(
       title='Distance to Blue Flag',
       xaxis_title='Episode',
-      yaxis_title='Transition Distance'
+      yaxis_title='Distance to Flag'
     )
   
   def setup(self):
