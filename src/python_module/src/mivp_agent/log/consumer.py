@@ -6,8 +6,27 @@ class Consumer:
   This is an abstract class meant to help with providing a general interface to consume transition data.
   '''
 
+  def _has_setup(self):
+    try:
+      test = self.setup
+      return True
+    except AttributeError:
+      return False
+  
+  def _setup_called(self):
+    try:
+      test = self.__setup_called
+      return True
+    except AttributeError:
+      return False
+  
   def _inject(self, data):
     assert isinstance(data, Message)
+
+    # Call setup if this is the first time
+    if self._has_setup() and not self._setup_called():
+      self.setup()
+      self.__setup_called = True
 
     pb2_run = False
     try:

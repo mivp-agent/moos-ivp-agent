@@ -1,5 +1,6 @@
 import plotly.graph_objects as go
-from .consumers import PlotlyScalars
+
+from mivp_agent.cli.inspect.consumers import PlotlyScalars
 
 from mivp_agent.util.math import dist
 
