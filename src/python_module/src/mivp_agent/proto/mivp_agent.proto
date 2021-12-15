@@ -1,0 +1,32 @@
+syntax = "proto2";
+
+package mivp_agent;
+
+import "moos.proto";
+
+message EpisodeReport {
+  required int32 NUM = 1;
+  required bool SUCCESS = 2;
+  required double DURATION = 3;
+  required bool WILL_PAUSE = 4;
+}
+
+message State {
+  required NodeReport vinfo = 1;
+  repeated MOOSVar vars = 2;
+  repeated NodeReport node_reports = 3;
+  optional EpisodeReport episode_report = 4;
+}
+
+message Action {
+  required double course = 1;
+  required double speed = 2;
+  repeated MOOSVar posts = 3;
+  required string ctrl_msg = 4;
+}
+
+message Transition {
+  required State s1 = 1;
+  required Action a = 2;
+  required State s2 = 3;
+}

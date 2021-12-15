@@ -68,19 +68,21 @@ class AgentData:
     self.grab_time = None
 
 
-def train(args, config):
-  # Setup model
-  q = QLearn(
-    lr=config['lr'],
-    gamma=config['gamma'],
-    action_space_size=config['action_space_size'],
-    field_res=config['field_res'],
-    verbose=args.debug,
-    save_dir=args.save_dir
-  )
-
+def train(args, config, run_name):
   agents = {}
-  with MissionManager() as mgr:
+  with MissionManager('trainer', log=True, immediate_transition=False, id_suffix=run_name) as mgr:
+    # Create a directory for the model to save
+    model_save_dir = mgr.model_output_dir()
+
+    # Setup model
+    q = QLearn(
+      lr=config['lr'],
+      gamma=config['gamma'],
+      action_space_size=config['action_space_size'],
+      field_res=config['field_res'],
+      verbose=args.debug,
+      save_dir=model_save_dir
+    )
     print('Waiting for sim vehicle connection...')
     mgr.wait_for(EXPECTED_VEHICLES)
 
@@ -123,6 +125,7 @@ def train(args, config):
       msg = mgr.get_message()
       # If pEpisodeManager is paused, start and continue to next agent
       if msg.episode_state == 'PAUSED':
+        msg.mark_transition() # Initial state should be a transition
         msg.start()
         continue
       agent_data = agents[msg.vname]
@@ -149,6 +152,9 @@ def train(args, config):
         '''
         Part 2: Handle the ending of episodes
         '''
+        # Mark this state as a transition to record it to logs
+        msg.mark_transition()
+
         if msg.episode_report is None:
           assert agent_data.agent_episode_count == 0
         elif msg.episode_report['DURATION'] < 2:
@@ -268,11 +274,8 @@ def train(args, config):
 
 
 if __name__ == '__main__':
-  save_dir = os.path.join(SAVE_DIR, str(round(time.time())))
-
   parser = argparse.ArgumentParser()
   parser.add_argument('--debug', action='store_true')
-  parser.add_argument('--save_dir', default=save_dir)
   parser.add_argument('--no_wandb', action='store_true')
   
   args = parser.parse_args()
@@ -301,10 +304,9 @@ if __name__ == '__main__':
   }
 
   if args.no_wandb:
-    train(args, config)
+    train(args, config, None)
   else:
     wandb.login(key=WANDB_KEY)
     with wandb.init(project='mivp_agent_qtable', config=config):
       config = wandb.config
-      args.save_dir = os.path.join(SAVE_DIR, f'{str(round(time.time()))}_{wandb.run.name}')
-      train(args, config)
+      train(args, config, f'{wandb.run.name}')

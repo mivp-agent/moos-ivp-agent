@@ -14,7 +14,7 @@ from model import load_model
 def run(args):
   q, attack_actions, retreat_actions = load_model(args.model)
 
-  with MissionManager() as mgr:
+  with MissionManager('runner', log=False) as mgr:
     print('Waiting for sim vehicle connections...')
     while mgr.get_vehicle_count() < 1:
       time.sleep(0.1)

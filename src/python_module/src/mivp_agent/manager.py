@@ -1,60 +1,19 @@
+# General
+import os
 import time
-from queue import Queue
+from queue import Queue, Empty
 from threading import Thread, Lock
 
-from mivp_agent.const import KEY_ID
-from mivp_agent.const import KEY_EPISODE_MGR_REPORT, KEY_EPISODE_MGR_STATE
+# For core
+from mivp_agent.const import KEY_ID, DATA_DIRECTORY
+from mivp_agent.messages import MissionMessage, INSTR_SEND_STATE, INSTR_RESET_FAILURE, INSTR_RESET_SUCCESS
 from mivp_agent.bridge import ModelBridgeServer
-from mivp_agent.util.validate import validateAction
-from mivp_agent.util.parse import parse_report
 
-INSTR_SEND_STATE = {
-    'speed': 0.0,
-    'course': 0.0,
-    'posts': {},
-    'ctrl_msg': 'SEND_STATE'
-}
-INSTR_START = {
-    'speed': 0.0,
-    'course': 0.0,
-    'posts': {
-        'EPISODE_MGR_CTRL': 'type=start'
-    },
-    'ctrl_msg': 'SEND_STATE'
-}
-INSTR_PAUSE = {
-    'speed': 0.0,
-    'course': 0.0,
-    'posts': {
-        'EPISODE_MGR_CTRL': 'type=pause'
-    },
-    'ctrl_msg': 'SEND_STATE'
-}
-INSTR_STOP = {
-    'speed': 0.0,
-    'course': 0.0,
-    'posts': {
-        'EPISODE_MGR_CTRL': 'type=hardstop'
-    },
-    'ctrl_msg': 'SEND_STATE'
-}
-INSTR_RESET_SUCCESS = {
-    'speed': 0.0,
-    'course': 0.0,
-    'posts': {
-        'EPISODE_MGR_CTRL': 'type=reset,success=true'
-    },
-    'ctrl_msg': 'SEND_STATE'
-}
-INSTR_RESET_FAILURE = {
-    'speed': 0.0,
-    'course': 0.0,
-    'posts': {
-        'EPISODE_MGR_CTRL': 'type=reset,success=false'
-    },
-    'ctrl_msg': 'SEND_STATE'
-}
-
+# For logging
+from mivp_agent.log.directory import LogDirectory
+from mivp_agent.proto.proto_logger import ProtoLogger
+from mivp_agent.proto.mivp_agent_pb2 import Transition
+from mivp_agent.proto import translate
 
 class MissionManager:
     '''
@@ -66,13 +25,29 @@ class MissionManager:
       ```
       from mivp_agent.manager import MissionManager
 
-      with MissionManager() as mgr:
+      with MissionManager('trainer') as mgr:
         mgr.wait_for(['felix', 'evan'])
         ...
       ```
     '''
 
-    def __init__(self):
+    def __init__(self, task, log=True, immediate_transition=True, log_whitelist=None, id_suffix=None, output_dir=None):
+        '''
+        The initializer for MissionManager
+
+        Args:
+            task (str): For organization of saved data type is required to specify what task the MissionManager is preforming. For example a `MissionManager('trainer')` will log data under `generated_files/trainer/` in the current working directory.
+
+            log (bool): Logging of agent transitions can be disabled by setting this to `False`.
+
+            immediate_transition (bool): By default the the manager will assume that all messages received from BHV_Agents represent a new transition. If set to `False` one must manually tell set `msg.is_transition = True` on any objects returned from `get_message()`. This is helpful when you want to control what is considered a "state" in your Markov Decsion Process.
+
+            log_whitelist (list): Setting this parameter will only log some transitions according to their reported `vnames`.
+
+            id_suffix (str): Will be appended to the generated session id.
+
+            output_dir (str): Path to a place to store files.
+        '''
         self._msg_queue = Queue()
 
         self._vnames = []
@@ -88,6 +63,60 @@ class MissionManager:
 
         self._thread = None
         self._stop_signal = False
+        
+        if output_dir is None:
+            output_dir = os.path.join(
+                os.path.abspath(os.getcwd()),
+                DATA_DIRECTORY
+            )
+
+        self._log_dir = LogDirectory(output_dir)
+        self._id = self._init_session(id_suffix)
+
+        # Calculate the path to the directories we will be writing to. This will be created when we first use them / return them to the user.
+        self._model_path = os.path.join(
+            self._log_dir.models_dir(),
+            self._id
+        )
+        self._log_path = os.path.join(
+            self._log_dir.task_dir(task),
+            self._id
+        )
+        self._model_path = os.path.abspath(self._model_path)
+        self._log_path = os.path.abspath(self._log_path)
+
+        self._log = log
+        self._imm_transition = immediate_transition
+        if self._log:
+            self._log_whitelist = log_whitelist
+            # Create data structs needed to log data from each vehicle
+            self._logs = {}
+            self._last_state = {}
+            self._last_act = {}
+
+            # Go ahead and create the log path
+            os.makedirs(self._log_path)
+
+    def _init_session(self, id_suffix):
+        # Start the session id with the current timestamp
+        id = str(round(time.time()))
+
+        # Add suffix if it exists
+        if id_suffix is not None:
+            id += f"-{id_suffix}"
+
+        id = self._log_dir.meta.registry.register(id)
+
+        return id
+
+    def model_output_dir(self):
+        if not os.path.isdir(self._model_path):
+            os.makedirs(self._model_path)
+        return self._model_path
+    
+    def log_output_dir(self):
+        assert self._log, "This method should not be used, when logging is disabled"
+        return self._log_path
 
     def __enter__(self):
         self.start()
@@ -132,7 +161,13 @@ class MissionManager:
                                 self._vnames.append(vname)
                                 self._vehicle_count += 1
 
-                        m = MissionMessage(addr, msg)
+                        assert address_map[msg[KEY_ID]] == addr, "Vehicle changed vname. This violates routing / logging assumptions made by MissionManager"
+
+                        m = MissionMessage(
+                          addr,
+                          msg,
+                          is_transition=self._imm_transition
+                        )
 
                         with self._ems_lock:
                             self._episode_manager_states[m.vname] = m.episode_state
@@ -155,19 +190,51 @@ class MissionManager:
                         live_msg_list.remove(m)
                         server.send_instr(m._addr, m._response)
 
+                        # Do logging
+                        self._do_logging(m)
+
                 # Handle reseting of vehicles
                 while not self._vresets.empty():
                     vname, success = self._vresets.get()
 
                     if vname not in address_map:
                         raise RuntimeError(
-                            f'Receeived reset for unknown vehicle: {vname}')
+                            f'Received reset for unknown vehicle: {vname}')
 
                     instr = INSTR_RESET_FAILURE
                     if success:
                         instr = INSTR_RESET_SUCCESS
 
                     server.send_instr(address_map[vname], instr)
+
+    # This message should only be called on msgs which have actions
+    def _do_logging(self, msg):
+        if not self._log:
+            return
+        
+        # Check in whitelist if exists
+        if self._log_whitelist is not None:
+            if msg.vname not in self._log_whitelist:
+                return
+
+        # Check if this is a new vehicle
+        if msg.vname not in self._logs:
+            path = os.path.join(self._log_path, f"log_{msg.vname}")
+            self._logs[msg.vname] = ProtoLogger(path, Transition, mode='w')
+
+        if msg._is_transition:
+            # Write a transition if this is not the first state ever
+            if msg.vname in self._last_state:
+                t = Transition()
+                t.s1.CopyFrom(translate.state_from_dict(self._last_state[msg.vname]))
+                t.a.CopyFrom(translate.action_from_dict(self._last_act[msg.vname]))
+                t.s2.CopyFrom(translate.state_from_dict(msg.state))
+
+                self._logs[msg.vname].write(t)
+
+            # Update the storage for next transition
+            self._last_state[msg.vname] = msg.state
+            self._last_act[msg.vname] = msg._response
 
     def are_present(self, vnames):
         '''
@@ -224,7 +291,10 @@ class MissionManager:
             })
           ```
         '''
-        return self._msg_queue.get(block=block)
+        try:
+            return self._msg_queue.get(block=block)
+        except Empty:
+            return None
 
     def get_vehicle_count(self):
         '''
@@ -263,149 +333,10 @@ class MissionManager:
         if self._thread is not None:
             self._stop_signal = True
             self._thread.join()
+        if self._log:
+            for vehicle in self._logs:
+                self._logs[vehicle].close()
+
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
-
-
-class MissionMessage:
-    '''
-    This class is used to parse incoming messages into attributes (see bellow) and provide a simple interface for responding to each message.
-
-    **IMPORTANT NOTE:** Messages **MUST** be responded by one of the following methods to as `BHV_Agent` will not send another update until it has a response to the last.
-
-      - [`act(action)`][mivp_agent.manager.MissionMessage.act] **<---- Most common**
-      - [`request_new()`][mivp_agent.manager.MissionMessage.request_new]
-      - [`start()`][mivp_agent.manager.MissionMessage.start]
-      - [`pause()`][mivp_agent.manager.MissionMessage.pause]
-      - [`stop()`][mivp_agent.manager.MissionMessage.stop]
-
-    Attributes:
-      vname (str): The vehicle's name which generated the message.
-      state (dict): A dictionary containing key, value pairs of MOOS vars and their associated value at the time the message was created by `BHV_Agent`.
-      episode_report (dict or None): If `pEpisodeManager` is present on the vehicle this message will contain any "report" generated by it at the end of episodes. If no `pEpisodeManager` is present, the **value will be** `None`.
-      episode_state (str or None): If `pEpisodeManager` is present on the vehicle this message will be the state which that app is broadcasting. Otherwise, it will be `None`.
-
-    '''
-
-    def __init__(self, addr, msg):
-        # For use my MissionManager
-        self._addr = addr
-        self._response = None
-        self._rsp_lock = Lock()
-
-        # For use by client
-        self.state = msg
-        self.vname = msg[KEY_ID]
-        self.episode_report = None
-        self.episode_state = None
-        if self.state[KEY_EPISODE_MGR_REPORT] is not None:
-            self.episode_report = parse_report(
-                self.state[KEY_EPISODE_MGR_REPORT])
-        if self.state[KEY_EPISODE_MGR_STATE] is not None:
-            self.episode_state = self.state[KEY_EPISODE_MGR_STATE]
-
-    def _assert_no_rsp(self):
-        assert self._response is None, 'This message has already been responded to'
-
-    def act(self, action):
-        '''
-        This is used to send an action for the `BHV_Agent` to execute.
-
-        Args:
-          action (dict): An action to send (see below)
-
-        Example:
-          Actions submitted through `MissionMessage` are python dictionaries with the following **required** fields.
-          ```
-          msg.act({
-              'speed': 1.0
-              'course': 180.0
-          })
-          ```
-        Example:
-          Optionally, one can add a MOOS var and value they would like to post.
-          ```
-          msg.act({
-              'speed': 0.0
-              'course': 0.0
-              'posts': {
-                'ACTION': 'ATTACK_LEFT'
-              },
-          })
-          ``` 
-        '''
-        self._assert_no_rsp()
-        # Copy so we don't run into threading errors if client reuses the action dict
-        instr = action.copy()
-        if 'posts' not in action:
-            instr['posts'] = {}
-        validateAction(instr)
-        instr['ctrl_msg'] = 'SEND_STATE'
-
-        with self._rsp_lock:
-            self._response = instr
-
-    def start(self):
-        '''
-        This method is used to send a message to `pEpisodeManager` to **start** an episode. The following message will be constructed and dispatched.
-
-        ```
-        {
-          'speed': 0.0,
-          'course': 0.0,
-          'posts': {
-            'EPISODE_MGR_CTRL': 'type=start'
-          },
-        }
-        ```
-        '''
-        self._assert_no_rsp()
-        with self._rsp_lock:
-            self._response = INSTR_START
-
-    def pause(self):
-        '''
-        This method is used to send a message to `pEpisodeManager` to **pause** after the current episode. The following messagewill be constructed and dispatched.
-
-        ```
-        {
-          'speed': 0.0,
-          'course': 0.0,
-          'posts': {
-            'EPISODE_MGR_CTRL': 'type=pause'
-          },
-        }
-        ```
-        '''
-        self._assert_no_rsp()
-        with self._rsp_lock:
-            self._response = INSTR_PAUSE
-
-    def stop(self):
-        '''
-        This method is used to send a message to `pEpisodeManager` to **hardstop** an episode immediately. The following messagewill be constructed and dispatched.
-
-        ```
-        {
-          'speed': 0.0,
-          'course': 0.0,
-          'posts': {
-            'EPISODE_MGR_CTRL': 'type=hardstop'
-          },
-        }
-        ```
-        '''
-        self._assert_no_rsp()
-
-        with self._rsp_lock:
-            self._response = INSTR_STOP
-
-    def request_new(self):
-        '''
-        This method is used to send ask `BHV_Agent` to send another action.
-        '''
-        self._assert_no_rsp()
-
-        with self._rsp_lock:
-            self._response = INSTR_SEND_STATE

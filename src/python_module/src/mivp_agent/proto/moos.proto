@@ -1,0 +1,20 @@
+syntax = "proto2";
+
+package mivp_agent;
+
+message MOOSVar {
+  required string key = 1;
+  oneof val {
+    string sval = 2;
+    double dval = 3;
+    bool bval = 4;
+  }
+}
+
+message NodeReport {
+  required string vname = 1;
+  required double NAV_X = 2;
+  required double NAV_Y = 3;
+  required double NAV_HEADING = 4;
+  required double MOOS_TIME = 5;
+}

@@ -12,19 +12,20 @@ env:
   DEBUG_OUTPUT: false
 
 jobs:
-  linux-build:
+  build-n-test:
     strategy:
       matrix:
-        os: [ubuntu-20.04, ubuntu-18.04]
+        os: [ubuntu-20.04, ubuntu-18.04, macos-11, macos-10.15]
     runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v2
-    - name: Install pip dependencies? # Pip will faill on ubutun 18 on step bellow without this
-      run: sudo apt-get update && sudo apt-get install -y python3-setuptools
-    - name: Install mivp_agent dependencies
-      run: pip3 install numpy matplotlib
-    - name: Install mivp_agent testing dependencies
-      run: pip3 install timeout-decorator
+    - name: Install deps for ubuntu 18 runners
+      if: matrix.os == 'ubuntu-18.04'
+      run: pip3 install setuptools wheel
+    - name: Install mivp_agent
+      run: cd src/python_module && pip3 install .
+    - name: Install mivp_agent testing deps
+      run: cd src/python_module && pip3 install .[test]
     - name: Run python tests
       run: cd src/python_module/test && ./test_all.py

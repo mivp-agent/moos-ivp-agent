@@ -21,7 +21,7 @@ def validateAction(action):
 def validateInstruction(instr):
   validateAction(instr)
 
-  assert "ctrl_msg" in instr, "Instruction must have key 'ctrl_str'"
+  assert "ctrl_msg" in instr, "Instruction must have key 'ctrl_msg'"
   assert isinstance(instr['ctrl_msg'], str), 'ctrl_msg must be string'
 
 def validateState(state):

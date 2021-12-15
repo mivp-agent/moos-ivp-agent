@@ -1,0 +1,1 @@
+This directory is for use with tests that generate file output

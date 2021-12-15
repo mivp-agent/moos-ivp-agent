@@ -68,7 +68,7 @@ def test(args):
     q, attack_actions, retreat_actions = load_model(args.model)
 
     # Do testing
-    with MissionManager() as mgr:
+    with MissionManager('tester', log=False) as mgr:
         print('Waiting for sim vehicle connection...')
         mgr.wait_for(EXPECTED_VEHICLES)
 

@@ -14,6 +14,7 @@ string module_dir = src_dir + "/python_module";
 //fprintf(stderr, "%s\n", src_dir.c_str());
 //fprintf(stderr, "Current path: %ls\n", Py_GetPath());
 
+/*
 TEST(TestInitalization, TestFailure){
   Py_Initialize();
 
@@ -27,15 +28,12 @@ TEST(TestInitalization, TestFailure){
 
   EXPECT_TRUE(bridge.failureState());
 }
+*/
 
 TEST(TestInitalization, TestSuccess){
   Py_Initialize();
 
   // Add the correct path for the module
-  PyRun_SimpleString("import sys");
-  string cmd_string = "sys.path.append(\"" + module_dir + "\")";
-  PyRun_SimpleString(cmd_string.c_str());
-
   fprintf(stderr, "Current path: %ls\n", Py_GetPath());
 
   PyInterface bridge("mivp_agent.bridge");
