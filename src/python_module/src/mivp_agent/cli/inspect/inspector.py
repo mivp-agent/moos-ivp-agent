@@ -21,12 +21,14 @@ class Inspector:
 
     parser.add_argument('log', nargs=1, help='The log file to preform the requested operations on. Can be the name of a session or a path.')
 
+    parser.add_argument('--limit', type=int, default=None, help='Limit the number of log files read.')
+
     for opt in options:
       parser.add_argument(f'--{opt}', action='store_true', help=options[opt]['help'])
 
     self.parser.set_defaults(func=self.do_it)
 
-  def handle_log(self, log, graphers):
+  def handle_log(self, log, graphers, args):
     # Initalized all graphers
     for i, g in enumerate(graphers):
       graphers[i] = g()
@@ -40,6 +42,10 @@ class Inspector:
       for g in graphers:
         g._inject(t)
 
+      if args.limit is not None:
+        if args.limit == log.current_file():
+          break
+
       # If we are on a new file update the progress bar
       if log.current_file() != last_idx:
         progress_bar.update(1)
@@ -47,7 +53,7 @@ class Inspector:
     
     # Show all graphers
     for g in graphers:
-      g._get_fig().show()
+      g._get_fig(log.path()).show()
 
   def do_it(self, args):
     '''
@@ -70,4 +76,4 @@ class Inspector:
       print('You must select at least one grapher. See usage.', file=sys.stderr)
       return
 
-    self.handle_log(log, graphers)
+    self.handle_log(log, graphers, args)

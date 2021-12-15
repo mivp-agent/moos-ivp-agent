@@ -6,9 +6,14 @@ from mivp_agent.util.math import dist
 from mivp_agent.aquaticus.const import FIELD_BLUE_FLAG
 
 class FlagDist(PlotlyScalars):
-  def layout(self):
+  def layout(self, name):
+    title = go.layout.Title(
+        text=f"<b>Distance to Flag</b><br><sup>{name}</sup>",
+        xref="paper",
+        x=0
+    )
     return go.Layout(
-      title='Distance to Blue Flag',
+      title=title,
       xaxis_title='Episode',
       yaxis_title='Distance to Flag'
     )

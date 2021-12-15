@@ -5,9 +5,14 @@ from mivp_agent.cli.inspect.consumers import PlotlyScalars
 from mivp_agent.util.math import dist
 
 class TransitionDist(PlotlyScalars):
-  def layout(self):
+  def layout(self, name):
+    title = go.layout.Title(
+        text=f"<b>Transition Distance</b><br><sup>{name}</sup>",
+        xref="paper",
+        x=0
+    )
     return go.Layout(
-      title='Transition Distance vs Time',
+      title=title,
       xaxis_title='Episode',
       yaxis_title='Transition Distance'
     )

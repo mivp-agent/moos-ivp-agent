@@ -14,12 +14,12 @@ class PlotlyScalars(Consumer):
       return False
     return True
   
-  def _get_layout(self):
+  def _get_layout(self, name):
     try:
-      return self.layout()
+      return self.layout(name)
     except AttributeError:
       return go.Layout(
-        title='Combined Graphs',
+        title=name,
         xaxis_title='X',
         yaxis_title='Y'
       )
@@ -38,7 +38,7 @@ class PlotlyScalars(Consumer):
     self._data[key]['x'].append(x)
     self._data[key]['y'].append(y)
   
-  def _get_fig(self):
+  def _get_fig(self, name):
     if not self._is_data():
       return None
     
@@ -56,7 +56,7 @@ class PlotlyScalars(Consumer):
 
     fig = go.Figure(
       data=scatters,
-      layout=self._get_layout()
+      layout=self._get_layout(name)
     )
     
     return fig
