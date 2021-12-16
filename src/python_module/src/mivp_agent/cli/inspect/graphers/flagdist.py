@@ -18,7 +18,7 @@ class FlagDist(PlotlyScalars):
       yaxis_title='Distance to Flag'
     )
   
-  def setup(self):
+  def setup(self, *args, **kwargs):
     self.min_dist = None
     self.last_episode = None
 

@@ -3,7 +3,7 @@ from tqdm import tqdm
 
 from mivp_agent.cli.util import get_log
 
-from .graphers import tdist, flagdist
+from .graphers import tdist, flagdist, prcnt_success
 
 options = {}
 options['tdist'] = {
@@ -14,6 +14,10 @@ options['flagdist'] = {
   'class': flagdist.FlagDist,
   'help': 'Plot the min distance that the agent gets to the blue flag for each episode'
 }
+options['prcnt_success'] = {
+  'class': prcnt_success.PrcntSuccess,
+  'help': 'Plot the precent success on a rolling basis. Use --window to set the window size'
+}
 
 class Inspector:
   def __init__(self, parser):
@@ -22,6 +26,7 @@ class Inspector:
     parser.add_argument('log', nargs=1, help='The log file to preform the requested operations on. Can be the name of a session or a path.')
 
     parser.add_argument('--limit', type=int, default=None, help='Limit the number of log files read.')
+    parser.add_argument('--window', type=int, default=100, help='Sets the window size for averages, precentages, etc that do calculations on a rolling basis.')
 
     for opt in options:
       parser.add_argument(f'--{opt}', action='store_true', help=options[opt]['help'])
@@ -29,9 +34,9 @@ class Inspector:
     self.parser.set_defaults(func=self.do_it)
 
   def handle_log(self, log, graphers, args):
-    # Initalized all graphers
+    # Initialize all graphers
     for i, g in enumerate(graphers):
-      graphers[i] = g()
+      graphers[i] = g(args)
 
     last_idx = None
     progress_bar = tqdm(total=log.total_files(), desc="Log Files")

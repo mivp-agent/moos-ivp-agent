@@ -6,27 +6,19 @@ class Consumer:
   This is an abstract class meant to help with providing a general interface to consume transition data.
   '''
 
+  def __init__(self, *args, **kwargs):
+    if self._has_setup():
+      self.setup(*args, **kwargs)
+
   def _has_setup(self):
     try:
       test = self.setup
       return True
     except AttributeError:
       return False
-  
-  def _setup_called(self):
-    try:
-      test = self.__setup_called
-      return True
-    except AttributeError:
-      return False
-  
+
   def _inject(self, data):
     assert isinstance(data, Message)
-
-    # Call setup if this is the first time
-    if self._has_setup() and not self._setup_called():
-      self.setup()
-      self.__setup_called = True
 
     pb2_run = False
     try:
@@ -43,6 +35,5 @@ class Consumer:
         self.dict_data(s1, a, s2)
       except AttributeError as e:
         raise AttributeError('No consumer method found to parse data') from None
-    
+
     return pb2_run
-    

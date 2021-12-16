@@ -20,7 +20,7 @@ CMakeFiles
 
 # Legacy trained folders
 **/trained/*
-**/generated_files/*
+**/generated_files*/*
 
 # Any data folders
 **/.last_manager_log/*
