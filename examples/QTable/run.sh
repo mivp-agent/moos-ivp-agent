@@ -32,6 +32,6 @@ sleep 5
 
 # Start trainer with any arguments passed to this script
 echo "Launching runner..."
-./model/runner.py "$@"
+./model/new_runner.py "$@"
 
 cd $PREVIOUS_WD
