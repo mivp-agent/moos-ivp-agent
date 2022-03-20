@@ -4,7 +4,7 @@ import time
 
 from mivp_agent.episodic_manager import EpisodicManager
 from mivp_agent.util.math import dist
-from mivp_agent.util.display import ModelConsole
+#from mivp_agent.util.display import ModelConsole
 from mivp_agent.aquaticus.const import FIELD_BLUE_FLAG
 from constants import DEFAULT_RUN_MODEL
 from model import load_model
@@ -19,27 +19,16 @@ class Agent:
   def id(self):
       return self.own_id
 
-  '''
-  Idea of the method bellow...
-  Trainer was previously had to deal with state transitions itself. 
-  msg1 - Message from v1 at time 1
-  msg2 - Message from v1 at time 2
-  # We can find when transitions by doing this
-  obs_to_rpr(msg1.state) != obs_to_rpr(msg2.state)
-  previous_state != obs_to_rpr(blah blah)
-  '''
-  #rename to msg_to_rpr? need full msg and not just msg.state for console.tick
-  #observation.state doesn't make sense, gotta figure that out
   def obs_to_rpr(self, observation): 
     model_representation = self.q.get_state(
-      observation.state['NAV_X'],
-      observation.state['NAV_Y'],
-      observation.state['NODE_REPORTS'][self.opponent_id]['NAV_X'],
-      observation.state['NODE_REPORTS'][self.opponent_id]['NAV_Y'],
-      observation.state['HAS_FLAG']
+      observation['NAV_X'],
+      observation['NAV_Y'],
+      observation['NODE_REPORTS'][self.opponent_id]['NAV_X'],
+      observation['NODE_REPORTS'][self.opponent_id]['NAV_Y'],
+      observation['HAS_FLAG']
     )
+    #console.tick(observation) #needs full msg, obervation is an msg.state
 
-    console.tick(observation)
     return model_representation
 
   def rpr_to_act(self, rpr, observation): #why rpr and observation? we talked about this but can't remember
@@ -79,7 +68,7 @@ if __name__ == '__main__':
     agents.append(Agent(f'agent_1{i}', f'drone_2{i}', args.model))
     wait_for.append(f'agent_1{i}')
 
-  console = ModelConsole() #where will this live?
-  mgr = EpisodicManager(agents, 13, wait_for=wait_for)
+  #console = ModelConsole() #where will this live? Do we care? Needs a full msg instead of msg.state
+  mgr = EpisodicManager(agents, 13, wait_for=wait_for) #13 for 10 full episodes... not ideal
   mgr.start('runner')
 

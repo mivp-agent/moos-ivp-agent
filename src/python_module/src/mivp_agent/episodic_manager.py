@@ -62,8 +62,8 @@ class EpisodicManager:
             data = self.agent_data[a.id()]
 
             # Probably always
-            # rpr = a.obs_to_rpr(msg.state) #state nomenclature still lurking
-            rpr = a.obs_to_rpr(msg)  # full msg for console.tick
+            rpr = a.obs_to_rpr(msg.state) #state nomenclature still lurking
+            #rpr = a.obs_to_rpr(msg)  # full msg for console.tick
 
             if data.last_rpr != rpr:
               msg.mark_transition()
