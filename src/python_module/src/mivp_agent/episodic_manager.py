@@ -117,8 +117,10 @@ class EpisodicManager:
             # track data
             data.last_rpr = rpr
 
-            ################################################
-            # Importantly, actually do shit #
-            msg.act(data.current_action)
+            # If we have an action send that, otherwise mark message as handled and request new one.
+            if data.current_action is None:
+              msg.request_new()
+            else:
+              msg.act(data.current_action)
 
     self._run_lock.release()
