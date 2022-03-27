@@ -1,3 +1,5 @@
+import time
+from threading import Event, Lock
 
 from mivp_agent.manager import MissionManager
 
@@ -17,7 +19,7 @@ class AgentData:
     self.current_action = None
 
     '''
-    To identify new states and preform action lookup / calculation from the model.
+    To identify new states and perform action lookup / calculation from the model.
     '''
     self.last_rpr = None
 
@@ -49,12 +51,46 @@ class EpisodicManager:
     self.episodes = episodes
     self.current_episode = 0
 
-  def start(self, task, log=True):
-    with MissionManager(task, log=log) as mgr:
-      mgr.wait_for(self.wait_for)
+    # Control signals
+    self._run_lock = Lock()
+    self._stop_signal = Event()
 
-      while self.current_episode < self.episodes:
-        msg = mgr.get_message()
+  '''
+  Perform non blocking acquire on the run lock to test if the lock is acquired by the run method. The lock will be released right after acquisition.
+  '''
+  def is_running(self):
+    if self._run_lock.acquire(False):
+      self._run_lock.release()
+      return False
+    return True
+
+  def _should_stop(self):
+    return self.current_episode >= self.episodes or \
+    self._stop_signal.is_set()
+
+  def stop(self):
+    if not self.is_running():
+      RuntimeError('Stop called before start.')
+    self._stop_signal.set()
+
+  def start(self, task, log=True):
+    if not self._run_lock.acquire(False):
+      raise RuntimeError('Start should only be called once.')
+
+    with MissionManager(task, log=log) as mgr:
+      # Below is similar to `mgr.wait_for(...)` but respects out stop signal
+      while not mgr.are_present(self.wait_for) and \
+        not self._should_stop():
+        time.sleep(0.1)
+
+      while not self._should_stop():
+        # Non blocking so `stop()` method will work immediately
+        msg = mgr.get_message(block=False)
+
+        # If we didn't get a message sleep and then loop
+        if msg is None:
+          time.sleep(0.1)
+          continue
 
         # Find agent in list...
         for a in self.agents:
@@ -84,3 +120,5 @@ class EpisodicManager:
             ################################################
             # Importantly, actually do shit #
             msg.act(data.current_action)
+
+    self._run_lock.release()
