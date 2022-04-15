@@ -1,5 +1,3 @@
-import time
-from threading import Event, Lock
 
 from mivp_agent.manager import MissionManager
 
@@ -49,48 +47,21 @@ class EpisodicManager:
     SETUP EPISODE TRACKING
     '''
     self.episodes = episodes
-    self.current_episode = 0
+    self.completed_episode = 0
 
-    # Control signals
-    self._run_lock = Lock()
-    self._stop_signal = Event()
+  def _build_report(self):
+    report = {
+      'completed_episodes': self.completed_episode,
+    }
 
-  '''
-  Perform non blocking acquire on the run lock to test if the lock is acquired by the run method. The lock will be released right after acquisition.
-  '''
-  def is_running(self):
-    if self._run_lock.acquire(False):
-      self._run_lock.release()
-      return False
-    return True
-
-  def _should_stop(self):
-    return self.current_episode >= self.episodes or \
-    self._stop_signal.is_set()
-
-  def stop(self):
-    if not self.is_running():
-      RuntimeError('Stop called before start.')
-    self._stop_signal.set()
+    return report
 
   def start(self, task, log=True):
-    if not self._run_lock.acquire(False):
-      raise RuntimeError('Start should only be called once.')
-
     with MissionManager(task, log=log) as mgr:
-      # Below is similar to `mgr.wait_for(...)` but respects out stop signal
-      while not mgr.are_present(self.wait_for) and \
-        not self._should_stop():
-        time.sleep(0.1)
+      mgr.wait_for(self.wait_for)
 
-      while not self._should_stop():
-        # Non blocking so `stop()` method will work immediately
-        msg = mgr.get_message(block=False)
-
-        # If we didn't get a message sleep and then loop
-        if msg is None:
-          time.sleep(0.1)
-          continue
+      while self.completed_episode < self.episodes:
+        msg = mgr.get_message()
 
         # Find agent in list...
         for a in self.agents:
@@ -103,24 +74,24 @@ class EpisodicManager:
 
             if data.last_rpr != rpr:
               msg.mark_transition()
+              em_report = self._build_report()
               # still need state here bc rpr_to_act expects obs
-              data.current_action = a.rpr_to_act(rpr, msg.state)
+              data.current_action = a.rpr_to_act(rpr, msg.state, em_report)
 
             # Update episode count if applicable
             if data.last_episode != msg.episode_report['NUM']:
+              if data.last_episode is not None:
+                # update the global episode count # if not first
+                self.completed_episode += 1
               data.last_episode = msg.episode_report['NUM']
+              em_report = self._build_report()
+              em_report['success'] = msg.episode_report['SUCCESS']
+              a.episode_end(rpr, msg.state, em_report)
 
-              ################################################
-              # Importantly, update the global episode count #
-              self.current_episode += 1
 
             # track data
             data.last_rpr = rpr
 
-            # If we have an action send that, otherwise mark message as handled and request new one.
-            if data.current_action is None:
-              msg.request_new()
-            else:
-              msg.act(data.current_action)
-
-    self._run_lock.release()
+            ################################################
+            # Importantly, actually do shit #
+            msg.act(data.current_action)
