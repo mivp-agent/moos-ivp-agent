@@ -13,7 +13,7 @@ def run():
   g.init_vehicle('felix', 'red')
   g.init_vehicle('evan', 'blue')
 
-  with MissionManager() as mgr:
+  with MissionManager('runner', log=False) as mgr:
     print('Waiting for simulation start...')
     mgr.wait_for(('felix',))
 
