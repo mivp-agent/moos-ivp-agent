@@ -1,6 +1,6 @@
 # Discretizer Example
 
-This example is demoing both the `FieldDiscretizer` and `DiscreteFieldGrapher` classes from the `mivp_agent.aquaticus.field` module. Descretization for state is useful in many forms of ML.
+This example is demoing both the `FieldDiscretizer` and `DiscreteFieldGrapher` classes from the `mivp_agent.aquaticus.field` module. Discretization for state is useful in many forms of ML.
 
 ![Demo](../../assets/DiscretizerDemo.gif)
 
@@ -8,14 +8,10 @@ Running the `DiscreteFieldGrapher` will slow down the program and is intended ma
 
 # Running
 
-Like the pLearn example, you will need to run the simulation separately.
+Use the launch script in this directory to run this example.
 
 ```
-cd examples/DiscreteField/mission
-./launch_full.sh
+./run.sh
 ```
 
-```
-cd examples/DiscreteField
-./run.py
-```
+If your X11 forwarding is configured correctly you should see, both the MOOS-IvP simulation (pMarineViewer) and a matplotlib window appear. 
