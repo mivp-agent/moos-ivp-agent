@@ -5,22 +5,22 @@
 ### Model
 This is an implementation of on policy [Q-Table learning](https://www.freecodecamp.org/news/an-introduction-to-q-learning-reinforcement-learning-14ac0b4493cc/). It uses the `FieldDiscretizer` utility provided by the `mivp_agent` to make the aquaticus field compatible with the Q-Table method.
 
-## Mission files
+## Mission files / MOOS-IvP details
 The mission files being used are from the `../../missions/AgentAquaticus` base mission.
 
 The config block, in `mission/heron/meta_heron.bhv`, that supports connection with `MissionManager` is `BHV_Agent` after the simulation is started this behavior will attempt connection to the server started by `MissionManager`.
 
 The other important config block, in `mision/heron/plug_pEpisodeManager.moos`, facilitates episodic behavior. Note also, the flag manager config block in shoreside's `mission/shoreside/meta_shoreside.moos` specifies the success condition by a message sent to the `pEpisodeManager` via a posted MOOS var that it listens to.
 
-The moos-ivp-agent apps `uFldFlagManagerAgent` & `uFldTagManagerAgent` (forks of the originals) to add support for multi-vehicle data collection during aquaticus simulations. They are backwards compatible as with the regular versions.
+The moos-ivp-agent apps `uFldFlagManagerAgent` & `uFldTagManagerAgent` (forks of the originals) to add support for multi-vehicle data collection during aquaticus simulations. They are backwards compatible with the original versions.
 
 ### Agent & results
-Currently, the agent being trained to both capture **and** return the flag. Success is being seen at around 45000 episodes which amounts to approximately 24 hours training time and 50 days of training time from the agent's perspective (with all 5 agents running during training time). It is **highly** likely that better learning algorithms, such as DQNs, will generalize better and converge to optimal Q values faster.
+Currently, the agent being trained to both capture **and** return the flag. Success is being seen at around 45000 episodes which amounts to approximately 24 hours and 50 days of training time from the agent's perspective (with all 5 agents running during training time). It is **highly** likely that better learning algorithms, such as DQNs, will generalize better and converge to optimal Q values faster.
 
 ## Training
 
 ### API Key
-QTable integrates with the ML service [WandB](https://wandb.ai) for logging purposes. You must make a account with them and put your api key in `model/wandb_key.py`
+The QTable example integrates with the ML service [WandB](https://wandb.ai) for logging purposes. You must make a account with them and put your api key in `model/wandb_key.py`
 
 ### Running trainer
 After making a WandB account and adding your key, you can start the trainer with the following command. This will launch both the simulator and the trainer.
@@ -29,7 +29,7 @@ After making a WandB account and adding your key, you can start the trainer with
 ./train.sh
 ```
  
-**NOTE:** If a majority of the first 20 or so episodes have `duration` values >= 200 (the maximum). See the section below and reduce the number of agents until this is not the case.
+**REALLY IMPORTANT NOTE:** If a majority of the first 20 or so episodes have `duration` values >= 200 (the maximum). See the section below and reduce the number of agents until this is not the case.
  
 #### View wandb output
  
@@ -87,7 +87,7 @@ cd ..
 ## Running models
 
 ### Directory structure
-To run trained models we need to point it at the `.npy` file with the trained model which has a `config.json` file in the same location as this file. For example:
+To run trained models we need to point it at the `.npy` file with the trained model which has a `config.json` file in the same folder as this file. For example:
 
 ```
 - trained/
@@ -119,10 +119,10 @@ This is helpful using trained agents in missions which they were not trained in.
 ## Debugging
 
 ### Debugging the simulation while training
-The best way to begin debugging the simulation is to run a `uMAC` session on the compiles shorside moos file after running the `./train.sh` script (while the simulation is running).
+The best way to begin debugging the simulation is to run a `uMAC` session on the compiled shoreside moos file after running the `./train.sh` script (while the simulation is running).
 
 ```
 uMAC mission/shoreside/targ_shoreside.moos
 ```
 
-**NOTE:** you might have to wait a short amout of time for shoreside to get a message from the vehicles
+**NOTE:** you might have to wait a short amount of time for shoreside to get a message from the vehicles.
