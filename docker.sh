@@ -178,15 +178,17 @@ elif [[ "$1" == "run" ]]; then
         # Check for stopped containers and prompt for removal
         stopped="$(count_all $NAME)"
 
-        set +e
-        prompt "Remove stopped container named $NAME?" 0
-        rsp=$?
+        if [[ "$stopped" -gt "0" ]]; then
+            set +e
+            prompt "Remove stopped container named $NAME?" 0
+            rsp=$?
 
-        if [[ "$rsp" == "1" ]]; then
-            echo "Exiting..."
-            exit 1
-        else
-            docker rm "$NAME"
+            if [[ "$rsp" == "1" ]]; then
+                echo "Exiting..."
+                exit 1
+            else
+                docker rm "$NAME"
+            fi
         fi
     fi
 
