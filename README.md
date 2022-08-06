@@ -53,16 +53,18 @@ git clone https://github.com/mivp-agent/moos-ivp-agent.git
 See the docker section below for usage of the docker container.
 
 ### Linux
+---
 
 **NOTE:** I will often have to **restart NOT log out** before the group addition and `docker run hello-world` works without root privilages
  
 Follow the post install instructions for docker [here](https://docs.docker.com/engine/install/linux-postinstall/)
 
-### Mac OSX & XQuartz
+### Mac OSX
+---
+
+#### Installing and configuring XQuartz
 
 Install [XQuartz](https://content.byui.edu/file/cddfb9c0-a825-4cfe-9858-28d5b4c218fe/1/Course/Setup-XQuartz.html) for the GUI components to render properly.
-
-#### Fix multi-threading issue
 
 `pMarineViewer` has a compatibility issue with connections inside of the docker container on some versions of OSX. On your **host NOT docker** terminal enter the following command.
 
@@ -72,20 +74,25 @@ defaults write org.xquartz.X11 enable_iglx -bool true
 
 [Reference](https://unix.stackexchange.com/questions/429760/opengl-rendering-with-x11-forwarding/642954#642954)
 
-#### Allow networked connections
-
-Run the following command to start XQuartz (again, on a host terminal).
+After this is done you can use the refresh script to restart XQuartz
 
 ```
-xhost +
+./refresh_xquartz.sh
 ```
 
-After the command completes go to the task bar and `XQuarts > Preferences > Security` and check the box labeled `Allow connections from network clients`. After doing this you will need to restart xhost. The following method will work among others.
+#### Handling pMarineViewer crashes
+
+If you see the pMarineViewer window for a moment and then have it crash, it can be related to the following error.
 
 ```
-killall Xquartz
-xhost +
+[xcb] Unknown sequence number while processing queue
+[xcb] Most likely this is a multi-threaded client and XInitThreads has not been called
+[xcb] Aborting, sorry about that.
 ```
+
+The first thing to make sure of is that you have set the `enable_iglx` flag correctly (see above section). 
+
+I have noticed this happening even after the `enable_iglx` flag is set to true. For me, **XQuartz will function properly the first time** pMarineViewer is loaded. The **second time, and every time after, I will see the above error**. A workaround to this is using the `./refresh_xquartz.sh` before every time you need.
 
 ### FAQ
 
