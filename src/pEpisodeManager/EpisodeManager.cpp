@@ -16,7 +16,8 @@ using namespace std;
 //---------------------------------------------------------
 // Constructor
 
-EpisodeManager::EpisodeManager()
+template<typename T>
+EpisodeManager<T>::EpisodeManager()
 {
   m_current_state = RUNNING;
   m_previous_state = PAUSED; // So start vars get posted
@@ -38,16 +39,16 @@ EpisodeManager::EpisodeManager()
 //---------------------------------------------------------
 // Destructor
 
-EpisodeManager::~EpisodeManager()
-{
-}
+template<typename T>
+EpisodeManager<T>::~EpisodeManager() {}
 
 //---------------------------------------------------------
 // Procedure: OnNewMail
 
-bool EpisodeManager::OnNewMail(MOOSMSG_LIST &NewMail)
+template<typename T>
+bool EpisodeManager<T>::OnNewMail(MOOSMSG_LIST &NewMail)
 {
-  AppCastingMOOSApp::OnNewMail(NewMail);
+  T::OnNewMail(NewMail);
 
   MOOSMSG_LIST::iterator p;
   for(p=NewMail.begin(); p!=NewMail.end(); p++) {
@@ -124,7 +125,8 @@ bool EpisodeManager::OnNewMail(MOOSMSG_LIST &NewMail)
 //------------------------------------------------------------
 // Procedure: updateInfoBuffer()
 
-bool EpisodeManager::updateInfoBuffer(CMOOSMsg &msg)
+template<typename T>
+bool EpisodeManager<T>::updateInfoBuffer(CMOOSMsg &msg)
 {
   string key = msg.GetKey();
   string sdata = msg.GetString();
@@ -143,7 +145,8 @@ bool EpisodeManager::updateInfoBuffer(CMOOSMsg &msg)
 //---------------------------------------------------------
 // Procedure: OnConnectToServer
 
-bool EpisodeManager::OnConnectToServer()
+template<typename T>
+bool EpisodeManager<T>::OnConnectToServer()
 {
    registerVariables();
    return(true);
@@ -153,9 +156,10 @@ bool EpisodeManager::OnConnectToServer()
 // Procedure: Iterate()
 //            happens AppTick times per second
 
-bool EpisodeManager::Iterate()
+template<typename T>
+bool EpisodeManager<T>::Iterate()
 {
-  AppCastingMOOSApp::Iterate();
+  T::Iterate();
   
   if(m_current_state == PAUSED){
     Notify("EPISODE_MGR_STATE", "PAUSED");
@@ -198,7 +202,7 @@ bool EpisodeManager::Iterate()
     }
   }
 
-  AppCastingMOOSApp::PostReport();
+  T::PostReport();
   return(true);
 }
 
@@ -206,9 +210,10 @@ bool EpisodeManager::Iterate()
 // Procedure: OnStartUp()
 //            happens before connection is open
 
-bool EpisodeManager::OnStartUp()
+template<typename T>
+bool EpisodeManager<T>::OnStartUp()
 {
-  AppCastingMOOSApp::OnStartUp();
+  T::OnStartUp();
 
   STRING_LIST sParams;
   m_MissionReader.EnableVerbatimQuoting(false);
@@ -324,10 +329,12 @@ bool EpisodeManager::OnStartUp()
 //---------------------------------------------------------
 // Procedure: registerVariables
 
-void EpisodeManager::registerVariables()
+template<typename T>
+void EpisodeManager<T>::registerVariables()
 {
-  AppCastingMOOSApp::RegisterVariables();
+  T::RegisterVariables();
   // Register vars needed for state machine
+  fprintf(stderr, "Yo man -------------\n");
   Register("IVPHELM_STATE");
   Register("NAV_X", 0);
   Register("NAV_Y", 0);
@@ -358,7 +365,8 @@ void EpisodeManager::registerVariables()
   }
 }
 
-bool EpisodeManager::resetPosValid(){
+template<typename T>
+bool EpisodeManager<T>::resetPosValid(){
   //TODO: Fix this
   return m_reset_heading != "";
 }
@@ -369,7 +377,8 @@ bool EpisodeManager::resetPosValid(){
 //            of conditions is met, given the snapshot of variable
 //            values in the info_buffer.
 
-bool EpisodeManager::checkConditions(std::vector<LogicCondition> conditions)
+template<typename T>
+bool EpisodeManager<T>::checkConditions(std::vector<LogicCondition> conditions)
 {
   // If no conditions exist, assume false
   if(conditions.size() == 0)
@@ -415,7 +424,8 @@ bool EpisodeManager::checkConditions(std::vector<LogicCondition> conditions)
   return(true);
 }
 
-void EpisodeManager::startEpisode(){
+template<typename T>
+void EpisodeManager<T>::startEpisode(){
   // Change state to running
   m_previous_state = m_current_state;
   m_current_state = RUNNING;
@@ -428,7 +438,8 @@ void EpisodeManager::startEpisode(){
   m_episode_start = MOOSTime();  
 }
 
-void EpisodeManager::endEpisode(bool success){
+template<typename T>
+void EpisodeManager<T>::endEpisode(bool success){
   if(success)
     m_success_cnt += 1;
   else
@@ -447,7 +458,8 @@ void EpisodeManager::endEpisode(bool success){
   m_current_state = STOPPING_HELM;
 }
 
-void EpisodeManager::resetVehicle(){
+template<typename T>
+void EpisodeManager<T>::resetVehicle(){
   if(!resetPosValid()){
     reportRunWarning("Cannot reset vehicle due to invalid reset position.");
     return;
@@ -464,7 +476,8 @@ void EpisodeManager::resetVehicle(){
   Notify("USM_RESET", reset_string);
 }
 
-void EpisodeManager::postPosts(std::vector<VarDataPair> posts){
+template<typename T>
+void EpisodeManager<T>::postPosts(std::vector<VarDataPair> posts){
   // Notify end posts
   unsigned int i, vsize = posts.size();
   for(i=0; i<vsize; i++){
@@ -496,7 +509,8 @@ void EpisodeManager::postPosts(std::vector<VarDataPair> posts){
 //------------------------------------------------------------
 // Procedure: buildReport()
 
-bool EpisodeManager::buildReport() 
+template<typename T>
+bool EpisodeManager<T>::buildReport() 
 {
   m_msgs << "Config Variables" << endl;
   m_msgs << "----------------------------------" << endl;
@@ -529,6 +543,4 @@ bool EpisodeManager::buildReport()
   return(true);
 }
 
-
-
-
+SPECIALIZE_MOOSCastingApp(EpisodeManager)

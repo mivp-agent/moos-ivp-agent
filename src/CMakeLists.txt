@@ -15,6 +15,7 @@ INCLUDE_DIRECTORIES(${LOCAL_LIBRARY_DIRS})
 #============================================================================
 # List the subdirectories to build...
 #============================================================================
+ADD_SUBDIRECTORY(lib_mivp-test)
 ADD_SUBDIRECTORY(lib_behaviors-agent)
 ADD_SUBDIRECTORY(pEpisodeManager)
 ADD_SUBDIRECTORY(uFldTagManagerAgent)

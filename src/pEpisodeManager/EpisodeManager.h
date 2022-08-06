@@ -12,11 +12,16 @@
 #include "LogicCondition.h"
 #include "InfoBuffer.h"
 #include "VarDataPair.h"
+#include "mivptest.h"
+#include "MockMOOSCastingApp.h"
 
 enum ManagerState {RUNNING, STOPPING_HELM, RESETING, PAUSED};
 
-class EpisodeManager : public AppCastingMOOSApp
+template<typename T>
+class EpisodeManager : public T
 {
+  USING_MOOSCastingApp(T)
+
  public:
    EpisodeManager();
    ~EpisodeManager();

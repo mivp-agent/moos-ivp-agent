@@ -6,6 +6,7 @@
 /************************************************************/
 
 #include <string>
+#include "MOOS/libMOOS/Thirdparty/AppCasting/AppCastingMOOSApp.h"
 #include "MBUtils.h"
 #include "ColorParse.h"
 #include "EpisodeManager.h"
@@ -43,7 +44,7 @@ int main(int argc, char *argv[])
   cout << "pEpisodeManager launching as " << run_command << endl;
   cout << termColor() << endl;
 
-  EpisodeManager EpisodeManager;
+  EpisodeManager<AppCastingMOOSApp> EpisodeManager;
 
   EpisodeManager.Run(run_command.c_str(), mission_file.c_str());
   
