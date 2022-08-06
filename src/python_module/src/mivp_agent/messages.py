@@ -54,7 +54,7 @@ INSTR_RESET_FAILURE = {
 
 class MissionMessage:
     '''
-    This class is used to parse incoming messages into attributes (see bellow) and provide a simple interface for responding to each message.
+    This class is used to parse incoming messages into attributes (see below) and provide a simple interface for responding to each message.
 
     **IMPORTANT NOTE:** Messages **MUST** be responded by one of the following methods to as `BHV_Agent` will not send another update until it has a response to the last.
 

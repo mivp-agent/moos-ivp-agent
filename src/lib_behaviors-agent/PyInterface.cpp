@@ -23,7 +23,7 @@ PyInterface::PyInterface(string module_name)
 
   m_is_connected = false;
 
-  // Bellow will fatal error on failure, no-op on second call
+  // Below will fatal error on failure, no-op on second call
   Py_Initialize();
 
   // Attempt to load the module

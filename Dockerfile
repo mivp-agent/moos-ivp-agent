@@ -50,7 +50,7 @@ USER moos
 # ================================== #
 # Setup moos-ivp-aquaticus repo
 # ================================== #
-# For some reason the bellow is not set properly
+# For some reason the below is not set properly
 ENV HOME="/home/moos"
 # Configure some environment vars
 ENV AQUATICUS="moos-ivp-aquaticus"

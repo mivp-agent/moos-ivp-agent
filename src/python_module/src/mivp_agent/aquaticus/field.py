@@ -108,7 +108,7 @@ class FieldDiscretizer:
     }
     self._idx_point_map = [None]
 
-    # The bellow maps the space we are creating to 0...n values for both x and y. This is useful when later binning / counting the occurrences of data in after collected. For example if we have a grid x,y we can create a counter where `count[0][0]` is the count of the first discrete point on our grid. But our discrete grid starts at whatever `min` is no zero. So we must map from the discrete x,y to these indexes in the counter. We do this through `enumerate(range(....))` to map from some x to 0...n.
+    # The below maps the space we are creating to 0...n values for both x and y. This is useful when later binning / counting the occurrences of data in after collected. For example if we have a grid x,y we can create a counter where `count[0][0]` is the count of the first discrete point on our grid. But our discrete grid starts at whatever `min` is no zero. So we must map from the discrete x,y to these indexes in the counter. We do this through `enumerate(range(....))` to map from some x to 0...n.
     # Note: Most times, len(self._xs) and len(self._ys) will not be the same size, and contain values for x & y values which will never be mapped to. This is to make storage in arrays easy too (easy to define a count[n][m]).
     self._xs = {x:i for i, x in enumerate(range(min[0], max[0]+1, resolution))}
     self._ys = {y:i for i, y in enumerate(range(min[1], max[1]+1, resolution))}
