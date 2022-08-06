@@ -10,7 +10,8 @@ USER root
 ARG USER_ID
 ARG GROUP_ID
 
-RUN groupadd -g $GROUP_ID host_group
+# the `|| true` is used to ignore an issue if the group exists
+RUN groupadd -g $GROUP_ID host_group || true
 RUN usermod -g $GROUP_ID moos 
 RUN usermod -u $USER_ID moos 
 RUN usermod -aG sudo moos

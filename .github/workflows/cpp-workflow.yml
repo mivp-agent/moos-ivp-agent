@@ -37,11 +37,12 @@ jobs:
         echo "$(ls -la)"
         echo "${{github.workspace}}"
         echo "$(ls -la ~)"
+    # python3.7-distutils need because of ubuntu-20 bug see here: https://askubuntu.com/a/1296996/1064456
     - name: Install moos-ivp-agent dependencies
       run: | 
         sudo add-apt-repository ppa:deadsnakes/ppa
         sudo apt update
-        sudo apt-get install -y python3.7-dev
+        sudo apt-get install -y python3.7-dev python3.7-distutils
     - name: Update pip version
       run: python3.7 -m pip install --upgrade pip
     - name: Install mivp_agent pip package
@@ -76,7 +77,9 @@ jobs:
         echo "${{github.workspace}}"
         echo "$(ls -la ~)"
     - name: Install moos-ivp-agent dependencies
-      run: brew install python@3.7
+      run: |
+        brew update
+        brew install python@3.7
     - name: Add brew python to path
       run: echo "/usr/local/opt/python@3.7/bin" >> $GITHUB_PATH
     - name: Install mivp_agent pip package

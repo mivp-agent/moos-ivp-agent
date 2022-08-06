@@ -53,6 +53,8 @@ git clone https://github.com/mivp-agent/moos-ivp-agent.git
 See the docker section below for usage of the docker container.
 
 ### Linux
+
+**NOTE:** I will often have to **restart NOT log out** before the group addition and `docker run hello-world` works without root privilages
  
 Follow the post install instructions for docker [here](https://docs.docker.com/engine/install/linux-postinstall/)
 

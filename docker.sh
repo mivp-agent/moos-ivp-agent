@@ -27,6 +27,40 @@ if [[ -n "$2" ]]; then
 fi
 TEST_NAME="$NAME-testing"
 
+function prompt(){
+    if [[ "$1" == "" ]]; then
+        echo "Echo: prompt function reruires a prompt provided as the first argument"
+    fi
+    
+    if [[ "$2" == "0" || "$2" == "" ]]; then
+        printf "$1 [Y/n]: "
+    elif [[ "$2" == "1" ]]; then
+        printf "$1 [y/N]: "
+    else
+        echo "Error: prompt function requires either '0', '1', or '' as the second argument"
+        exit 1
+    fi
+
+    read response
+
+    case $response in
+        "Y"|"y"|"yes")
+            return 0
+            ;;
+        "N"|"n"|"no")
+            return 1
+            ;;
+        "")
+            return $2
+            ;;
+        *)
+            echo "You must respond with either Y or N" >&2
+            prompt "$1" "$2"
+            return $?
+            ;;
+       esac
+}
+
 require_image(){
     if [[ "$(docker images -q $NAME)" == "" ]]; then
         printf "Error: Unable to find docker image with tag \"$NAME\".\n\n"
@@ -62,9 +96,36 @@ do_run(){
             --mount type=bind,source="$(pwd)"/src,target=/home/moos/moos-ivp-agent/src \
             --mount type=bind,source="$(pwd)"/examples,target=/home/moos/moos-ivp-agent/examples \
             --workdir="/home/moos/moos-ivp-agent" \
-	    --user "$(id -u):$(id -g)" \
+	        --user "$(id -u):$(id -g)" \
             --name "$2" "-it$3" "$1:1.0" bash 
     fi
+
+    # Return status from `docker run` command
+    return $?
+}
+
+count_running(){
+    if [[ "$1" == "" ]]; then
+        printf "Error: count_running should be called with one argument\n"
+        exit 1
+    fi
+    
+    ps_line_count=$(docker ps --no-trunc --filter "name=$1" | wc -l)
+    
+    # The number of containers is the line count minus one (for the header line)
+    echo $(($ps_line_count-1))
+}
+
+count_all(){
+    if [[ "$1" == "" ]]; then
+        printf "Error: count_all should be called with one argument\n"
+        exit 1
+    fi
+    
+    ps_line_count=$(docker ps -a --no-trunc --filter "name=$1" | wc -l)
+    
+    # The number of containers is the line count minus one (for the header line)
+    echo $(($ps_line_count-1))
 }
 
 # Handle arguments
@@ -91,7 +152,45 @@ elif [[ "$1" == "build" ]]; then
 elif [[ "$1" == "run" ]]; then
     # Make sure an image has been build
     require_image
-    require_no_container $NAME
+
+    # Check for running containers and prompt for removal
+    running=$(count_running $NAME)
+    if [[ "$running" -gt "0" ]]; then
+        pmpt="Found running containers named $NAME!\n"
+        pmpt+="\nTo start a new container there must be no existing containers with the same name.\n"
+        pmpt+="\nWARNING: Stopping containers while running is dangerous. Make sure you have all process stopped and data saved.\n"
+        pmpt+="\nWould you like you to stop the running container AND remove it?"
+
+        # Allow prompt to return non zero response
+        set +e
+        prompt "$pmpt" 1
+        rsp=$?
+        set -e
+
+        if [[ "$rsp" == "1" ]]; then
+            echo "Exiting..."
+            exit 1
+        else
+            docker stop "$NAME"
+            docker rm "$NAME"
+        fi
+    else
+        # Check for stopped containers and prompt for removal
+        stopped="$(count_all $NAME)"
+
+        if [[ "$stopped" -gt "0" ]]; then
+            set +e
+            prompt "Remove stopped container named $NAME?" 0
+            rsp=$?
+
+            if [[ "$rsp" == "1" ]]; then
+                echo "Exiting..."
+                exit 1
+            else
+                docker rm "$NAME"
+            fi
+        fi
+    fi
 
     printf "Enabling xhost server...\n"
     xhost +
@@ -103,7 +202,7 @@ elif [[ "$1" == "run" ]]; then
 
     do_run $NAME $NAME
     
-    printf "WARNING: Docker container will run in background unless stopped\n"
+    printf "WARNING: Docker container can run in background unless stopped\n"
 elif [[ "$1" == "connect" ]]; then
     printf "Conecting to docker container...\n"
     printf "\n==========================================\n"
