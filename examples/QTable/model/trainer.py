@@ -27,6 +27,7 @@ VEHICLE_PAIRING = {
   'agent_14': 'drone_24',
   'agent_15': 'drone_25'
 }
+# Expect the agents to connect (so we can send instructions). The drones are on autopilot defined by the bhv files.
 EXPECTED_VEHICLES = [key for key in VEHICLE_PAIRING]
 
 class AgentData:
