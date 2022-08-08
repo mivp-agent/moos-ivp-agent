@@ -6,7 +6,7 @@ VEHICLES = ['alder', ]
 from mivp_agent.manager import MissionManager
 
 # Initalize the MissionManager through python context management
-with MissionManager() as mgr:
+with MissionManager('runner', log=False) as mgr:
   print('Waiting for vehicle connection...')
   mgr.wait_for(VEHICLES)
 
