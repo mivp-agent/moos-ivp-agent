@@ -29,30 +29,28 @@ Firstly, make sure your trained model exists in a file structure like this...
 
 Launching the simulation comes in two steps. You will need two consoles **INSIDE** the moos-ivp-agent's docker container... so utilize the `./docker.sh connect` functionality.
 
-The first task is to launch the `run.py` script (inside `examples/pLearn/model`) and point it to your model.
+You can use the `run.sh` script to launch both the MOOS-IvP simulation and the model.
 
 ```
-cd examples/pLearn/model
-./run.py --model trained/my_model/iteration_39
+./run.sh
 ```
 
-**NOTE:** If no model is provided, the `run.py` script will run the model in the `trained/topModel/model` directory.
-
-Then we need to launch a moos-ivp simulation. The `examples/pLearn/mission` directory has such a simulation with `BHV_Agent` properly configured to be compatible with pLearn. 
+**OR**
 
 ```
-cd examples/pLearn/mission
-./launch_full.sh 6 
+./run.sh --model model/trained/my_model/iteration_39
 ```
 
-Most time warps should work. After the GUI window pops up, you can push the `DEPLOY` button in the lower right.
+**NOTE:** If no `--model` is provided, the `run.py` script will run the model in the `model/trained/topModel/model` directory.
+
+After the GUI window pops up, you can push the `DEPLOY` button in the lower right.
 
 ## Debugging existing models
 
 The moos-ivp-agent implementation of pLearn comes equipped with some visualizations to provide insight into pLearn models. Using the `--debug` flag.
 
 ```
-./run.py --model trained/my_model/iteration_39 --debug
+./run.sh --model trained/my_model/iteration_39 --debug
 ```
 
 Similarly to the normal usage of the run script, you will need to launch the moos-ivp simulation separately.
