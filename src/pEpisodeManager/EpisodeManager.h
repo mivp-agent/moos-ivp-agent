@@ -39,6 +39,7 @@ class EpisodeManager : public AppCastingMOOSApp
    bool resetPosValid();
    bool updateInfoBuffer(CMOOSMsg&);
    bool checkConditions(std::vector<LogicCondition> conditions);
+   bool debouncedCheckConditions(std::vector<LogicCondition> conditions);
    void postPosts(std::vector<VarDataPair> posts);
 
  private: // Configuration variables
@@ -50,6 +51,7 @@ class EpisodeManager : public AppCastingMOOSApp
    std::string m_reset_heading = "";
 
    double m_max_duration;
+   double m_debounce_period;
 
   // TODO: m_unpause_conditions, m_unpause_posts, m_continous -> m_paused
   // m_paused set by m_end_posts?? (prob not delay to get new mail?)
@@ -74,7 +76,6 @@ class EpisodeManager : public AppCastingMOOSApp
    double m_nav_x;
    double m_nav_y;
    std::string m_helm_state;
-
 
    double m_episode_start;
 };

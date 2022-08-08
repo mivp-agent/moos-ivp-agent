@@ -33,6 +33,7 @@ EpisodeManager::EpisodeManager()
   m_failure_cnt = 0;
 
   m_max_duration = -1;
+  m_debounce_period = 0.0;
 }
 
 //---------------------------------------------------------
@@ -166,9 +167,9 @@ bool EpisodeManager::Iterate()
   }else if(m_current_state == RUNNING){
     Notify("EPISODE_MGR_STATE", "RUNNING");
     bool end, success;
-    end = success = checkConditions(m_end_success_conditions);
+    end = success = debouncedCheckConditions(m_end_success_conditions);
     if(!end)
-      end = checkConditions(m_end_failure_conditions);
+      end = debouncedCheckConditions(m_end_failure_conditions);
     if(!end && m_max_duration != -1 && (MOOSTime()-m_episode_start) >= m_max_duration)
       end = true;
 
@@ -311,6 +312,12 @@ bool EpisodeManager::OnStartUp()
     }else if(param == "max_duration"){
       m_max_duration = std::atof(stripBlankEnds(value).c_str());
       handled = true;
+    }else if(param == "debounce_period"){
+      m_debounce_period = std::atof(stripBlankEnds(value).c_str());
+      if (m_debounce_period < 0) {
+        m_debounce_period = 0.0;
+      }
+      handled = true;
     }
 
     if(!handled)
@@ -415,6 +422,14 @@ bool EpisodeManager::checkConditions(std::vector<LogicCondition> conditions)
   return(true);
 }
 
+// Only checks the conditions if the current episode duration is greater than the debound period
+bool EpisodeManager::debouncedCheckConditions(std::vector<LogicCondition> conditions) {
+  if (MOOSTime() - m_episode_start < m_debounce_period)
+    return false;
+  
+  return checkConditions(conditions);
+}
+
 void EpisodeManager::startEpisode(){
   // Change state to running
   m_previous_state = m_current_state;
@@ -501,11 +516,13 @@ bool EpisodeManager::buildReport()
   m_msgs << "Config Variables" << endl;
   m_msgs << "----------------------------------" << endl;
   m_msgs << "VNAME: " << m_vname << endl;
-  m_msgs << "RESET_X:       " << m_reset_x << endl;
-  m_msgs << "RESET_Y:       " << m_reset_y << endl;
-  m_msgs << "RESET_HEADING: " << m_reset_heading << endl;
+  m_msgs << "RESET_X:         " << m_reset_x << endl;
+  m_msgs << "RESET_Y:         " << m_reset_y << endl;
+  m_msgs << "RESET_HEADING:   " << m_reset_heading << endl;
   if(m_max_duration != -1)
-    m_msgs << "MAX_DURATION:  " << m_max_duration << endl;
+    m_msgs << "MAX_DURATION:    " << m_max_duration << endl;
+  if (m_debounce_period != 0)
+    m_msgs << "DEBOUNCE_PERIOD: " << m_debounce_period << endl;
 
   m_msgs << "State Variables" << endl;
   m_msgs << "----------------------------------" << endl;
