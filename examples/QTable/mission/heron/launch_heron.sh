@@ -18,6 +18,7 @@ OWN_FLAG=""
 ENEMY_FLAG=""
 GRABR_POS=""
 GRABL_POS=""
+FORWARD_POS=""
 BEHAVIOR="DEFEND"
 
 # MOOS-IvP-Agent specific
@@ -80,6 +81,7 @@ if [ "${VTEAM}" = "red" ]; then
 
     GRABR_POS="-46,-42"
     GRABL_POS="-29,-83"
+    FORWARD_POS="24,-38"
 elif [ "${VTEAM}" = "blue" ]; then
     MY_FLAG="-52,-70"
     START_POS="-52,-70,60"
@@ -87,6 +89,7 @@ elif [ "${VTEAM}" = "blue" ]; then
 
     GRABR_POS="42,-55"
     GRABL_POS="19,-11"
+    FORWARD_POS="-20,-57"
 fi
 
 # Handle role assigment
@@ -168,6 +171,7 @@ nsplug meta_heron.bhv targ_${VNAME}.bhv -f  \
         ENEMY_FLAG=$ENEMY_FLAG              \
         GRABR_POS=$GRABR_POS                \
         GRABL_POS=$GRABL_POS                \
+        FORWARD_POS=$FORWARD_POS            \
 	    BEHAVIOR=$BEHAVIOR
 
 

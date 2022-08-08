@@ -31,6 +31,11 @@ set MODE     = DEFENDING {
   (ACTION = DEFEND) and (TAGGED = false)
 }
 
+set MODE     = DEFEND_FORWARD {
+  MODE       = ACTIVE:PLAY
+  (ACTION = DEFEND_FORWARD) and (TAGGED = false)
+}
+
 set MODE     = STATIONNING {
   MODE       = ACTIVE:PLAY
   ACTION     = STATION
@@ -89,6 +94,21 @@ Behavior = BHV_Loiter
 
   polygon                 = radial:: x=0,y=0,radius=10,pts=8 // example
   center_assign           = $(MY_FLAG)
+}
+
+//#############################################################################
+Behavior = BHV_Loiter
+{
+  name                    = loiter_forward
+  pwt                     = 100
+  condition               = MODE == DEFEND_FORWARD
+  runflag                 = BOT_DIALOG_STATUS=Defending forward
+  updates                 = LOITER_UPDATES
+
+  speed                   = 5
+
+  polygon                 = radial:: x=0,y=0,radius=10,pts=8 // example
+  center_assign           = $(FORWARD_POS)
 }
 
 //#############################################################################
