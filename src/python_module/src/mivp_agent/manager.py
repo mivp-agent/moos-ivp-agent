@@ -115,6 +115,9 @@ class MissionManager:
         return self._model_path
     
     def log_output_dir(self):
+        '''
+        Returns the log path for the current session so custom files can be added to it.
+        '''
         assert self._log, "This method should not be used, when logging is disabled"
         return self._log_path
 

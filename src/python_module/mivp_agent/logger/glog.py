@@ -75,7 +75,7 @@ def do_glog(transitions, discretizer=None, only=False):
     z=bins / np.max(bins)
   )
 
-  # Bellow is to mark out the corners and put lines between them. The extra +'s are to add the first point twice otherwise there will not be a line from the last corner to the first.
+  # Below is to mark out the corners and put lines between them. The extra +'s are to add the first point twice otherwise there will not be a line from the last corner to the first.
   field_lines = go.Scatter3d(
     x=[c[0] for c in FIELD_CORNERS]+[FIELD_CORNERS[0][0]],
     y=[c[1] for c in FIELD_CORNERS]+[FIELD_CORNERS[0][1]],
