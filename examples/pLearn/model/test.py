@@ -33,7 +33,7 @@ def test_dir(args):
     iterations.sort()
 
     # Do testing
-    with MissionManager() as mgr:
+    with MissionManager('tester', log=False) as mgr:
         print('Waiting for vehicle connection...')
         mgr.wait_for(('felix',))
 

@@ -30,7 +30,7 @@ def run_model(args):
     if args.debug:
         graph = DebugGrapher()
 
-    with MissionManager() as mgr:
+    with MissionManager('runner', log=False) as mgr:
         print('Waiting for vehicle connection...')
         mgr.wait_for(('felix',))
 
