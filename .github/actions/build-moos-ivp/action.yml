@@ -12,7 +12,7 @@ runs:
   using: "composite"
   steps:
     - name: Clone latest MOOS-IvP trunk
-      run: svn co https://oceanai.mit.edu/svn/moos-ivp-aro/trunk/ moos-ivp
+      run: svn co -r 9767 https://oceanai.mit.edu/svn/moos-ivp-aro/trunk/ moos-ivp
       shell: bash
     - name: Store moos-ivp revision for cache key
       if: inputs.caching == 'true'
