@@ -20,12 +20,5 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Install deps for ubuntu 18 runners
-      if: matrix.os == 'ubuntu-18.04'
-      run: pip3 install setuptools wheel
-    - name: Install mivp_agent
-      run: cd src/python_module && pip3 install .
-    - name: Install mivp_agent testing deps
-      run: cd src/python_module && pip3 install .[test]
     - name: Run python tests
-      run: cd src/python_module/test && ./test_all.py
+      run: cd src/python_module/test && tox
