@@ -32,7 +32,9 @@ jobs:
       if: runner.os == 'macOS'
       run: |
         brew update
-        brew install python@3.7 python@3.8
+        brew install pyenv
+        pyenv install 3.7
+        pyenv install 3.8
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
