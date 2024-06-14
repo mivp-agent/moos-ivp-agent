@@ -46,7 +46,7 @@ See [this](https://docs.docker.com/get-docker/) page for instructions for each m
 
 ### Download this repo
 
-```
+```bash
 git clone https://github.com/mivp-agent/moos-ivp-agent.git
 ```
 
@@ -68,7 +68,7 @@ Install [XQuartz](https://content.byui.edu/file/cddfb9c0-a825-4cfe-9858-28d5b4c2
 
 `pMarineViewer` has a compatibility issue with connections inside of the docker container on some versions of OSX. On your **host NOT docker** terminal enter the following command.
 
-```
+```bash
 defaults write org.xquartz.X11 enable_iglx -bool true
 ```
 
@@ -76,7 +76,7 @@ defaults write org.xquartz.X11 enable_iglx -bool true
 
 After this is done you can use the refresh script to restart XQuartz
 
-```
+```bash
 ./refresh_xquartz.sh
 ```
 
@@ -114,8 +114,11 @@ Note the **password** for the `moos` user is `moos`
 
 We can build the `mivp-agent` image with the following usage. The first time you run this it will take a while.
 
-```
+```bash
 ./docker.sh build
+
+# Run unit tests inside docker container
+./docker.sh test
 ```
 
 The image will take a while to build the first time.
@@ -128,13 +131,13 @@ If no `mivp-agent` container is running, the following command will start one an
 
 **NOTE:** If previously run, you will need to `./docker.sh rm` before starting another container. See below.
 
-```
+```bash
 ./docker.sh run
 ```
 
 If you want **another terminal inside the running container** use the following command.
 
-```
+```bash
 ./docker.sh connect
 ```
 
@@ -142,7 +145,7 @@ If you want **another terminal inside the running container** use the following 
 
 The following sequence of commands will both stop the `mivp-agent` container (regardless of any activity) and remove the container.
 
-```
+```bash
 ./docker.sh stop
 ./docker.sh rm
 ```
