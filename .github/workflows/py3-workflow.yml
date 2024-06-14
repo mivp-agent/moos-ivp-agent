@@ -19,15 +19,22 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@
+    - name: Install python versions for Linux
+      if: runner.os == 'Linux'
+      run: |
+        sudo add-apt-repository ppa:deadsnakes/ppa
+        sudo apt update
+        sudo apt-get install -y python3.7 python3.8
+    - name: Install python versions for MacOS
+      if: runner.os == 'macOS'
+      run: |
+        brew update
+        brew install python@3.7 python@3.8
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: '3.7'
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.8'
+        python-version: '3.x'
     - name: Install tox
       run: pip install tox
     - name: Run python tests
