@@ -2,6 +2,7 @@
 
 [![C++ Build](https://github.com/mivp-agent/moos-ivp-agent/actions/workflows/cpp-workflow.yml/badge.svg)](https://github.com/mivp-agent/moos-ivp-agent/actions/workflows/cpp-workflow.yml)
 [![Python Build](https://github.com/mivp-agent/moos-ivp-agent/actions/workflows/py3-workflow.yml/badge.svg)](https://github.com/mivp-agent/moos-ivp-agent/actions/workflows/py3-workflow.yml)
+[![Docker Build](https://github.com/mivp-agent/moos-ivp-agent/actions/workflows/docker-workflow.yml/badge.svg)](https://github.com/mivp-agent/moos-ivp-agent/actions/workflows/docker-workflow.yml)
 
 Model agnostic ML tooling for MOOS-IvP. See very simple implementation below based on the [ManagerExample](./examples/ManagerExample). See the [mivp-agent.github.io](https://mivp-agent.github.io/) website for more information about getting started.
 
