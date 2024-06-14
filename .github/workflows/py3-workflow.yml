@@ -51,6 +51,6 @@ jobs:
     - name: Run python tests
       if: runner.os == 'macOS'
       run: |
-        pyenv shell 3.7 3.8
+        pyenv local 3.7 3.8
         cd src/python_module/test
         tox
