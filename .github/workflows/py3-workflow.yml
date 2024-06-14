@@ -20,5 +20,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: Install tox
+      run: pip install tox
     - name: Run python tests
       run: cd src/python_module/test && tox
