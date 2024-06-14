@@ -56,5 +56,6 @@ jobs:
         pyenv versions
         pyenv global 3.7 3.8
         pyenv versions
+        eval "$(pyenv init --path)"
         cd src/python_module/test
         tox
