@@ -56,7 +56,8 @@ jobs:
   osx-build:
     strategy:
       matrix:
-        os: [macos-14, macos-13, macos-12]
+        # os: [macos-14, macos-13, macos-12]
+        os: [macos-13, macos-12]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
@@ -90,5 +91,3 @@ jobs:
       run: echo "${{github.workspace}}/moos-ivp/bin" >> $GITHUB_PATH
     - name: Add MOOS-IvP scripts to path
       run: echo "${{github.workspace}}/moos-ivp/scripts" >> $GITHUB_PATH
-      
-      
