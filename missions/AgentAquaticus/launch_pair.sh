@@ -39,6 +39,7 @@ fi
 #  Part 2: Launching herons
 #-------------------------------------------------------
 if [[ -z $NO_HERON ]]; then
+  echo "Launching heron vehicles..."
   cd ./heron
   # Launch a red agent
   ./launch_heron.sh red agent 11 --behavior=ATTACK --color=orange $TIME_WARP > /dev/null &
@@ -55,6 +56,7 @@ fi
 #  Part 3: Launching shoreside
 #-------------------------------------------------------
 if [[ -z $NO_SHORESIDE ]]; then
+  echo "Launching shoreside..."
   cd ./shoreside
   ./launch_shoreside.sh $TIME_WARP >& /dev/null &
   cd ..
@@ -63,6 +65,7 @@ fi
 #-------------------------------------------------------
 #  Part 4: Launching uMAC
 #-------------------------------------------------------
+sleep 1
 uMAC shoreside/targ_shoreside.moos
 
 #-------------------------------------------------------
