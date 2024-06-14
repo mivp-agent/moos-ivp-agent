@@ -36,6 +36,7 @@ jobs:
         pyenv install 3.7
         pyenv install 3.8
         pyenv global 3.7 3.8
+        pyenv versions
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
