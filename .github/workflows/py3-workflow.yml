@@ -15,7 +15,7 @@ jobs:
   build-n-test:
     strategy:
       matrix:
-        os: [ubuntu-20.04, ubuntu-18.04, macos-11, macos-10.15]
+        os: [ubuntu-24.04, ubuntu-22.04, ubuntu-20.04, macos-14, macos-13, macos-12]
     runs-on: ${{ matrix.os }}
 
     steps:
