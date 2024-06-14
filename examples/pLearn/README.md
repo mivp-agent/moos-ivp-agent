@@ -96,14 +96,13 @@ This time we will point the `test.py` script at the folder containing the iterat
 We point the test script to this location through the following.
 
 ```
-./test.py --test_dir trained/my_model
+./model/test.py --test_dir trained/my_model
 ```
 
 Again, in another console we will launch the moos-ivp simulation **BUT** this time through the script provided in `examples/pLearn/model/scripts/launch.sim`. This simulation has default time warp of 15.
 
 ```
-cd examples/pLearn/model
-./scripts/launch_sim.sh
+./model/scripts/launch_sim.sh
 ```
 
 **NOTE:** The script will automatically deploy and reset the vehicles... no pMarineViewer will launch.
