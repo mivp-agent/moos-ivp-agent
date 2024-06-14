@@ -110,11 +110,22 @@ To launch a gui simulation and the model, we can use the following script syntax
 **NOTE:** If run without a `--model` flag, the run script will run whatever model is defined by `DEFAULT_RUN_MODEL` in `model/constants.py`
 Further, you can change the name of the "enemy" that your agent will look for by the following syntax
 
-```
+```bash
 ./run.sh --model trained/my_cool_model/3000.npy --enemy evan
 ```
 
 This is helpful using trained agents in missions which they were not trained in.
+
+## Testing models
+
+To test a model's preformance you can use the following script syntax
+```bash
+./test.sh
+# Or
+./test.sh --model trained/my_cool_model/3000.npy
+# Or
+./test.sh --model trained/my_cool_model/3000.npy --episodes 1000
+```
 
 ## Debugging
 

@@ -29,10 +29,12 @@ Firstly, make sure your trained model exists in a file structure like this...
 
 Launching the simulation comes in two steps. You will need two consoles **INSIDE** the moos-ivp-agent's docker container... so utilize the `./docker.sh connect` functionality.
 
-You can use the `run.sh` script to launch both the MOOS-IvP simulation and the model.
+You can use the `run.sh` script to launch both the MOOS-IvP simulation and the model. A optional `--debug` flag can be added to launch some graphs showing internal model state.
 
-```
+```bash
 ./run.sh
+# Or
+./run.sh --debug
 ```
 
 **OR**
@@ -42,6 +44,14 @@ You can use the `run.sh` script to launch both the MOOS-IvP simulation and the m
 ```
 
 **NOTE:** If no `--model` is provided, the `run.py` script will run the model in the `model/trained/topModel/model` directory.
+
+For an example you can use the an existing pre-trained model:
+
+```bash
+./run.sh --model model/trained/topModel/model/
+# Or
+./run.sh --model model/trained/topModel/model/ --debug
+```
 
 After the GUI window pops up, you can push the `DEPLOY` button in the lower right.
 

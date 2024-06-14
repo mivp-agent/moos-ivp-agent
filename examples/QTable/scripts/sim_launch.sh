@@ -4,6 +4,7 @@ DIRNAME="$(dirname $0)"
 cd $DIRNAME
 
 TIME_WARP="10"
+# TIME_WARP="1"
 # Change below to --log for logging
 LOGGING=""
 
@@ -26,7 +27,7 @@ cd ..
 
 cd shoreside
   ./launch_shoreside.sh --no_gui $LOGGING $TIME_WARP >& /dev/null &
-  # ./launch_shoreside.sh $LOGGING $TIME_WARP >& /dev/null &
+#   ./launch_shoreside.sh $LOGGING $TIME_WARP >& /dev/null &
   sleep 5
   echo "DEPLOYING"
   uPokeDB targ_shoreside.moos DEPLOY_ALL=true MOOS_MANUAL_OVERRIDE_ALL=false
