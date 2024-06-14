@@ -44,4 +44,7 @@ jobs:
     - name: Install tox
       run: pip install tox
     - name: Run python tests
-      run: cd src/python_module/test && tox
+      run: |
+        pyenv shell 3.7 3.8
+        cd src/python_module/test
+        tox
