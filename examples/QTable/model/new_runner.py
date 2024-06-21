@@ -17,8 +17,7 @@ class Agent:
     self.current_action = None
 
   def id(self):
-    return self.own_id
-
+      return self.own_id
 
   def obs_to_rpr(self, observation): 
     model_representation = self.q.get_state(
@@ -32,7 +31,7 @@ class Agent:
 
     return model_representation
 
-  def rpr_to_act(self, rpr, observation):
+  def rpr_to_act(self, rpr, observation): #why rpr and observation? we talked about this but can't remember
     self.current_action = self.q.get_action(rpr)
     
     # Determine action set
@@ -67,6 +66,7 @@ if __name__ == '__main__':
   wait_for = []
   for i in [1, 2, 3]:
     agents.append(Agent(f'agent_1{i}', f'drone_2{i}', args.model))
+    wait_for.append(f'agent_1{i}')
 
   #console = ModelConsole() #where will this live? Do we care? Needs a full msg instead of msg.state
   mgr = EpisodicManager(agents, 13, wait_for=wait_for) #13 for 10 full episodes... not ideal

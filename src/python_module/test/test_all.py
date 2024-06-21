@@ -15,6 +15,7 @@ import test_file_system
 import test_bridge
 import test_log
 import test_manager
+import test_episodic_manager
 import test_data_structures
 import test_proto
 import test_consumer
@@ -36,6 +37,7 @@ if __name__ == '__main__':
   suite.addTest(unittest.makeSuite(test_consumer.TestConsumer))
   suite.addTest(unittest.makeSuite(test_manager.TestManagerCore))
   suite.addTest(unittest.makeSuite(test_manager.TestManagerLogger))
+  suite.addTest(unittest.makeSuite(test_episodic_manager.TestEpisodicManager))
   suite.addTest(unittest.makeSuite(test_data_structures.TestLimitedHistory))
   suite.addTest(unittest.makeSuite(test_proto.TestLogger))
   
